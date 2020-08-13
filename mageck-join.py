@@ -26,10 +26,6 @@ if len(sys.argv) != 2:
 sgrnas_list00 = open(sys.argv[1])
 sgrnas_list00 = list(csv.reader(open(sys.argv[1])))
 
-
-#Generates reference list of all library sgRNAs
-sgrnas_list00 = list(csv.reader(open("bassik-guides-sorted.csv"))) #Change file name to your library file
-
 sgrnas_list0 = []
 
 for x in sgrnas_list00: #Flattens the list
