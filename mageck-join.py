@@ -23,7 +23,7 @@ import csv
 if len(sys.argv) != 2:
     sys.exit('\nJust one argument required (see instructions)%s' %(docstring))
     
-sgrnas_list00 = open(sys.argv[1])
+#sgrnas_list00 = open(sys.argv[1])
 sgrnas_list00 = list(csv.reader(open(sys.argv[1])))
 
 sgrnas_list0 = []
