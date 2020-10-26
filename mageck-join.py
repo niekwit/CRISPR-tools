@@ -2,16 +2,16 @@
 # -*- coding: utf-8 -*-
 docstring="""
 2019
-@author: Niek Wit (MRC-LMB)
+@author: Niek Wit
 
-This script will join all your individual Bowtie alignment files (.txt) into one file that is suitable for MAGeCK analysis
+This script will join all your individual count files (.txt) into one file that is suitable for MAGeCK analysis
 
 Instructions:
 1. Create a new folder
 2. Copy in your sorted library file that only contains gene/sgRNA info (like this: A1BG_sgA1BG_1) in one column
 3. Copy in your Bowtie output .txt files (can be any name) that need to be joined for MAGeCK analysis
     - IMPORTANT: do not include any other .txt files
-4. In terminal type: python3 join.py <sgRNA_name_list.csv>
+4. In terminal type: python3 mageck-join.py <sgRNA_name_list.csv>
 5. The output file (counts-aggregated.tsv) can be used for MAGeCK analysis
 """
 
