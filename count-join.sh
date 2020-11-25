@@ -9,10 +9,9 @@ pigz -dkv ../raw-data/*fastq.gz
 fastqc --threads 30 -o ../fastqc ../raw-data/*fastq.gz
 multiqc -o ../fastqc ../fastqc . 2> count.log
 
-#
+#Trims, aligns and counts reads
 for file in ../raw-data/*.fastq
 do 
-	#file_name=$(echo $file | cut -d'/' -f3)
 	echo $file >> count.log
 	file_name=${file##*/} #substring removal of file location
 	file2=${file_name%.fastq} #substring removal of .fastq
@@ -24,5 +23,5 @@ done
 #join count files to generate MAGeCK input file
 cp *.guidecounts.txt ../join/
 cd ../join
-python3 ../join/join.py ../join/DUBlibrarysgRNAname.csv
+python3 join.py ../join/DUBlibrarysgRNAname.csv
 cp counts-aggregated.tsv ../mageck
