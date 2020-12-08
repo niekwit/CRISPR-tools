@@ -1,6 +1,6 @@
 #!/bin/bash
 
-###Author: Niek Wit (University of Cambridge)###
+###Author: Niek Wit (University of Cambridge), 2020###
 
 file_path=""
 library=""
@@ -76,14 +76,21 @@ done
 
 cp /home/niek/Documents/scripts/CRISPR-tools/mageck-join.py count/
 
-#Creates MAGeCK inout file
-python3 count/mageck-join.py $guides
-mv counts-aggregated.tsv mageck/
+#Creates MAGeCK input file
+cd count/
+python3 mageck-join.py $guides
+
+#Normalises MAGeCK input file to total read count
+working_dir=$(pwd)
+Rscript /home/niek/Documents/scripts/CRISPR-tools/normalise.R $working_dir
+
+cp counts-aggregated.tsv ../mageck/
 
 #Removes uncompressed .fastq files
-rm -r raw-data/*.fastq
+rm -r ../raw-data/*.fastq
 
 #Performs MAGeCK
+
 
 
 
