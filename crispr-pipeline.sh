@@ -97,8 +97,8 @@ input="mageck_config.csv"
 while IFS= read -r line
 do
   
-  test_sample=$(echo "$line" | cut -d ";" -f 1) #split line of config file into test sample name
-  control_sample=$(echo "$line" | cut -d ";" -f 2)#split line of config file into control sample name
+  test_sample=$(echo "$line" | cut -d ";" -f 1) #splits line of config file into test sample name
+  control_sample=$(echo "$line" | cut -d ";" -f 2) #splits line of config file into control sample name
   mageck_output="${test_sample}_vs_${control_sample}"
   mkdir $mageck_output
   mageck test -k counts-aggregated.tsv -t $test_sample -c $control_sample --sort-criteria neg -n $mageck_output/$mageck_output 2>> ../crispr.log
