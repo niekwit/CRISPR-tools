@@ -47,7 +47,7 @@ dfjoin1 = pd.DataFrame(d0) #sgRNA/gene column required for MAGeCK, sgRNA2 is nee
 #Generates a list of all count .txt files
 file_list = glob.glob('*.txt')
 file_list.sort()
-file_list2 = [w.replace('.txt','') for w in file_list] #this list will generate the column headers for the output file (removes .txt)
+file_list2 = [w.replace('.guidecounts.txt','') for w in file_list] #this list will generate the column headers for the output file (removes .txt)
 
 #Counts number of .txt files in script folder
 txtnumber = len(file_list)
