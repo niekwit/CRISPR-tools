@@ -90,7 +90,16 @@ cp counts-aggregated.tsv ../mageck/
 rm -r ../raw-data/*.fastq
 
 #Performs MAGeCK
-
-
-
-
+##-c reference sample, -t test sample: neg rank(genes that drop out in test sample)/pos rank(genes that are overrepresented in test sample)
+cd ../mageck
+sed '1d' ../mageck_config.csv > mageck_config.csv #removes header from config file
+input="mageck_config.csv"
+while IFS= read -r line
+do
+  
+  test_sample=$(echo "$line" | cut -d ";" -f 1) #split line of config file into test sample name
+  control_sample=$(echo "$line" | cut -d ";" -f 2)#split line of config file into control sample name
+  mageck_output="${test_sample}_vs_${control_sample}"
+  mkdir $mageck_output
+  mageck test -k counts-aggregated.tsv -t $test_sample -c $control_sample --sort-criteria neg -n $mageck_output/$mageck_output 2>> ../crispr.log
+done < "$input"
