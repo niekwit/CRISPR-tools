@@ -4,14 +4,14 @@
 
 file_path=""
 library=""
-guides=""
+rename_config="NULL"
 
 usage() {                                    
-  echo "Usage: $0 [ -p /path/to/data ] [ -l CRISPR library ]"
+  echo "Usage: $0 [ -p /path/to/data ] [ -l CRISPR library ] [ -n <rename.config>]"
   exit 2
 }
 
-while getopts 'p:l:?h' c
+while getopts 'p:l:n:?h' c
 do
   case $c in
     p) 
@@ -20,6 +20,8 @@ do
     l) 
     	library=$OPTARG 
     	;;
+    n)	rename_config=$OPTARG 
+    	;;	
     h|?) usage 
     	;;
   esac
@@ -51,6 +53,20 @@ fi
 
 cd $file_path
 mkdir -p {count,fastqc,mageck}
+
+#renames fastq.gz files
+if [ $rename_config != "NULL" ];
+	then
+		input=$rename_config
+		while IFS= read -r line
+		do
+		  original_file=$(echo "$line" | cut -d ";" -f 1) #splits line of config file into test sample name
+		  new_file=$(echo "$line" | cut -d ";" -f 2) #splits line of config file into control sample name
+		  mv "raw-data/${original_file}" "raw-data/${new_file}"
+		done < "$input"
+	else
+		:
+fi
 
 #Unzip data
 echo "Decompressing .fastq.gz files"
@@ -92,8 +108,8 @@ rm -r ../raw-data/*.fastq
 #Performs MAGeCK
 ##-c reference sample, -t test sample: neg rank(genes that drop out in test sample)/pos rank(genes that are overrepresented in test sample)
 cd ../mageck
-sed '1d' ../mageck_config.csv > mageck_config.csv #removes header from config file
-input="mageck_config.csv"
+sed '1d' ../mageck.config > mageck.config #removes header from config file
+input="mageck.config"
 while IFS= read -r line
 do
   
