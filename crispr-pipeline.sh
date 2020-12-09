@@ -2,12 +2,15 @@
 
 ###Author: Niek Wit (University of Cambridge), 2020###
 
+start_time=$(date +%s)
+echo "Analysis started: ${start_time}"
+
 file_path=""
 library=""
 rename_config="NULL"
 
 usage() {                                    
-  echo "Usage: $0 [ -p /path/to/data ] [ -l CRISPR library ] [ -n <rename.config>]"
+  echo "Usage: $0 [ -p /path/to/data ] [ -l CRISPR library ] [ -n <rename.config> OPTIONAL]"
   exit 2
 }
 
@@ -60,8 +63,8 @@ if [ $rename_config != "NULL" ];
 		input=$rename_config
 		while IFS= read -r line
 		do
-		  original_file=$(echo "$line" | cut -d ";" -f 1) #splits line of config file into test sample name
-		  new_file=$(echo "$line" | cut -d ";" -f 2) #splits line of config file into control sample name
+		  original_file=$(echo "$line" | cut -d ";" -f 1) #splits line of config file into original file name
+		  new_file=$(echo "$line" | cut -d ";" -f 2) #splits line of config file into new file name
 		  mv "raw-data/${original_file}" "raw-data/${new_file}"
 		done < "$input"
 	else
@@ -119,3 +122,9 @@ do
   mkdir $mageck_output
   mageck test -k counts-aggregated.tsv -t $test_sample -c $control_sample --sort-criteria neg -n $mageck_output/$mageck_output 2>> ../crispr.log
 done < "$input"
+
+end_time=$(date +%s)
+runtime=$((end_time-start_time))
+hours=$((runtime / 3600)); minutes=$(( (runtime % 3600) / 60 )); seconds=$(( (runtime % 3600) % 60 )) 
+echo "Analysis ended: ${end_time}"
+echo "Runtime: $hours:$minutes:$seconds (hh:mm:ss)"
