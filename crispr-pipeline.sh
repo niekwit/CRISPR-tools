@@ -5,16 +5,20 @@
 file_path=""
 library=""
 rename_config="NULL"
+remove_fq=""
 
 usage() {                                    
-  echo "Usage: $0 [ -p /path/to/data ] [ -l <CRISPR library> ] [ -n <rename.config> OPTIONAL]"
+  echo "Usage: $0 [ -p /path/to/data ] [ -l <CRISPR library> ] [ -n <rename.config> OPTIONAL] [-r Removes uncompressed fq files after analysis OPTIONAL]"
   echo -e "CRISPR library options:\nbassik (Morgens et al 2017 Nat. Comm.)\nmoffat_tko1 (Hart et al 2015 Cell)\nsabatini (Park et al 2016 Nat. Gen.)\ndub-only (Nathan lab, unpublished)"
   exit 2
 }
 
-while getopts 'p:l:n:?h' c
+while getopts 'rp:l:n:?h' c
 do
   case $c in
+    r)
+    	remove_fq="TRUE"
+    	;;
     p) 
     	file_path=$OPTARG 
     	;;
@@ -51,7 +55,6 @@ elif [ $library = "dub-only" ];
 fi
 
 start_time=$(date +%s)
-echo "Analysis started: ${start_time}"
 
 cd $file_path
 mkdir -p {count,fastqc,mageck}
@@ -104,8 +107,13 @@ Rscript /home/niek/Documents/scripts/CRISPR-tools/normalise.R $working_dir
 
 cp counts-aggregated.tsv ../mageck/
 
-#Removes uncompressed .fastq files
-rm -r ../raw-data/*.fastq
+#Optionally removes uncompressed .fastq files
+if [[ $remove_fq == "TRUE" ]];
+	then
+		rm -r ../raw-data/*.fastq
+	else
+		:
+fi
 
 #Performs MAGeCK
 ##-c reference sample, -t test sample: neg rank(genes that drop out in test sample)/pos rank(genes that are overrepresented in test sample)
@@ -124,5 +132,4 @@ done < "$input"
 end_time=$(date +%s)
 runtime=$((end_time-start_time))
 hours=$((runtime / 3600)); minutes=$(( (runtime % 3600) / 60 )); seconds=$(( (runtime % 3600) % 60 )) 
-echo "Analysis ended: ${end_time}"
 echo "Runtime: $hours:$minutes:$seconds (hh:mm:ss)"
