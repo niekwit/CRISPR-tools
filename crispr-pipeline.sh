@@ -1,16 +1,14 @@
 #!/bin/bash
 
-###Author: Niek Wit (University of Cambridge), 2020###
-
-start_time=$(date +%s)
-echo "Analysis started: ${start_time}"
+### Author: Niek Wit (University of Cambridge), 2020 ###
 
 file_path=""
 library=""
 rename_config="NULL"
 
 usage() {                                    
-  echo "Usage: $0 [ -p /path/to/data ] [ -l CRISPR library ] [ -n <rename.config> OPTIONAL]"
+  echo "Usage: $0 [ -p /path/to/data ] [ -l <CRISPR library> ] [ -n <rename.config> OPTIONAL]"
+  echo -e "CRISPR library options:\nbassik (Morgens et al 2017 Nat. Comm.)\nmoffat_tko1 (Hart et al 2015 Cell)\nsabatini (Park et al 2016 Nat. Gen.)\ndub-only (Nathan lab, unpublished)"
   exit 2
 }
 
@@ -29,7 +27,6 @@ do
     	;;
   esac
 done
-
 
 if [ $library = "bassik" ];
 	then
@@ -53,6 +50,8 @@ elif [ $library = "dub-only" ];
 		echo "DUB only library selected"
 fi
 
+start_time=$(date +%s)
+echo "Analysis started: ${start_time}"
 
 cd $file_path
 mkdir -p {count,fastqc,mageck}
@@ -115,7 +114,6 @@ sed '1d' ../mageck.config > mageck.config #removes header from config file
 input="mageck.config"
 while IFS= read -r line
 do
-  
   test_sample=$(echo "$line" | cut -d ";" -f 1) #splits line of config file into test sample name
   control_sample=$(echo "$line" | cut -d ";" -f 2) #splits line of config file into control sample name
   mageck_output="${test_sample}_vs_${control_sample}"
