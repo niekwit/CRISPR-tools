@@ -6,14 +6,15 @@ file_path=""
 library=""
 rename_config="NULL"
 remove_fq=""
+align_mm=0
 
 usage() {                                    
-  echo "Usage: $0 [ -p /path/to/data ] [ -l <CRISPR library> ] [ -n <rename.config> OPTIONAL] [-r Removes uncompressed fq files after analysis OPTIONAL]"
+  echo "Usage: $0 [ -p /path/to/data ] [ -l <CRISPR library> ] [ -n <rename.config> OPTIONAL] [-r Removes uncompressed fq files after analysis OPTIONAL][-m # of mismatches allowed for alignment (standard is zero) OPTIONAL]"
   echo -e "CRISPR library options:\nbassik (Morgens et al 2017 Nat. Comm.)\nmoffat_tko1 (Hart et al 2015 Cell)\nsabatini (Park et al 2016 Nat. Gen.)\ndub-only (Nathan lab, unpublished)"
   exit 2
 }
 
-while getopts 'rp:l:n:?h' c
+while getopts 'rp:l:n:m:?h' c
 do
   case $c in
     r)
@@ -26,6 +27,8 @@ do
     	library=$OPTARG 
     	;;
     n)	rename_config=$OPTARG 
+    	;;
+    m)  align_mm=$OPTARG
     	;;	
     h|?) usage 
     	;;
@@ -90,8 +93,7 @@ echo "Performing MultiQC"
 multiqc -o fastqc/ fastqc/ . 2> crispr.log
 
 #Trims, aligns and counts reads
-echo "Aligning reads to reference"
-
+echo "Aligning reads to reference ($align_mm mismatch(es) allowed)"
 if [ $read_mod == "trim" ];
 	then
 		for file in raw-data/*.fastq
@@ -101,7 +103,7 @@ if [ $read_mod == "trim" ];
 			file2=${file_name%.fastq} #substring removal of .fastq
 			extension=".guidecounts.txt"
 			output_file=$file2$extension
-			cat $file | fastx_trimmer -l 20 -Q33 2>> crispr.log | bowtie --sam-nohead -5 0 -p40 -t -v0 $index_path - 2>> crispr.log | sed '/XS:/d' | cut -f3 | sort | uniq -c > count/$output_file
+			cat $file | fastx_trimmer -l 20 -Q33 2>> crispr.log | bowtie --sam-nohead -5 0 -p40 -t "-v$align_mm" $index_path - 2>> crispr.log | sed '/XS:/d' | cut -f3 | sort | uniq -c > count/$output_file
 		done
 elif [ $read_mod == "clip" ];
 	then
@@ -112,7 +114,7 @@ elif [ $read_mod == "clip" ];
 			file2=${file_name%.fastq} #substring removal of .fastq
 			extension=".guidecounts.txt"
 			output_file=$file2$extension
-			cat $file | fastx_clipper -Q33 -l 12 -a $clip_seq -v -n 2>> crispr.log | bowtie --sam-nohead -5 0 -p40 -t -v0 $index_path - 2>> crispr.log | sed '/XS:/d' | cut -f3 | sort | uniq -c > count/$output_file
+			cat $file | fastx_clipper -Q33 -l 12 -a $clip_seq -v -n 2>> crispr.log | bowtie --sam-nohead -5 0 -p40 -t "-v$align_mm" $index_path - 2>> crispr.log | sed '/XS:/d' | cut -f3 | sort | uniq -c > count/$output_file
 		done
 fi
 
