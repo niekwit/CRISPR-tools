@@ -156,3 +156,4 @@ end_time=$(date +%s)
 runtime=$((end_time-start_time))
 hours=$((runtime / 3600)); minutes=$(( (runtime % 3600) / 60 )); seconds=$(( (runtime % 3600) % 60 )) 
 echo "Runtime: $hours:$minutes:$seconds (hh:mm:ss)"
+
