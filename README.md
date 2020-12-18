@@ -24,3 +24,19 @@ if [ $library = "bassik" ];
 		clip_seq="GTTTAAGAGCTAAGCTGGAAACAGCATAGCAA"
 		echo "Bassik library selected"
 ```
+or
+```
+elif [ $library = "moffat_tko1" ];
+	then
+		index_path="/home/niek/Documents/references/bowtie-index/CRISPR/Moffat_TKO1/moffat_TKO1-index"
+		guides="/home/niek/Documents/references/bowtie-index/CRISPR/Moffat_TKO1/moffat-guideslist-sorted.csv"
+		read_mod="trim"
+		sg_length=20	
+		echo "Moffat TKO1 library selected"
+```
+
+
+
+
+`index_path` is the file path to the Bowtie index. `guides` is the path to a sorted csv file that contains each guide name (e.g. A1BG_sgA1BG_1) on a new line. `read_mod` ("clip" or "trim") sets the method or removing the vector sequence. Use "clip" for libraries with variable guide length (vector sequence to be removed is `clip_seq`) and use "trim" for fixed guide lengths (set with `sg_length`).
+
