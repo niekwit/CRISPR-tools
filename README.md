@@ -1,4 +1,4 @@
-# CRISPR screen bioinformatic tools
+# CRISPR screen bioinformatic pipeline
 
 
 ### Software Dependencies:
