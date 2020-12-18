@@ -5,8 +5,8 @@
 - python3 
 - R
 - FASTQC
-- Bowtie 
 - MultiQC
+- Bowtie 
 - FASTX-Toolkit
 - pigz
 - MAGeCK
@@ -41,4 +41,4 @@ elif [ $library = "moffat_tko1" ];
 
 `index_path` is the file path to the Bowtie index. `guides` is the path to a sorted csv file that contains each guide name (e.g. A1BG_sgA1BG_1) on a new line. `read_mod` ("clip" or "trim") sets the method or removing the vector sequence. Use "clip" for libraries with variable guide length (vector sequence to be removed is `clip_seq`) and use "trim" for fixed guide lengths (set with `sg_length`).
 
-Files can be optionally be renamed using the `-n`flag and a config file (`rename.config`), as file names are used to generate sample names for MAGeCK. `-r` removes uncompressed fastq files after use (optional) and `-m INT` set the number of mismatches that are allowed during the alignement step (if not called, zero mismatches are set)
+Files can be optionally be renamed using the `-n` flag and a config file (`rename.config`), as file names are used to generate sample names for MAGeCK. `-r` removes uncompressed fastq files after use (optional) and `-m INT` sets the number of mismatches that are allowed during the alignement step (if not called, zero mismatches are set)
