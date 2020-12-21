@@ -35,11 +35,11 @@ do
   esac
 done
 
-if [ "$align_mm" -eq "$align_mm" ] 2>/dev/null
+if [ "$align_mm" -lt 4 ] && [ "$align_mm" -eq "$align_mm" ] 2>/dev/null
 then
     :
 else
-    echo "ERROR: -m parameter must be an integer."
+    echo "ERROR: -m parameter must be an integer below 4"
     usage
     exit 1
 fi
