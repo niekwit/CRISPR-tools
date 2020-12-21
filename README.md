@@ -8,7 +8,7 @@
 - MultiQC
 - Bowtie 
 - FASTX-Toolkit
-- pigz
+- pigz (if not installed gunzip will be used, but will be slower)
 - MAGeCK
 
 ### Instructions:
