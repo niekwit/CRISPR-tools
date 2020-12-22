@@ -97,11 +97,16 @@ fi
 
 #Unzip data
 echo "Decompressing .fastq.gz files"
-pigz -dkv raw-data/*fastq.gz
+if ! command -v pigz &> /dev/null
+	then
+    		gunzip -dkv raw-data/*fastq.gz
+	else	
+		pigz -dkv raw-data/*fastq.gz		
+fi
 
 #Fastq quality control
 echo "Performing FastQC"
-fastqc --threads 30 -o fastqc/ raw-data/*fastq.gz
+fastqc --threads 40 -o fastqc/ raw-data/*fastq.gz
 echo "Performing MultiQC"
 multiqc -o fastqc/ fastqc/ . 2> crispr.log
 
