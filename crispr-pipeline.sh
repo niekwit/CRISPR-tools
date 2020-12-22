@@ -104,9 +104,12 @@ if ! command -v pigz &> /dev/null
 		pigz -dkv raw-data/*fastq.gz		
 fi
 
+#determines CPU thread count
+max_threads=$(nproc --all)
+
 #Fastq quality control
 echo "Performing FastQC"
-fastqc --threads 40 -o fastqc/ raw-data/*fastq.gz
+fastqc --threads $max_threads -o fastqc/ raw-data/*fastq.gz
 echo "Performing MultiQC"
 multiqc -o fastqc/ fastqc/ . 2> crispr.log
 
@@ -121,7 +124,7 @@ if [ $read_mod == "trim" ];
 			file2=${file_name%.fastq} #substring removal of .fastq
 			extension=".guidecounts.txt"
 			output_file=$file2$extension
-			cat $file | fastx_trimmer -l $sg_length -Q33 2>> crispr.log | bowtie --sam-nohead -5 0 -p40 -t "-v$align_mm" $index_path - 2>> crispr.log | sed '/XS:/d' | cut -f3 | sort | uniq -c > count/$output_file
+			cat $file | fastx_trimmer -l $sg_length -Q33 2>> crispr.log | bowtie --sam-nohead -5 0 "-p$max_threads" -t "-v$align_mm" $index_path - 2>> crispr.log | sed '/XS:/d' | cut -f3 | sort | uniq -c > count/$output_file
 		done
 elif [ $read_mod == "clip" ];
 	then
@@ -132,7 +135,7 @@ elif [ $read_mod == "clip" ];
 			file2=${file_name%.fastq} #substring removal of .fastq
 			extension=".guidecounts.txt"
 			output_file=$file2$extension
-			cat $file | fastx_clipper -Q33 -l 12 -a $clip_seq -v -n 2>> crispr.log | bowtie --sam-nohead -5 0 -p40 -t "-v$align_mm" $index_path - 2>> crispr.log | sed '/XS:/d' | cut -f3 | sort | uniq -c > count/$output_file
+			cat $file | fastx_clipper -Q33 -l 12 -a $clip_seq -v -n 2>> crispr.log | bowtie --sam-nohead -5 1 "-p$max_threads" -t "-v$align_mm" $index_path - 2>> crispr.log | sed '/XS:/d' | cut -f3 | sort | uniq -c > count/$output_file
 		done
 fi
 
