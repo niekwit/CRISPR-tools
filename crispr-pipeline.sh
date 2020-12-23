@@ -9,26 +9,25 @@ remove_fq=""
 align_mm=0
 
 usage() {                                    
-  echo "Usage: $0 [ -p /path/to/data ] [ -l <CRISPR library> ] [ -n <rename.config> OPTIONAL] [-r Removes uncompressed fq files after analysis OPTIONAL][-m <INT> number of mismatches allowed for alignment (standard is zero) OPTIONAL]"
+  echo "Usage: $0 [ -p /path/to/data ] [ -l <CRISPR library> ] [ -r <rename.config> OPTIONAL] [-m <INT> number of mismatches allowed for alignment (standard is zero) OPTIONAL]"
   echo -e "CRISPR library options:\nbassik (Morgens et al 2017 Nat. Comm.)\nmoffat_tko1 (Hart et al 2015 Cell)\nsabatini (Park et al 2016 Nat. Gen.)\ndub-only (Nathan lab, unpublished)"
   exit 2
 }
 
-while getopts 'rp:l:n:m:?h' c
+while getopts 'p:l:r:m:?h' c
 do
   case $c in
-    r)
-    	remove_fq="TRUE"
-    	;;
     p) 
     	file_path=$OPTARG 
     	;;
     l) 
     	library=$OPTARG 
     	;;
-    n)	rename_config=$OPTARG 
+    r)	
+    	rename_config=$OPTARG 
     	;;
-    m)  align_mm=$OPTARG
+    m)  
+    	align_mm=$OPTARG
     	;;	
     h|?) usage 
     	;;
@@ -39,7 +38,7 @@ if [ "$align_mm" -lt 4 ] && [ "$align_mm" -eq "$align_mm" ] 2>/dev/null
 then
     :
 else
-    echo "ERROR: -m parameter must be an integer below 4"
+    echo "ERROR: -m parameter must be an integer, idealy 0 or 1"
     usage
     exit 1
 fi
@@ -47,7 +46,7 @@ fi
 
 if [ $library = "bassik" ];
 	then
-		index_path="/home/niek/Documents/references/bowtie-index/CRISPR/Bassik/bowtie-lib/bassik-bowtie"
+		index_path="/home/niek/Documents/references/bowtie2-index/bassik/bassik"
 		guides="/home/niek/Documents/references/bowtie-index/CRISPR/Bassik/bowtie-lib/bassik-guides-sorted.csv"
 		read_mod="clip"
 		clip_seq="GTTTAAGAGCTAAGCTGGAAACAGCATAGCAA"
@@ -69,7 +68,7 @@ elif [ $library = "sabatini" ];
 		echo "Sabatini library selected"
 elif [ $library = "dub-only" ];
 	then
-		index_path="/home/niek/Documents/references/bowtie-index/CRISPR/DUB-only-lib/DUB_only-index"
+		index_path="/home/niek/Documents/references/bowtie2-index/dub-only/bowtie2-dub-only-index"
 		guides="/home/niek/Documents/references/bowtie-index/CRISPR/DUB-only-lib/DUBlibrarysgRNAname.csv"
 		read_mod="trim"
 		sg_length=20
@@ -95,15 +94,6 @@ if [ $rename_config != "NULL" ];
 		:
 fi
 
-#Unzip data
-echo "Decompressing .fastq.gz files"
-if ! command -v pigz &> /dev/null
-	then
-    		gunzip -dkv raw-data/*fastq.gz
-	else	
-		pigz -dkv raw-data/*fastq.gz		
-fi
-
 #determines CPU thread count
 max_threads=$(nproc --all)
 
@@ -117,25 +107,25 @@ multiqc -o fastqc/ fastqc/ . 2> crispr.log
 echo "Aligning reads to reference ($align_mm mismatch(es) allowed)"
 if [ $read_mod == "trim" ];
 	then
-		for file in raw-data/*.fastq
+		for file in raw-data/*.fastq.gz
 		do 
 			echo $file >> crispr.log
 			file_name=${file##*/} #substring removal of file location
 			file2=${file_name%.fastq} #substring removal of .fastq
 			extension=".guidecounts.txt"
 			output_file=$file2$extension
-			cat $file | fastx_trimmer -l $sg_length -Q33 2>> crispr.log | bowtie --sam-nohead -5 0 "-p$max_threads" -t "-v$align_mm" $index_path - 2>> crispr.log | sed '/XS:/d' | cut -f3 | sort | uniq -c > count/$output_file
+			cutadapt -j $max_threads --quality-base 33 -l 20 -o - $file 2>> crispr.log | bowtie2 --no-hd -p $max_threads -t -N $align_mm -x $index_path - 2>> crispr.log | sed '/XS:/d' | cut -f3 | sort | uniq -c > count/$output_file
 		done
 elif [ $read_mod == "clip" ];
 	then
-		for file in raw-data/*.fastq
+		for file in raw-data/*.fastq.gz
 		do 
 			echo $file >> crispr.log
 			file_name=${file##*/} #substring removal of file location
-			file2=${file_name%.fastq} #substring removal of .fastq
+			file2=${file_name%.fastq.gz} #substring removal of .fastq
 			extension=".guidecounts.txt"
 			output_file=$file2$extension
-			cat $file | fastx_clipper -Q33 -l 12 -a $clip_seq -v -n 2>> crispr.log | bowtie --sam-nohead -5 1 "-p$max_threads" -t "-v$align_mm" $index_path - 2>> crispr.log | sed '/XS:/d' | cut -f3 | sort | uniq -c > count/$output_file
+			cutadapt -j $max_threads --quality-base 33 -a $clip_seq -o - $file 2>> crispr.log | bowtie2 --trim5 1 --no-hd -p $max_threads -t -N $align_mm -x $index_path - 2>> crispr.log | sed '/XS:/d' | cut -f3 | sort | uniq -c > count/$output_file
 		done
 fi
 
@@ -150,14 +140,6 @@ working_dir=$(pwd)
 Rscript /home/niek/Documents/scripts/CRISPR-tools/normalise.R $working_dir
 
 cp counts-aggregated.tsv ../mageck/
-
-#Optionally removes uncompressed .fastq files
-if [[ $remove_fq == "TRUE" ]];
-	then
-		rm -r ../raw-data/*.fastq
-	else
-		:
-fi
 
 #Performs MAGeCK
 ##-c reference sample, -t test sample: neg rank(genes that drop out in test sample)/pos rank(genes that are overrepresented in test sample)
