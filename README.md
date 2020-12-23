@@ -2,7 +2,7 @@
 
 
 ### Software Dependencies:
-- python3 
+- Python 3 
 - R
 - FASTQC
 - MultiQC
@@ -12,6 +12,8 @@
 - MAGeCK
 
 ### Instructions:
+
+Installation: in the command line: git clone https://github.com/niekwit/CRISPR-tools.git
 
 Usage: `./crispr-pipeline.sh [ -p /path/to/data ] [ -l <CRISPR library> ] [ -n <rename.config> OPTIONAL] [-m <INT> number of mismatches allowed for alignment (standard is zero) OPTIONAL]`
 
