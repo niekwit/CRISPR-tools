@@ -111,7 +111,7 @@ if [ $read_mod == "trim" ];
 		do 
 			echo $file >> crispr.log
 			file_name=${file##*/} #substring removal of file location
-			file2=${file_name%.fastq} #substring removal of .fastq
+			file2=${file_name%.fastq.gz} #substring removal of .fastq.gz
 			extension=".guidecounts.txt"
 			output_file=$file2$extension
 			cutadapt -j $max_threads --quality-base 33 -l 20 -o - $file 2>> crispr.log | bowtie2 --no-hd -p $max_threads -t -N $align_mm -x $index_path - 2>> crispr.log | sed '/XS:/d' | cut -f3 | sort | uniq -c > count/$output_file
@@ -122,7 +122,7 @@ elif [ $read_mod == "clip" ];
 		do 
 			echo $file >> crispr.log
 			file_name=${file##*/} #substring removal of file location
-			file2=${file_name%.fastq.gz} #substring removal of .fastq
+			file2=${file_name%.fastq.gz} #substring removal of .fastq.gz
 			extension=".guidecounts.txt"
 			output_file=$file2$extension
 			cutadapt -j $max_threads --quality-base 33 -a $clip_seq -o - $file 2>> crispr.log | bowtie2 --trim5 1 --no-hd -p $max_threads -t -N $align_mm -x $index_path - 2>> crispr.log | sed '/XS:/d' | cut -f3 | sort | uniq -c > count/$output_file
