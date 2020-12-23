@@ -54,14 +54,14 @@ if [ $library = "bassik" ];
 		
 elif [ $library = "moffat_tko1" ];
 	then
-		index_path="/home/niek/Documents/references/bowtie-index/CRISPR/Moffat_TKO1/moffat_TKO1-index"
+		index_path="/home/niek/Documents/references/bowtie2-index/moffat_tko1/moffat_tko1"
 		guides="/home/niek/Documents/references/bowtie-index/CRISPR/Moffat_TKO1/moffat-guideslist-sorted.csv"
 		read_mod="trim"
 		sg_length=20	
 		echo "Moffat TKO1 library selected"
 elif [ $library = "sabatini" ];
 	then
-		index_path="/home/niek/Documents/references/bowtie-index/CRISPR/Sabatini/sabatini-index"
+		index_path="/home/niek/Documents/references/bowtie2-index/sabatini/sabatini"
 		guides="/home/niek/Documents/references/bowtie-index/CRISPR/Sabatini/sabatini-guides-names.csv"
 		read_mod="trim"
 		sg_length=20	
