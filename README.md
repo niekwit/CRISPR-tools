@@ -15,7 +15,9 @@
 
 Installation: in the command line: git clone https://github.com/niekwit/CRISPR-tools.git
 
-Usage: `./crispr-pipeline.sh [ -p /path/to/data ] [ -l <CRISPR library> ] [ -n <rename.config> OPTIONAL] [-m <INT> number of mismatches allowed for alignment (standard is zero) OPTIONAL]`
+Create a main folder (can be any name) for the analysis that contains the subfolder `raw-data`, which in turn contains the fastq.gz files.
+
+Usage: `path/to/crispr-pipeline.sh [ -l <CRISPR library> ] [ -n <rename.config> OPTIONAL] [-m <INT> number of mismatches allowed for alignment (standard is zero) OPTIONAL]`
 
 CRISPR libraries can be set in the script from line 38, for example:
 ```
