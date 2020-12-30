@@ -2,24 +2,20 @@
 
 ### Author: Niek Wit (University of Cambridge) 2020 ###
 
-file_path=""
 library=""
 rename_config="NULL"
 remove_fq=""
 align_mm=0
 
 usage() {                                    
-  echo "Usage: $0 [ -p /path/to/data ] [ -l <CRISPR library> ] [ -r <rename.config> OPTIONAL] [-m <INT> number of mismatches allowed for alignment (standard is zero) OPTIONAL]"
+  echo "Usage: $0 [ -l <CRISPR library> ] [ -r <rename.config> OPTIONAL] [-m <INT> number of mismatches allowed for alignment (standard is zero) OPTIONAL]"
   echo -e "CRISPR library options:\nbassik (Morgens et al 2017 Nat. Comm.)\nmoffat_tko1 (Hart et al 2015 Cell)\nsabatini (Park et al 2016 Nat. Gen.)\ndub-only (Nathan lab, unpublished)"
   exit 2
 }
 
-while getopts 'p:l:r:m:?h' c
+while getopts 'l:r:m:?h' c
 do
   case $c in
-    p) 
-    	file_path=$OPTARG 
-    	;;
     l) 
     	library=$OPTARG 
     	;;
@@ -42,7 +38,6 @@ else
     usage
     exit 1
 fi
-
 
 if [ $library = "bassik" ];
 	then
@@ -77,6 +72,7 @@ fi
 
 start_time=$(date +%s)
 
+file_path=$(pwd)
 cd $file_path
 mkdir -p {count,fastqc,mageck}
 
