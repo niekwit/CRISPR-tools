@@ -72,8 +72,6 @@ fi
 
 start_time=$(date +%s)
 
-file_path=$(pwd)
-cd $file_path
 mkdir -p {count,fastqc,mageck}
 
 #renames fastq.gz files
