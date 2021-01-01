@@ -1,8 +1,11 @@
 # CRISPR screen bioinformatic pipeline
 
 
-### Software Dependencies:
-- Python 3 
+This bioinformatic pipeline will automate analysis of NGS data from CRISPR-Cas9 screen experiments. It uses MAGeCK for statistical analysis.
+
+### Software dependencies:
+- Python 3
+..- Pandas
 - R
 - FASTQC
 - MultiQC
@@ -13,13 +16,13 @@
 
 ### Instructions:
 
-Installation: in the command line: git clone https://github.com/niekwit/CRISPR-tools.git
+Installation (command line): `git clone git@github.com:niekwit/CRISPR-tools.git` (SSH)
 
 Create a main folder (can be any name) for the analysis that contains the subfolder `raw-data`, which in turn contains the fastq.gz files.
 
-Usage: `path/to/crispr-pipeline.sh [ -l <CRISPR library> ] [ -n <rename.config> OPTIONAL] [-m <INT> number of mismatches allowed for alignment (standard is zero) OPTIONAL]`
+Navigate to the analysis folder in the command line and type: `path/to/crispr-pipeline.sh [ -l <CRISPR library> ] [ -n <rename.config> OPTIONAL] [-m <INT> number of mismatches allowed for alignment (standard is zero) OPTIONAL]`
 
-CRISPR libraries can be set in the script from line 38, for example:
+CRISPR libraries can be set in the script from line 42, for example:
 ```
 if [ $library = "bassik" ];
 	then
@@ -42,8 +45,8 @@ elif [ $library = "moffat_tko1" ];
 
 
 
-
-`index_path` is the file path to the Bowtie2 index. `guides` is the path to a sorted csv file that contains each guide name (e.g. A1BG_sgA1BG_1) on a new line. `read_mod` ("clip" or "trim") sets the method or removing the vector sequence. Use "clip" for libraries with variable guide length (vector sequence to be removed is `clip_seq`) and use "trim" for fixed guide lengths (set with `sg_length`).
+For each library, a Bowtie2 index has to be generated beforehand using `bowtie build` with the library fasta file as input. Additionally, a sorted csv file is required that contains each guide name (e.g. A1BG_sgA1BG_1) on a new line.
+`index_path` is the file path to the Bowtie2 index. `guides` is the path to the sorted csv file. `read_mod` ("clip" or "trim") sets the method or removing the vector sequence. Use "clip" for libraries with variable guide length (vector sequence to be removed is `clip_seq`) and use "trim" for fixed guide lengths (set guide length with `sg_length`).
 
 Files can be optionally be renamed using the `-n` flag and a config file (`rename.config`), as file names are used to generate sample names for MAGeCK. `-m INT` sets the number of mismatches that are allowed during the alignement step (if not called, zero mismatches are set).
 The mageck.config file contains the comparisons that MAGeCK will perform: -c reference sample, -t test sample: neg rank(genes that drop out in test sample)/pos rank(genes that are overrepresented in test sample)
