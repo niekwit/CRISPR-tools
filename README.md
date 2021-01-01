@@ -5,7 +5,7 @@ This bioinformatic pipeline will automate analysis of NGS data from CRISPR-Cas9 
 
 ### Software dependencies:
 - Python 3
-..- Pandas
+	- Pandas
 - R
 - FASTQC
 - MultiQC
