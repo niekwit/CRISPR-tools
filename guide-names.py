@@ -1,21 +1,22 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-Created on Sun Mar 22 10:47:22 2020
-@author: Niek Wit (MRC LMB)
+docstring="""
+@author: Niek Wit (University of Cambridge)
 This function returns a .csv file of guides names extracted from the FASTA CRISPR library file
-"""
+Run as follows from the command line: $ python3 /path/to/guide-names.py library.fasta"""
 
 import pandas as pd
+import sys
 
-def guide_names(library):
-    library_name = library
-    library = pd.read_csv(library + '.fasta', names = ['guide'])
-    #creates new dataframe with only guide names:
-    library = library[library['guide'].str.contains('>')]
-    #removes '<' character from each row:
-    library = library['guide'].str.strip('>')
-    #saves guide names to a .csv file:
-    library.to_csv(library_name + '_guides.csv', index=False)
-    
-guide_names("yusa_human_lib")
+if len(sys.argv) != 2:
+    sys.exit('\nJust one argument required (see instructions)%s' %(docstring))
+
+library = pd.read_csv(sys.argv[1], names = ['guide'])
+#creates new dataframe with only guide names:
+library = library[library['guide'].str.contains('>')]
+#removes '<' character from each row:
+library = library['guide'].str.strip('>')
+#saves guide names to a .csv file:
+library_name=sys.argv[1]
+library_name=library_name.replace('.fasta','')
+library.to_csv(library_name+'_guides.csv', index=False)    
