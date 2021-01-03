@@ -135,22 +135,37 @@ Rscript /home/niek/Documents/scripts/CRISPR-tools/normalise.R $working_dir
 
 cp counts-aggregated.tsv ../mageck/
 
+#Performs CRISPR maxiprep sequencing analysis (only when samples are present in counts-aggregated.tsv)
+##Name pre-amplication sample `pre` and post-amplification sample `post`
+test_line=$(head -1 counts-aggregated.tsv)
+if [[ "$test_line" == *"pre"* ]] && [[ "$test_line" == *"post"* ]]; 
+	then
+  		echo python3 /home/niek/Documents/scripts/CRISPR-tools/library-analysis.py
+fi
+
 #Performs MAGeCK
 ##-c reference sample, -t test sample: neg rank(genes that drop out in test sample)/pos rank(genes that are overrepresented in test sample)
-cd ../mageck
-sed '1d' ../mageck.config > mageck.config #removes header from config file
-input="mageck.config"
-while IFS= read -r line
-do
-  test_sample=$(echo "$line" | cut -d ";" -f 1) #splits line of config file into test sample name
-  control_sample=$(echo "$line" | cut -d ";" -f 2) #splits line of config file into control sample name
-  mageck_output="${test_sample}_vs_${control_sample}"
-  mkdir $mageck_output
-  mageck test -k counts-aggregated.tsv -t $test_sample -c $control_sample --sort-criteria neg -n $mageck_output/$mageck_output 2>> ../crispr.log
-done < "$input"
+##If pipeline has been called with only pre and post CRISPR library amplification samples, then MAGeCK will not be executed 
+sep="\t"
+mageck_test=$(awk -F"${sep}" '{print NF-1}' <<< "${test_line}")
+if [[ "$test_line" == *"pre"* ]] && [[ "$test_line" == *"post"* ]] && [[ $mageck_test == 3 ]]; 
+	then
+  		echo "No MAGeCK analysis performed"
+	else
+		cd ../mageck
+		sed '1d' ../mageck.config > mageck.config #removes header from config file
+		input="mageck.config"
+		while IFS= read -r line
+		do
+ 		 	test_sample=$(echo "$line" | cut -d ";" -f 1) #splits line of config file into test sample name
+  			control_sample=$(echo "$line" | cut -d ";" -f 2) #splits line of config file into control sample name
+  			mageck_output="${test_sample}_vs_${control_sample}"
+  			mkdir $mageck_output
+  			mageck test -k counts-aggregated.tsv -t $test_sample -c $control_sample --sort-criteria neg -n $mageck_output/$mageck_output 2>> ../crispr.log
+		done < "$input"	
+fi
 
 end_time=$(date +%s)
 runtime=$((end_time-start_time))
 hours=$((runtime / 3600)); minutes=$(( (runtime % 3600) / 60 )); seconds=$(( (runtime % 3600) % 60 )) 
 echo "Runtime: $hours:$minutes:$seconds (hh:mm:ss)"
-
