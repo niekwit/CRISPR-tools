@@ -38,7 +38,7 @@ ax = sns.lineplot(x=range(index_len),y=Y, color='green',label='Post-amplificatio
 ax.set_yscale('log')
 ax.legend(loc='lower right')
 ax.set(ylabel='Normalised sgRNA count', xlabel='sgRNA')
-plt.savefig('normalised-guides-frequency.eps')
+plt.savefig('normalised-guides-frequency.pdf')
 plt.close()
 
 #
@@ -57,7 +57,7 @@ ax = sns.lineplot(x=range(index_len),y=data2, color='navy')
 ax.set(ylabel='Normalised \n pre-amplification/post-amplification', xlabel='sgRNA')
 ax.set_yscale('log')
 plt.tight_layout()
-plt.savefig('normalised-pre-amplification-post-amplification.eps')
+plt.savefig('normalised-pre-amplification-post-amplification.pdf')
 plt.close()
 
 #Calculates Gini index of data sets
@@ -99,5 +99,5 @@ plt.text(0.075, 0.9, 'pre-amplification Gini index = '+str(pre_gini_index))
 plt.text(0.075, 0.85, 'post-amplification Gini index = '+str(post_gini_index))
 ax.legend(loc='lower right')
 plt.tight_layout()
-plt.savefig('lorenz-curve.eps')
+plt.savefig('lorenz-curve.pdf')
 plt.close()
