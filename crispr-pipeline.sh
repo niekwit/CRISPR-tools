@@ -146,8 +146,11 @@ fi
 #Performs MAGeCK
 ##-c reference sample, -t test sample: neg rank(genes that drop out in test sample)/pos rank(genes that are overrepresented in test sample)
 ##If pipeline has been called with only pre and post CRISPR library amplification samples, then MAGeCK will not be executed 
+
+#determines number of tabs in counts-aggregated.tsv (3 means only two samples in sheet)
 sep="\t"
 mageck_test=$(awk -F"${sep}" '{print NF-1}' <<< "${test_line}")
+
 if [[ "$test_line" == *"pre"* ]] && [[ "$test_line" == *"post"* ]] && [[ $mageck_test == 3 ]]; 
 	then
   		echo "No MAGeCK analysis performed"
