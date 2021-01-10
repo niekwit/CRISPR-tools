@@ -30,7 +30,7 @@ do
   esac
 done
 
-if [ "$align_mm" -lt 4 ] && [ "$align_mm" -eq "$align_mm" ] 2>/dev/null
+if [ "$align_mm" > 2 ] && [ "$align_mm" -eq "$align_mm" ] 2>/dev/null
 then
     :
 else
