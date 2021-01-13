@@ -10,4 +10,4 @@ fi
 
 file_out=$1
 file_out="${file_out%.fasta}.csv"
-cat *.fasta | grep ">" | tr -d ">" > $file_out
+cat $1 | grep ">" | tr -d ">" > $file_out
