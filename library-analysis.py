@@ -10,6 +10,9 @@ import pandas as pd
 import seaborn as sns
 sns.set(style="whitegrid")
 
+import warnings
+warnings.filterwarnings("ignore")
+
 df = pd.read_csv('counts-aggregated.tsv',sep='\t')
 
 #determines total read count per column
@@ -38,7 +41,7 @@ ax = sns.lineplot(x=range(index_len),y=Y, color='green',label='Post-amplificatio
 ax.set_yscale('log')
 ax.legend(loc='lower right')
 ax.set(ylabel='Normalised sgRNA count', xlabel='sgRNA')
-plt.savefig('normalised-guides-frequency.pdf')
+plt.savefig('../library-analysis/normalised-guides-frequency.pdf')
 plt.close()
 
 #
@@ -57,7 +60,7 @@ ax = sns.lineplot(x=range(index_len),y=data2, color='navy')
 ax.set(ylabel='Normalised \n pre-amplification/post-amplification', xlabel='sgRNA')
 ax.set_yscale('log')
 plt.tight_layout()
-plt.savefig('normalised-pre-amplification-post-amplification.pdf')
+plt.savefig('../library-analysis/normalised-pre-amplification-post-amplification.pdf')
 plt.close()
 
 #Calculates Gini index of data sets
@@ -99,5 +102,5 @@ plt.text(0.075, 0.9, 'pre-amplification Gini index = '+str(pre_gini_index))
 plt.text(0.075, 0.85, 'post-amplification Gini index = '+str(post_gini_index))
 ax.legend(loc='lower right')
 plt.tight_layout()
-plt.savefig('lorenz-curve.pdf')
+plt.savefig('../library-analysis/lorenz-curve.pdf')
 plt.close()
