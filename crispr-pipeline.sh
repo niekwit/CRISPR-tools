@@ -30,11 +30,11 @@ do
   esac
 done
 
-if [ "$align_mm" > 2 ] && [ "$align_mm" -eq "$align_mm" ] 2>/dev/null
+if [[ $align_mm == 0 ]] || [[ $align_mm == 1 ]];
 then
     :
 else
-    echo "ERROR: -m parameter must be an integer, idealy 0 or 1"
+    echo "ERROR: -m parameter must be 0 or 1"
     usage
     exit 1
 fi
@@ -140,7 +140,9 @@ cp counts-aggregated.tsv ../mageck/
 test_line=$(head -1 counts-aggregated.tsv)
 if [[ "$test_line" == *"pre"* ]] && [[ "$test_line" == *"post"* ]]; 
 	then
-  		echo python3 /home/niek/Documents/scripts/CRISPR-tools/library-analysis.py
+  		mkdir ../library-analysis
+  		echo "Performing pre- and post-library amplification comparative analysis" 
+  		python3 -W ignore /home/niek/Documents/scripts/CRISPR-tools/library-analysis.py
 fi
 
 #Performs MAGeCK
@@ -153,6 +155,7 @@ mageck_test=$(awk -F"${sep}" '{print NF-1}' <<< "${test_line}")
 
 if [[ "$test_line" == *"pre"* ]] && [[ "$test_line" == *"post"* ]] && [[ $mageck_test == 3 ]]; 
 	then
+  		rm -r ../mageck
   		echo "No MAGeCK analysis performed"
 	else
 		cd ../mageck
