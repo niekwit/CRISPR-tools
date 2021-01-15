@@ -74,7 +74,7 @@ start_time=$(date +%s)
 
 mkdir -p {count,fastqc,mageck}
 
-#renames fastq.gz files
+#renames files
 if [ $rename_config != "NULL" ];
 	then
 		input=$rename_config
@@ -88,12 +88,23 @@ if [ $rename_config != "NULL" ];
 		:
 fi
 
+#checks if file extension is .fq or .fastq
+input_format=$(ls raw-data/*.gz | head -1)
+
+if [[ $input_format == *"fastq"* ]]
+	then
+  		input_extension=".fastq.gz"
+elif [[ $input_format == *"fq"* ]]
+	then
+  		input_extension=".fq.gz"		
+fi
+
 #determines CPU thread count
 max_threads=$(nproc --all)
 
 #Fastq quality control
 echo "Performing FastQC"
-fastqc --threads $max_threads -o fastqc/ raw-data/*fastq.gz
+fastqc --threads $max_threads -o fastqc/ raw-data/*$input_extension
 echo "Performing MultiQC"
 multiqc -o fastqc/ fastqc/ . 2> crispr.log
 
@@ -101,27 +112,33 @@ multiqc -o fastqc/ fastqc/ . 2> crispr.log
 echo "Aligning reads to reference ($align_mm mismatch(es) allowed)"
 if [ $read_mod == "trim" ];
 	then
-		for file in raw-data/*.fastq.gz
+		for file in raw-data/*$input_extension
 		do 
 			echo $file >> crispr.log
 			file_name=${file##*/} #substring removal of file location
-			file2=${file_name%.fastq.gz} #substring removal of .fastq.gz
+			file2=${file_name%$input_extension} #substring removal of file extension
 			extension=".guidecounts.txt"
 			output_file=$file2$extension
 			cutadapt -j $max_threads --quality-base 33 -l 20 -o - $file 2>> crispr.log | bowtie2 --no-hd -p $max_threads -t -N $align_mm -x $index_path - 2>> crispr.log | sed '/XS:/d' | cut -f3 | sort | uniq -c > count/$output_file
 		done
 elif [ $read_mod == "clip" ];
 	then
-		for file in raw-data/*.fastq.gz
+		for file in raw-data/$input_extension
 		do 
 			echo $file >> crispr.log
 			file_name=${file##*/} #substring removal of file location
-			file2=${file_name%.fastq.gz} #substring removal of .fastq.gz
+			file2=${file_name%$input_extension} #substring removal of file extension
 			extension=".guidecounts.txt"
 			output_file=$file2$extension
 			cutadapt -j $max_threads --quality-base 33 -a $clip_seq -o - $file 2>> crispr.log | bowtie2 --trim5 1 --no-hd -p $max_threads -t -N $align_mm -x $index_path - 2>> crispr.log | sed '/XS:/d' | cut -f3 | sort | uniq -c > count/$output_file
 		done
 fi
+
+#removes first line from guide count text files (bowtie2 artefact)
+for file in count/*.guidecounts.txt
+do
+	sed '1d' $file > "$file.temp" && mv "$file.temp" $file
+done
 
 cp /home/niek/Documents/scripts/CRISPR-tools/mageck-join.py count/
 
