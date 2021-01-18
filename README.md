@@ -48,7 +48,7 @@ elif [ $library = "moffat_tko1" ];
 
 
 
-For each library, a Bowtie2 index has to be generated beforehand using `bowtie2 build` with the library fasta file as input. Additionally, a sorted csv file is required that contains each guide name (e.g. A1BG_sgA1BG_1) on a new line.
+For each library, a Bowtie2 index has to be generated beforehand using `bowtie2 build` with the library fasta file as input. Additionally, a sorted csv file is required that contains each guide name (e.g. A1BG_sgA1BG_1) on a new line. This file can be generated with the `guide-names.sh` script using the relevant fasta file. Fasta files for a variety of CRISPR libraries can be found in the `Addgene_CRISPR_libraries_FASTA` folder.
 `index_path` is the file path to the Bowtie2 index. `guides` is the path to the sorted csv file. `read_mod` ("clip" or "trim") sets the method or removing the vector sequence. Use "clip" for libraries with variable guide length (vector sequence to be removed is `clip_seq`) and use "trim" for fixed guide lengths (set guide length with `sg_length`).
 
 Files can be optionally be renamed using the `-n` flag and a config file (`rename.config`), as file names are used to generate sample names for MAGeCK. `-m INT` sets the number of mismatches that are allowed during the alignement step (if not called, zero mismatches are set).
