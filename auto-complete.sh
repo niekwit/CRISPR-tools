@@ -9,8 +9,8 @@ function libs()
   # $3 is the word preceding the word being completed
 
 case $3 in
-    -l) COMPREPLY=($(compgen -W "bassik moffat_tko1 sabatini dub-only" "${COMP_WORDS[$COMP_CWORD]}"));;
+    -l) COMPREPLY=($(compgen -W "bassik moffat_tko1 moffat_tko3 sabatini dub-only" "${COMP_WORDS[$COMP_CWORD]}"));;
   esac
 }
 
-complete -F libs crispr-pipeline.sh
+complete -F libs crispr-pipeline #refers to symbolic link in /usr/bin
