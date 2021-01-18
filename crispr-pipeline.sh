@@ -46,7 +46,6 @@ if [ $library = "bassik" ];
 		read_mod="clip"
 		clip_seq="GTTTAAGAGCTAAGCTGGAAACAGCATAGCAA"
 		echo "Bassik library selected"
-		
 elif [ $library = "moffat_tko1" ];
 	then
 		index_path="/home/niek/Documents/references/bowtie2-index/moffat_tko1/moffat_tko1"
@@ -54,6 +53,13 @@ elif [ $library = "moffat_tko1" ];
 		read_mod="trim"
 		sg_length=20	
 		echo "Moffat TKO1 library selected"
+elif [ $library = "moffat_tko3" ];
+	then
+		index_path="/home/niek/Documents/references/bowtie2-index/moffat_tko3/moffat_tko3"
+		guides="/home/niek/Documents/references/bowtie2-index/moffat_tko3/Moffat_TKO3-guide-names.csv"
+		read_mod="trim"
+		sg_length=20	
+		echo "Moffat TKO3 library selected"
 elif [ $library = "sabatini" ];
 	then
 		index_path="/home/niek/Documents/references/bowtie2-index/sabatini/sabatini"
