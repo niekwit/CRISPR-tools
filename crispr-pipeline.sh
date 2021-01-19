@@ -9,7 +9,7 @@ align_mm=0
 
 usage() {                                    
   echo "Usage: $0 [ -l <CRISPR library> ] [ -r <rename.config> OPTIONAL] [-m <INT> number of mismatches allowed for alignment (standard is zero) OPTIONAL]"
-  echo -e "CRISPR library options:\nbassik (Morgens et al 2017 Nat. Comm.)\nmoffat_tko1 (Hart et al 2015 Cell)\nsabatini (Park et al 2016 Nat. Gen.)\ndub-only (Nathan lab, unpublished)"
+  echo -e "CRISPR library options:\nbassik (Morgens et al 2017 Nat. Comm.)\nmoffat_tko1 (Hart et al 2015 Cell)\nmoffat_tko3 (Hart et al 2017 G3/Mair et al 2019 Cell Rep)\nsabatini (Park et al 2016 Nat. Gen.)\ndub-only (Nathan lab, unpublished)"
   exit 2
 }
 
@@ -168,9 +168,9 @@ if [[ "$test_line" == *"pre"* ]] && [[ "$test_line" == *"post"* ]];
   		python3 -W ignore /home/niek/Documents/scripts/CRISPR-tools/library-analysis.py
 fi
 
-#Performs MAGeCK
-##-c reference sample, -t test sample: neg rank(genes that drop out in test sample)/pos rank(genes that are overrepresented in test sample)
-##If pipeline has been called with only pre and post CRISPR library amplification samples, then MAGeCK will not be executed 
+###Performs MAGeCK
+#-c reference sample, -t test sample: neg rank(genes that drop out in test sample)/pos rank(genes that are overrepresented in test sample)
+#If pipeline has been called with only pre and post CRISPR library amplification samples, then MAGeCK will not be executed 
 
 #determines number of tabs in counts-aggregated.tsv (3 means only two samples in sheet)
 sep="\t"
@@ -183,6 +183,7 @@ if [[ "$test_line" == *"pre"* ]] && [[ "$test_line" == *"post"* ]] && [[ $mageck
 	else
 		cd ../mageck
 		sed '1d' ../mageck.config > mageck.config #removes header from config file
+		echo "Performing MAGeCK"
 		input="mageck.config"
 		while IFS= read -r line
 		do
