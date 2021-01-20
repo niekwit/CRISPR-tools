@@ -7,6 +7,8 @@ rename_config="NULL"
 remove_fq=""
 align_mm=0
 
+SCRIPT_DIR="/home/niek/Documents/scripts/CRISPR-tools/"
+
 usage() {                                    
   echo "Usage: $0 [ -l <CRISPR library> ] [ -r <rename.config> OPTIONAL] [-m <INT> number of mismatches allowed for alignment (standard is zero) OPTIONAL]"
   echo -e "CRISPR library options:\nbassik (Morgens et al 2017 Nat. Comm.)\nmoffat_tko1 (Hart et al 2015 Cell)\nmoffat_tko3 (Hart et al 2017 G3/Mair et al 2019 Cell Rep)\nsabatini (Park et al 2016 Nat. Gen.)\ndub-only (Nathan lab, unpublished)"
@@ -45,27 +47,31 @@ if [ $library = "bassik" ];
 		guides="/home/niek/Documents/references/bowtie-index/CRISPR/Bassik/bowtie-lib/bassik-guides-sorted.csv"
 		read_mod="clip"
 		clip_seq="GTTTAAGAGCTAAGCTGGAAACAGCATAGCAA"
+		species="human"
 		echo "Bassik library selected"
 elif [ $library = "moffat_tko1" ];
 	then
 		index_path="/home/niek/Documents/references/bowtie2-index/moffat_tko1/moffat_tko1"
 		guides="/home/niek/Documents/references/bowtie-index/CRISPR/Moffat_TKO1/moffat-guideslist-sorted.csv"
 		read_mod="trim"
-		sg_length=20	
+		sg_length=20
+		species="human"
 		echo "Moffat TKO1 library selected"
 elif [ $library = "moffat_tko3" ];
 	then
 		index_path="/home/niek/Documents/references/bowtie2-index/moffat_tko3/moffat_tko3"
 		guides="/home/niek/Documents/references/bowtie2-index/moffat_tko3/Moffat_TKO3-guide-names.csv"
 		read_mod="trim"
-		sg_length=20	
+		sg_length=20
+		species="human"	
 		echo "Moffat TKO3 library selected"
 elif [ $library = "sabatini" ];
 	then
 		index_path="/home/niek/Documents/references/bowtie2-index/sabatini/sabatini"
 		guides="/home/niek/Documents/references/bowtie-index/CRISPR/Sabatini/sabatini-guides-names.csv"
 		read_mod="trim"
-		sg_length=20	
+		sg_length=20
+		species="human"	
 		echo "Sabatini library selected"
 elif [ $library = "dub-only" ];
 	then
@@ -73,6 +79,7 @@ elif [ $library = "dub-only" ];
 		guides="/home/niek/Documents/references/bowtie-index/CRISPR/DUB-only-lib/DUBlibrarysgRNAname.csv"
 		read_mod="trim"
 		sg_length=20
+		species="human"
 		echo "DUB only library selected"
 fi
 
@@ -194,6 +201,15 @@ if [[ "$test_line" == *"pre"* ]] && [[ "$test_line" == *"post"* ]] && [[ $mageck
   			mageck test -k counts-aggregated.tsv -t $test_sample -c $control_sample --sort-criteria neg -n $mageck_output/$mageck_output 2>> ../crispr.log
 		done < "$input"	
 fi
+
+#plots results and marks top 10 hits, and performs GO analysis of signficant genes (standard FDR cut off is set at 0.25)
+fdr=0.25
+file_list=$(find . -name "*gene_summary.txt") #lists all paths to MAGeCK output files
+
+for file in $file_list
+		do 
+			Rscript /home/niek/Documents/scripts/CRISPR-tools/plot-hits.R $fdr $file $species
+		done
 
 end_time=$(date +%s)
 runtime=$((end_time-start_time))
