@@ -153,7 +153,7 @@ do
 	sed '1d' $file > "$file.temp" && mv "$file.temp" $file
 done
 
-cp /home/niek/Documents/scripts/CRISPR-tools/mageck-join.py count/
+cp "${SCRIPT_DIR}mageck-join.py" count/
 
 #Creates MAGeCK input file
 cd count/
@@ -161,7 +161,7 @@ python3 mageck-join.py $guides
 
 #Normalises MAGeCK input file to total read count
 working_dir=$(pwd)
-Rscript /home/niek/Documents/scripts/CRISPR-tools/normalise.R $working_dir
+Rscript "${SCRIPT_DIR}normalise.R" $working_dir
 
 cp counts-aggregated.tsv ../mageck/
 
@@ -172,7 +172,7 @@ if [[ "$test_line" == *"pre"* ]] && [[ "$test_line" == *"post"* ]];
 	then
   		mkdir ../library-analysis
   		echo "Performing pre- and post-library amplification comparative analysis" 
-  		python3 -W ignore /home/niek/Documents/scripts/CRISPR-tools/library-analysis.py
+  		python3 -W ignore "${SCRIPT_DIR}library-analysis.py"
 fi
 
 ###Performs MAGeCK
@@ -208,7 +208,7 @@ file_list=$(find . -name "*gene_summary.txt") #lists all paths to MAGeCK output 
 
 for file in $file_list
 		do 
-			Rscript /home/niek/Documents/scripts/CRISPR-tools/plot-hits.R $fdr $file $species
+			Rscript "${SCRIPT_DIR}plot-hits.R" $fdr $file $species
 		done
 
 end_time=$(date +%s)
