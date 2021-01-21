@@ -208,7 +208,9 @@ file_list=$(find . -name "*gene_summary.txt") #lists all paths to MAGeCK output 
 
 for file in $file_list
 		do 
-			Rscript "${SCRIPT_DIR}plot-hits.R" $fdr $file $species
+			save_path=$(echo $file | sed 's|\(.*\)/.*|\1|') #removes file name from $file 
+			save_path="${save_path}/"
+			Rscript "${SCRIPT_DIR}plot-hits.R" $fdr $file $species $save_path 
 		done
 
 end_time=$(date +%s)

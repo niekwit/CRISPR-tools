@@ -20,13 +20,14 @@ if (species == "human") {
 
 df$neg.log.score <- -log10(df$neg.score) #for plotting
 
-#calculates p value for fdr cut off line in plot
+#calculates score value for fdr cut off line in plot
 df$fdr.cutoff <- fdr
 df$fdr.diff <- as.numeric(df$fdr.cutoff) - as.numeric(df$neg.fdr)
 df$fdr.diff.abs <- abs(df$fdr.diff)
 fdr.min <- min(df$fdr.diff.abs)
 df.temp <- df[df$fdr.diff.abs == fdr.min,]
-fdr.cut.off <- unique(df.temp$neg.log.score)
+fdr.cut.off.df <- df.temp[df.temp$neg.log.score == max(df.temp$neg.log.score), ]
+fdr.cut.off <- fdr.cut.off.df$neg.log.score
 
 #determines top 10 hits for ggrepel labels
 df.label <- df[df$neg.rank %in% 1:10, ]
