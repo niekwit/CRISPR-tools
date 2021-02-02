@@ -19,7 +19,7 @@ This bioinformatic pipeline will automate analysis of NGS data from CRISPR-Cas9 
 
 ### Instructions:
 
-Installation (command line): `https://github.com/niekwit/CRISPR-tools.git`
+Installation (command line): `git clone https://github.com/niekwit/CRISPR-tools.git`
 
 Create a main folder (can be any name) for the analysis that contains the subfolder `raw-data`, which contains the fastq.gz files.
 
