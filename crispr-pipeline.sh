@@ -135,10 +135,10 @@ if [ $read_mod == "trim" ];
 			file2=${file_name%$input_extension} #substring removal of file extension
 			extension=".guidecounts.txt"
 			output_file=$file2$extension
-			echo -ne "\rAligning$count/$totalfiles"
+			echo -ne "\rAligning file $count/$totalfiles"
 			cutadapt -j $max_threads --quality-base 33 -l 20 -o - $file 2>> crispr.log | bowtie2 --no-hd -p $max_threads -t -N $align_mm -x $index_path - 2>> crispr.log | sed '/XS:/d' | cut -f3 | sort | uniq -c > count/$output_file
 		done
-		echo -e \
+		echo -e "\n"
 elif [ $read_mod == "clip" ];
 	then
 		count=0
@@ -151,10 +151,10 @@ elif [ $read_mod == "clip" ];
 			file2=${file_name%$input_extension} #substring removal of file extension
 			extension=".guidecounts.txt"
 			output_file=$file2$extension
-			echo -ne "\rAligning$count/$totalfiles"
+			echo -ne "\rAligning file $count/$totalfiles"
 			cutadapt -j $max_threads --quality-base 33 -a $clip_seq -o - $file 2>> crispr.log | bowtie2 --trim5 1 --no-hd -p $max_threads -t -N $align_mm -x $index_path - 2>> crispr.log | sed '/XS:/d' | cut -f3 | sort | uniq -c > count/$output_file
 		done
-		echo -e \
+		echo -e "\n"
 fi
 
 #removes first line from guide count text files (bowtie2 artefact)

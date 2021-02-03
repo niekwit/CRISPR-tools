@@ -32,6 +32,12 @@ fdr.cut.off <- fdr.cut.off.df$neg.log.score
 #determines top 10 hits for ggrepel labels
 df.label <- df[df$neg.rank %in% 1:10, ]
 
+#parameters for plotting
+plot.titles <- c("Dropout gene ranking","Enrichment gene ranking")
+plot.df.neg <- df
+plot.df.pos <- df[order(df$pos.rank), ]
+plot.dfs <- as.list( c(plot.df.neg, plot.df.pos))
+
 p <- ggplot(df, aes(x=`neg.rank`, y=`neg.log.score`)) +
         theme_bw() +
 	theme(axis.text=element_text(size=16),
