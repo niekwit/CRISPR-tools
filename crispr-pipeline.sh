@@ -122,52 +122,60 @@ fi
 max_threads=$(nproc --all)
 
 #Fastq quality control
-echo "Performing FastQC"
-fastqc --threads $max_threads -o fastqc/ raw-data/*$input_extension
-echo "Performing MultiQC"
-multiqc -o fastqc/ fastqc/ . 2> crispr.log
-
-#Trims, aligns and counts reads
-echo "Aligning reads to reference ($align_mm mismatch(es) allowed)"
-if [ $read_mod == "trim" ];
+fastqc_folder="fastqc/"
+if [[ ! -d  "$fastqc_folder" ]]; 
 	then
-		count=0
-		totalfiles=$(ls raw-data/*$input_extension | wc -l)
-		for file in raw-data/*$input_extension
-		do 
-			count=$(($count + 1))
-			echo $file >> crispr.log
-			file_name=${file##*/} #substring removal of file location
-			file2=${file_name%$input_extension} #substring removal of file extension
-			extension=".guidecounts.txt"
-			output_file=$file2$extension
-			echo -ne "\rAligning file $count/$totalfiles"
-			cutadapt -j $max_threads --quality-base 33 -l 20 -o - $file 2>> crispr.log | bowtie2 --no-hd -p $max_threads -t -N $align_mm -x $index_path - 2>> crispr.log | sed '/XS:/d' | cut -f3 | sort | uniq -c > count/$output_file
-		done
-		echo -e "\n"
-elif [ $read_mod == "clip" ];
-	then
-		count=0
-		totalfiles=$(ls raw-data/*$input_extension | wc -l)		
-		for file in raw-data/*$input_extension
-		do 
-			count=$(($count + 1))			
-			echo $file >> crispr.log
-			file_name=${file##*/} #substring removal of file location
-			file2=${file_name%$input_extension} #substring removal of file extension
-			extension=".guidecounts.txt"
-			output_file=$file2$extension
-			echo -ne "\rAligning file $count/$totalfiles"
-			cutadapt -j $max_threads --quality-base 33 -a $clip_seq -o - $file 2>> crispr.log | bowtie2 --trim5 1 --no-hd -p $max_threads -t -N $align_mm -x $index_path - 2>> crispr.log | sed '/XS:/d' | cut -f3 | sort | uniq -c > count/$output_file
-		done
-		echo -e "\n"
+		echo "Performing FastQC"
+		fastqc --threads $max_threads -o fastqc/ raw-data/*$input_extension
+		echo "Performing MultiQC"
+		multiqc -o fastqc/ fastqc/ . 2> crispr.log
 fi
 
-#removes first line from guide count text files (bowtie2 artefact)
-for file in count/*.guidecounts.txt
-do
-	sed '1d' $file > "$file.temp" && mv "$file.temp" $file
-done
+#Trims, aligns and counts reads
+count_folder="count/"
+if [[ ! -d  "$count_folder" ]]; 
+	then
+		echo "Aligning reads to reference ($align_mm mismatch(es) allowed)"
+		if [ $read_mod == "trim" ];
+			then
+				count=0
+				totalfiles=$(ls raw-data/*$input_extension | wc -l)
+				for file in raw-data/*$input_extension
+				do 
+					count=$(($count + 1))
+					echo $file >> crispr.log
+					file_name=${file##*/} #substring removal of file location
+					file2=${file_name%$input_extension} #substring removal of file extension
+					extension=".guidecounts.txt"
+					output_file=$file2$extension
+					echo -ne "\rAligning file $count/$totalfiles"
+					cutadapt -j $max_threads --quality-base 33 -l 20 -o - $file 2>> crispr.log | bowtie2 --no-hd -p $max_threads -t -N $align_mm -x $index_path - 2>> crispr.log | sed '/XS:/d' | cut -f3 | sort | uniq -c > count/$output_file
+				done
+				echo -e "\n"
+		elif [ $read_mod == "clip" ];
+			then
+				count=0
+				totalfiles=$(ls raw-data/*$input_extension | wc -l)		
+				for file in raw-data/*$input_extension
+				do 
+					count=$(($count + 1))			
+					echo $file >> crispr.log
+					file_name=${file##*/} #substring removal of file location
+					file2=${file_name%$input_extension} #substring removal of file extension
+					extension=".guidecounts.txt"
+					output_file=$file2$extension
+					echo -ne "\rAligning file $count/$totalfiles"
+					cutadapt -j $max_threads --quality-base 33 -a $clip_seq -o - $file 2>> crispr.log | bowtie2 --trim5 1 --no-hd -p $max_threads -t -N $align_mm -x $index_path - 2>> crispr.log | sed '/XS:/d' | cut -f3 | sort | uniq -c > count/$output_file
+				done
+				echo -e "\n"
+		fi
+
+		#removes first line from guide count text files (bowtie2 artefact)
+		for file in count/*.guidecounts.txt
+		do
+			sed '1d' $file > "$file.temp" && mv "$file.temp" $file
+		done
+fi
 
 cp "${SCRIPT_DIR}/mageck-join.py" count/
 
@@ -188,7 +196,8 @@ if [[ "$test_line" == *"pre"* ]] && [[ "$test_line" == *"post"* ]];
 	then
   		mkdir ../library-analysis
   		echo "Performing pre- and post-library amplification comparative analysis" 
-  		python3 -W ignore "${SCRIPT_DIR}library-analysis.py"
+  		python3 -W ignore "${SCRIPT_DIR}/library-analysis.py"
+  		Rscript "${SCRIPT_DIR}/gc-bias.R" "$working_dir"
 fi
 
 ###Performs MAGeCK
@@ -199,7 +208,7 @@ fi
 sep="\t"
 mageck_test=$(awk -F"${sep}" '{print NF-1}' <<< "${test_line}")
 
-if [[ "$test_line" == *"pre"* ]] && [[ "$test_line" == *"post"* ]] && [[ $mageck_test == 3 ]] ; 
+if [[ "$test_line" == *"pre"* ]] && [[ "$test_line" == *"post"* ]] && [[ $mageck_test == 3 ]]; 
 	then
   		rm -r ../mageck
   		echo "No MAGeCK analysis performed"
@@ -226,15 +235,13 @@ fi
 fdr=0.25
 file_list=$(find . -name "*gene_summary.txt") #lists all paths to MAGeCK output files
 
-if [[ -z "$file_list" ]];
+if [[ -n "$file_list" ]];
 	then
-		:
-else
-	for file in $file_list
+		for file in $file_list
 		do 
 			save_path=$(echo $file | sed 's|\(.*\)/.*|\1|') #removes file name from $file 
 			save_path="${save_path}/"
-			Rscript "${SCRIPT_DIR}plot-hits.R" $fdr $file $species $save_path 
+			Rscript "${SCRIPT_DIR}/plot-hits.R" $fdr $file $species $save_path 
 		done
 fi
 
