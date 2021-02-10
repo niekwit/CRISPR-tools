@@ -9,5 +9,5 @@ if (($# != 1));
 fi
 
 file_out=$1
-file_out="${file_out%.fasta}.csv"
+file_out="${file_out%.fasta}guide-names.csv"
 cat $1 | grep ">" | tr -d ">" > $file_out
