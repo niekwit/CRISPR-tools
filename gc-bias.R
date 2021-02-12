@@ -3,9 +3,9 @@ library(tidyverse)
 
 args <- commandArgs(trailingOnly=TRUE)
 #setwd(args[1])
-setwd("/home/niek/Documents/analyses/CRISPR-screens/guine/count")
+setwd("/mnt/sdb1/analyses/CRISPR-screens/guine/count")
 
-df <- read.csv(file="../count/counts-aggregated.tsv", 
+df <- read.csv(file="counts-aggregated.tsv", 
                sep="\t")
 
 df <- subset(x=df,
@@ -33,7 +33,7 @@ df.merge <- merge(x=df,
 #determine GC bias of guides with the lowest count
 df.merge <- df.merge[order(df.merge$pre), ]
 length <- nrow(df.merge)
-fraction <- round(0.05 * length,0)
+fraction <- round(0.2 * length,0)
 df.low <- df.merge[1:fraction,] #selects guides with lowest counts (bottom 5%)
 
 
@@ -42,8 +42,8 @@ df.low$gc.content <- NA
 for (i in 1:fraction) {
   seq <- df.low$sequence[i]
   len.seq <- str_count(seq, pattern="")
-  G <- str_count(test, pattern="G")
-  C <- str_count(test, pattern="C")
+  G <- str_count(seq, pattern="G")
+  C <- str_count(seq, pattern="C")
   gc.content <- (G + C)/len.seq*100
   df.low$gc.content[i] <- gc.content
   }
@@ -54,8 +54,8 @@ df.merge$gc.content <- NA
 for (i in 1:nrow(df.merge)) {
   seq <- df.merge$sequence[i]
   len.seq <- str_count(seq, pattern="")
-  G <- str_count(test, pattern="G")
-  C <- str_count(test, pattern="C")
+  G <- str_count(seq, pattern="G")
+  C <- str_count(seq, pattern="C")
   gc.content <- (G + C)/len.seq*100
   df.merge$gc.content[i] <- gc.content
 }
@@ -63,7 +63,7 @@ library.gc.content <- mean(df.merge$gc.content)
 
 #plot histogram
 ggplot(df.low, aes(x=gc.content)) +
-  geom_histogram(binwidth=1) +
+  geom_histogram(binwidth=3) +
   geom_vline(aes(xintercept=library.gc.content),
              colour="navy",
              linetype="dashed",

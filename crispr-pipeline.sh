@@ -10,6 +10,8 @@ align_mm=0
 SCRIPT_DIR=$(find $HOME -type d -name "CRISPR-tools")
 source library.conf #loads library location variables
 
+max_threads=$(nproc --all) #determines CPU thread count
+
 usage() {                                    
   echo "Usage: $0 [ -l <CRISPR library> ] [ -r <rename.config> OPTIONAL] [-m <INT> number of mismatches allowed for alignment (standard is zero) OPTIONAL]"
   echo -e "CRISPR library options:\nbassik (Morgens et al 2017 Nat. Comm.)\nmoffat_tko1 (Hart et al 2015 Cell)\nmoffat_tko3 (Hart et al 2017 G3/Mair et al 2019 Cell Rep)\nsabatini (Park et al 2016 Nat. Gen.)\ndub-only (Nathan lab, unpublished)\nslc-mito-2ogdd (Nathan lab, unpublished)"
@@ -89,12 +91,13 @@ elif [[ $library = "slc-mito-2ogdd" ]];
 		read_mod="$read_mod6"
 		clip_seq="$clip_seq6"
 		species="$species6"
+		sg_length="$sg_length6"
 		echo "SLC, 2-OG DD, mitoP sub library selected (mouse)"
 fi
 
 start_time=$(date +%s)
 
-mkdir -p {count,fastqc,mageck}
+mkdir -p {fastqc,mageck}
 
 #renames files
 if [ $rename_config != "NULL" ];
@@ -118,9 +121,6 @@ elif [[ $input_format == *"fq"* ]]
   		input_extension=".fq.gz"		
 fi
 
-#determines CPU thread count
-max_threads=$(nproc --all)
-
 #Fastq quality control
 fastqc_folder="fastqc/"
 if [[ ! -d  "$fastqc_folder" ]]; 
@@ -132,10 +132,12 @@ if [[ ! -d  "$fastqc_folder" ]];
 fi
 
 #Trims, aligns and counts reads
+
 count_folder="count/"
 if [[ ! -d  "$count_folder" ]]; 
 	then
 		echo "Aligning reads to reference ($align_mm mismatch(es) allowed)"
+		mkdir count
 		if [ $read_mod == "trim" ];
 			then
 				count=0
@@ -149,9 +151,10 @@ if [[ ! -d  "$count_folder" ]];
 					extension=".guidecounts.txt"
 					output_file=$file2$extension
 					echo -ne "\rAligning file $count/$totalfiles"
-					cutadapt -j $max_threads --quality-base 33 -l 20 -o - $file 2>> crispr.log | bowtie2 --no-hd -p $max_threads -t -N $align_mm -x $index_path - 2>> crispr.log | sed '/XS:/d' | cut -f3 | sort | uniq -c > count/$output_file
+					cutadapt -j $max_threads --quality-base 33 -l "$sg_length" -o - $file 2>> crispr.log | bowtie2 --no-hd -p $max_threads -t -N $align_mm -x $index_path - 2>> crispr.log | sed '/XS:/d' | cut -f3 | sort | uniq -c > count/$output_file
 				done
 				echo -e "\n"
+				
 		elif [ $read_mod == "clip" ];
 			then
 				count=0
@@ -175,19 +178,16 @@ if [[ ! -d  "$count_folder" ]];
 		do
 			sed '1d' $file > "$file.temp" && mv "$file.temp" $file
 		done
+		
+		cp "${SCRIPT_DIR}/mageck-join.py" count/
+		#Creates MAGeCK input file
+		cd count/
+		python3 mageck-join.py $guides
+		#Normalises MAGeCK input file to total read count
+		working_dir=$(pwd)
+		Rscript "${SCRIPT_DIR}/normalise.R" $working_dir
+		cp counts-aggregated.tsv ../mageck/
 fi
-
-cp "${SCRIPT_DIR}/mageck-join.py" count/
-
-#Creates MAGeCK input file
-cd count/
-python3 mageck-join.py $guides
-
-#Normalises MAGeCK input file to total read count
-working_dir=$(pwd)
-Rscript "${SCRIPT_DIR}/normalise.R" $working_dir
-
-cp counts-aggregated.tsv ../mageck/
 
 #Performs CRISPR maxiprep sequencing analysis (only when samples are present in counts-aggregated.tsv)
 ##Name pre-amplication sample `pre` and post-amplification sample `post`
@@ -197,7 +197,7 @@ if [[ "$test_line" == *"pre"* ]] && [[ "$test_line" == *"post"* ]];
   		mkdir ../library-analysis
   		echo "Performing pre- and post-library amplification comparative analysis" 
   		python3 -W ignore "${SCRIPT_DIR}/library-analysis.py"
-  		Rscript "${SCRIPT_DIR}/gc-bias.R" "$working_dir"
+  		#Rscript "${SCRIPT_DIR}/gc-bias.R" "$working_dir"
 fi
 
 ###Performs MAGeCK
