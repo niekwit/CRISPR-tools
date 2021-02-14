@@ -9,6 +9,7 @@ This bioinformatic pipeline will automate analysis of NGS data from CRISPR-Cas9 
 	- Numpy
 	- Matplotlib
 	- Seaborn
+	- shyaml
 - R
 - FASTQC
 - MultiQC
@@ -26,29 +27,25 @@ Create a main folder (can be any name) for the analysis that contains the subfol
 
 Navigate to the analysis folder in the command line and type: `path/to/crispr-pipeline.sh [ -l <CRISPR library> ] [ -n <rename.config> OPTIONAL] [-m <INT> number of mismatches allowed for alignment (standard is zero) OPTIONAL]`
 
-CRISPR libraries can be set in the script from line 42, for example:
+CRISPR libraries can be configured in the `config.yaml` file, as follows:
 ```
-if [ $library = "bassik" ];
-	then
-		index_path="/home/niek/Documents/references/bowtie-index/CRISPR/Bassik/bowtie-lib/bassik-bowtie"
-		guides="/home/niek/Documents/references/bowtie-index/CRISPR/Bassik/bowtie-lib/bassik-guides-sorted.csv"
-		read_mod="clip"
-		clip_seq="GTTTAAGAGCTAAGCTGGAAACAGCATAGCAA"
-		echo "Bassik library selected"
+bassik:
+  fasta: ""
+  index_path: "/home/niek/Documents/references/bowtie2-index/bassik/bassik"
+  guides: "/home/niek/Documents/references/bowtie-index/CRISPR/Bassik/bowtie-lib/bassik-guides-sorted.csv"
+  read_mod: "clip"
+  clip_seq: "GTTTAAGAGCTAAGCTGGAAACAGCATAGCAA"
+  sg_length: ""
+  species: "human"
+moffat_tko1:
+  fasta: ""
+  index_path: "/home/niek/Documents/references/bowtie2-index/moffat_tko1/moffat_tko1"
+  guides: "/home/niek/Documents/references/bowtie-index/CRISPR/Moffat_TKO1/moffat-guideslist-sorted.csv"
+  read_mod: "trim"
+  clip_seq: ""
+  sg_length: 20
+  species: "human"
 ```
-or
-```
-elif [ $library = "moffat_tko1" ];
-	then
-		index_path="/home/niek/Documents/references/bowtie-index/CRISPR/Moffat_TKO1/moffat_TKO1-index"
-		guides="/home/niek/Documents/references/bowtie-index/CRISPR/Moffat_TKO1/moffat-guideslist-sorted.csv"
-		read_mod="trim"
-		sg_length=20	
-		echo "Moffat TKO1 library selected"
-```
-
-
-
 For each library, a Bowtie2 index has to be generated beforehand using `bowtie2 build` with the library fasta file as input. Additionally, a sorted csv file is required that contains each guide name (e.g. A1BG_sgA1BG_1) on a new line. This file can be generated with the `guide-names.sh` script using the relevant fasta file: 
 > `./guide-names.sh <library.fasta>`
 
@@ -58,4 +55,4 @@ Fasta files for a variety of CRISPR libraries can be found in the `Addgene_CRISP
 Files can be optionally be renamed using the `-n` flag and a config file (`rename.config`), as file names are used to generate sample names for MAGeCK. `-m INT` sets the number of mismatches that are allowed during the alignement step (if not called, zero mismatches are set).
 The mageck.config file contains the comparisons that MAGeCK will perform: -c reference sample, -t test sample: neg rank(genes that drop out in test sample)/pos rank(genes that are overrepresented in test sample).
 
-If you have sequencing samples that represent pre and post CRISPR library amplifications, then these can be named `pre` and `post`, respectively. This will initiate a comparative analysis of these two samples to test for a skew in guide numbers (GINI). When only these two samples are present, no MAGeCK analysis will be performed.
+If you have sequencing samples that represent pre and post CRISPR library amplifications, then these can be named `pre` and `post`, respectively. This will initiate a comparative analysis of these two samples to test for a skew in guide numbers (GINI) and calculates the G/C bias in missing/overreppresented sgRNAs. When only these two samples are present, no MAGeCK analysis will be performed.
