@@ -9,7 +9,7 @@ if [ -z ${pip3_path} ];
 		exit 1
 fi
 
-python_deps="pandas numpy matplotlib seaborn"
+python_deps="pandas numpy matplotlib seaborn shyaml"
 
 for dep in $python_deps
 	do

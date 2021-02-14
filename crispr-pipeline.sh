@@ -4,7 +4,6 @@
 
 library=""
 rename_config="NULL"
-remove_fq=""
 align_mm=0
 SCRIPT_DIR=$(find $HOME -type d -name "CRISPR-tools")
 max_threads=$(nproc --all) #determines CPU thread count
@@ -41,10 +40,10 @@ else
     exit 1
 fi
 
+#loads library info from yaml file
 echo "$library library selected"
 fasta=$(cat config.yml | shyaml get-value $library.fasta)
 index_path=$(cat config.yml | shyaml get-value $library.index_path)
-guides=$(cat config.yml | shyaml get-value $library.guides)
 read_mod=$(cat config.yml | shyaml get-value $library.read_mod)
 sg_length=$(cat config.yml | shyaml get-value $library.sg_length)
 clip_seq=$(cat config.yml | shyaml get-value $library.clip_seq)
@@ -87,7 +86,6 @@ if [[ ! -d  "$fastqc_folder" ]];
 fi
 
 #Trims, aligns and counts reads
-
 count_folder="count/"
 if [[ ! -d  "$count_folder" ]]; 
 	then
@@ -134,6 +132,13 @@ if [[ ! -d  "$count_folder" ]];
 			sed '1d' $file > "$file.temp" && mv "$file.temp" $file
 		done
 		
+		#generates csv file with only sorted guide names		
+		guides="${fasta%.fasta}-guide-names.csv"
+		if [[ ! -e "$guides" ]];
+		then
+			cat "$fasta" | grep ">" | tr -d ">" | sort > "$guides"
+		fi
+
 		cp "${SCRIPT_DIR}/mageck-join.py" count/
 		#Creates MAGeCK input file
 		cd count/
@@ -187,7 +192,7 @@ else
 fi
 
 #plots results and marks top 10 hits, and performs GO analysis of signficant genes (standard FDR cut off is set at 0.25)
-fdr=0.25
+fdr=$(cat config.yml | shyaml get-value fdr.fdr)
 file_list=$(find . -name "*gene_summary.txt") #lists all paths to MAGeCK output files
 
 if [[ -n "$file_list" ]];
