@@ -18,10 +18,18 @@ This bioinformatic pipeline will automate analysis of NGS data from CRISPR-Cas9 
 - pigz (if not installed gunzip will be used, but will be slower)
 - MAGeCK
 
-### Instructions:
+### Installation:
 
 Installation from the command line:
 > `git clone https://github.com/niekwit/CRISPR-tools.git`
+
+Dependencies can be installed by running:
+> `./setup.sh`
+
+For convenience the `crispr-pipeline.sh` can be permamently added to $PATH by adding the following line to `~/.bashrc`:
+> `export PATH=/home/path/to/CRISPR-tools:$PATH`
+
+### Usage:
 
 Create a main folder (can be any name) for the analysis that contains the subfolder `raw-data`, which contains the fastq.gz files.
 
