@@ -6,10 +6,7 @@ library=""
 rename_config="NULL"
 remove_fq=""
 align_mm=0
-
 SCRIPT_DIR=$(find $HOME -type d -name "CRISPR-tools")
-source library.conf #loads library location variables
-
 max_threads=$(nproc --all) #determines CPU thread count
 
 usage() {                                    
@@ -44,56 +41,14 @@ else
     exit 1
 fi
 
-if [[ $library = "bassik" ]];
-	then
-		index_path="$index_path1"
-		guides="$guides1"
-		read_mod="$read_mod1"
-		clip_seq="$clip_seq1"
-		species="$species1"
-		echo "Bassik library selected"
-elif [[ $library = "moffat_tko1" ]];
-	then
-		index_path="$index_path2"
-		guides="$guides2"
-		read_mod="$read_mod2"
-		sg_length="$sg_length2"
-		species="$species2"
-		echo "Moffat TKO1 library selected"
-elif [[ $library = "moffat_tko3" ]];
-	then
-		index_path="$index_path3"
-		guides="$guides3"
-		read_mod="$read_mod3"
-		sg_length="$sg_length3"
-		species="$species3"	
-		echo "Moffat TKO3 library selected"
-elif [[ $library = "sabatini" ]];
-	then
-		index_path="$index_path4"
-		guides="$guides4"
-		read_mod="$read_mod4"
-		sg_length="$sg_length4"
-		species="$species4"	
-		echo "Sabatini library selected"
-elif [[ $library = "dub-only" ]];
-	then
-		index_path="$index_path5"
-		guides="$guides5"
-		read_mod="$read_mod5"
-		sg_length="$sg_length5"
-		species="$species5"
-		echo "DUB only library selected"
-elif [[ $library = "slc-mito-2ogdd" ]];
-	then
-		index_path="$index_path6"
-		guides="$guides6"
-		read_mod="$read_mod6"
-		clip_seq="$clip_seq6"
-		species="$species6"
-		sg_length="$sg_length6"
-		echo "SLC, 2-OG DD, mitoP sub library selected (mouse)"
-fi
+echo "$library library selected"
+fasta=$(cat config.yml | shyaml get-value $library.fasta)
+index_path=$(cat config.yml | shyaml get-value $library.index_path)
+guides=$(cat config.yml | shyaml get-value $library.guides)
+read_mod=$(cat config.yml | shyaml get-value $library.read_mod)
+sg_length=$(cat config.yml | shyaml get-value $library.sg_length)
+clip_seq=$(cat config.yml | shyaml get-value $library.clip_seq)
+species=$(cat config.yml | shyaml get-value $library.species)
 
 start_time=$(date +%s)
 
