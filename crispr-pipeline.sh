@@ -3,20 +3,24 @@
 ### Author: Niek Wit (University of Cambridge) 2020 ###
 
 library=""
-rename_config="NULL"
+rename_config=""
 align_mm=0
 SCRIPT_DIR=$(find $HOME -type d -name "CRISPR-tools")
-max_threads=$(nproc --all) #determines CPU thread count
+max_threads=""
+working_dir=$(pwd)
 
 usage() {                                    
-  echo "Usage: $0 [ -l <CRISPR library> ] [ -r <rename.config> OPTIONAL] [-m <INT> number of mismatches allowed for alignment (standard is zero) OPTIONAL]"
-  echo -e "CRISPR library options:\nbassik (Morgens et al 2017 Nat. Comm.)\nmoffat_tko1 (Hart et al 2015 Cell)\nmoffat_tko3 (Hart et al 2017 G3/Mair et al 2019 Cell Rep)\nsabatini (Park et al 2016 Nat. Gen.)\ndub-only (Nathan lab, unpublished)\nslc-mito-2ogdd (Nathan lab, unpublished)"
-  exit 2
+	echo "Usage: $0 [-l <CRISPR library>] [-r <rename.config> OPTIONAL] [-m <INT> mismatches allowed for alignment (standard is zero) OPTIONAL] [-t <INT> number of CPU threads to be used]"
+	echo -e "CRISPR library options:\nbassik (Morgens et al 2017 Nat. Comm.)\nmoffat_tko1 (Hart et al 2015 Cell)\nmoffat_tko3 (Hart et al 2017 G3/Mair et al 2019 Cell Rep)\nsabatini (Park et al 2016 Nat. Gen.)\ndub-only (Nathan lab, unpublished)\nslc-mito-2ogdd (Nathan lab, unpublished)"
+	exit 2
 }
 
-while getopts 'l:r:m:?h' c
+while getopts 't:l:r:m:?h' c
 do
   case $c in
+    t) 
+    	max_threads=$OPTARG 
+    	;;
     l) 
     	library=$OPTARG 
     	;;
@@ -32,29 +36,32 @@ do
 done
 
 if [[ $align_mm == 0 ]] || [[ $align_mm == 1 ]];
-then
-    :
-else
-    echo "ERROR: -m parameter must be 0 or 1"
-    usage
-    exit 1
+	then
+		:
+	else
+		echo "ERROR: -m parameter must be 0 or 1"
+		usage
+		exit 1
+fi
+
+if [[ -z "$max_threads" ]];
+	then
+		max_threads=$(nproc --all)
 fi
 
 #loads library info from yaml file
 echo "$library library selected"
-fasta=$(cat config.yml | shyaml get-value $library.fasta)
-index_path=$(cat config.yml | shyaml get-value $library.index_path)
-read_mod=$(cat config.yml | shyaml get-value $library.read_mod)
-sg_length=$(cat config.yml | shyaml get-value $library.sg_length)
-clip_seq=$(cat config.yml | shyaml get-value $library.clip_seq)
-species=$(cat config.yml | shyaml get-value $library.species)
+fasta=$(cat "$SCRIPT_DIR/config.yml" | shyaml get-value $library.fasta)
+index_path=$(cat "$SCRIPT_DIR/config.yml" | shyaml get-value $library.index_path)
+read_mod=$(cat "$SCRIPT_DIR/config.yml" | shyaml get-value $library.read_mod)
+sg_length=$(cat "$SCRIPT_DIR/config.yml" | shyaml get-value $library.sg_length)
+clip_seq=$(cat "$SCRIPT_DIR/config.yml" | shyaml get-value $library.clip_seq)
+species=$(cat "$SCRIPT_DIR/config.yml" | shyaml get-value $library.species)
 
 start_time=$(date +%s)
 
-mkdir -p {fastqc,mageck}
-
-#renames files
-if [ $rename_config != "NULL" ];
+#renames files if -r flag and rename template have been given
+if [ ! -z $rename_config ];
 	then
 		input=$rename_config
 		while IFS= read -r line
@@ -80,6 +87,7 @@ fastqc_folder="fastqc/"
 if [[ ! -d  "$fastqc_folder" ]]; 
 	then
 		echo "Performing FastQC"
+		mkdir fastqc
 		fastqc --threads $max_threads -o fastqc/ raw-data/*$input_extension
 		echo "Performing MultiQC"
 		multiqc -o fastqc/ fastqc/ . 2> crispr.log
@@ -146,12 +154,16 @@ if [[ ! -d  "$count_folder" ]];
 		#Normalises MAGeCK input file to total read count
 		working_dir=$(pwd)
 		Rscript "${SCRIPT_DIR}/normalise.R" $working_dir
-		cp counts-aggregated.tsv ../mageck/
+		
 fi
+
+mkdir "$working_dir/mageck"
+cd "$working_dir"
+#cp "$working_dir/count/counts-aggregated.tsv" "$working_dir/mageck"
 
 #Performs CRISPR maxiprep sequencing analysis (only when samples are present in counts-aggregated.tsv)
 ##Name pre-amplication sample `pre` and post-amplification sample `post`
-test_line=$(head -1 counts-aggregated.tsv)
+test_line=$(head -1 "$working_dir/count/counts-aggregated.tsv")
 if [[ "$test_line" == *"pre"* ]] && [[ "$test_line" == *"post"* ]]; 
 	then
   		mkdir ../library-analysis
@@ -170,29 +182,29 @@ mageck_test=$(awk -F"${sep}" '{print NF-1}' <<< "${test_line}")
 
 if [[ "$test_line" == *"pre"* ]] && [[ "$test_line" == *"post"* ]] && [[ $mageck_test == 3 ]]; 
 	then
-  		rm -r ../mageck
+  		rm -r "$working_dir/mageck"
   		echo "No MAGeCK analysis performed"
-elif [[ ! -e ../mageck.config ]];
+elif [[ ! -e mageck.config ]];
 	then
-		rm -r ../mageck
+		rm -r "$working_dir/mageck"
 		echo "No MAGeCK analysis performed (mageck.config missing)"
 else
-	cd ../mageck
-	sed '1d' ../mageck.config > mageck.config #removes header from config file
+	cd "$working_dir/mageck"
+	sed '1d' "$working_dir/mageck.config" > "$working_dir/mageck/mageck.config" #removes header from config file
 	echo "Performing MAGeCK"
-	input="mageck.config"
+	input="$working_dir/mageck/mageck.config"
 	while IFS= read -r line
 	do
 	 	test_sample=$(echo "$line" | cut -d ";" -f 1) #splits line of config file into test sample name
 		control_sample=$(echo "$line" | cut -d ";" -f 2) #splits line of config file into control sample name
 		mageck_output="${test_sample}_vs_${control_sample}"
 		mkdir $mageck_output
-		mageck test -k counts-aggregated.tsv -t $test_sample -c $control_sample --sort-criteria neg -n $mageck_output/$mageck_output 2>> ../crispr.log
+		mageck test -k "$working_dir/count/counts-aggregated.tsv" -t $test_sample -c $control_sample --sort-criteria neg -n $mageck_output/$mageck_output 2>> ../crispr.log
 	done < "$input"	
 fi
 
 #plots results and marks top 10 hits, and performs GO analysis of signficant genes (standard FDR cut off is set at 0.25)
-fdr=$(cat config.yml | shyaml get-value fdr.fdr)
+fdr=$(cat "$SCRIPT_DIR/config.yml" | shyaml get-value mageck-fdr.fdr)
 file_list=$(find . -name "*gene_summary.txt") #lists all paths to MAGeCK output files
 
 if [[ -n "$file_list" ]];
