@@ -1,35 +1,35 @@
-fdr:
+mageck-fdr:
   fdr: 0.25
 bassik:
-  fasta: ""
+  fasta: "/home/niek/Documents/references/fasta/Human/Bassik-library/bassik_lib.fasta"
   index_path: "/home/niek/Documents/references/bowtie2-index/bassik/bassik"
   read_mod: "clip"
   clip_seq: "GTTTAAGAGCTAAGCTGGAAACAGCATAGCAA"
   sg_length: ""
   species: "human"
 moffat_tko1:
-  fasta: ""
+  fasta: "/home/niek/Documents/references/fasta/Human/Moffat_TKO1/moffat_tko1.fasta"
   index_path: "/home/niek/Documents/references/bowtie2-index/moffat_tko1/moffat_tko1"
   read_mod: "trim"
   clip_seq: ""
   sg_length: 20
   species: "human"
 moffat_tko3:
-  fasta: ""
+  fasta: "/home/niek/Documents/references/fasta/Human/Moffat_TKO3/Moffat_TKO3.fasta"
   index_path: "/home/niek/Documents/references/bowtie2-index/moffat_tko3/moffat_tko3"
   read_mod: "trim"
   clip_seq: ""
   sg_length: 20
   species: "human"
 sabatini:
-  fasta: ""
+  fasta: "/home/niek/Documents/references/fasta/Human/Sabatini-library/sabatini-guides.fasta"
   index_path: "/home/niek/Documents/references/bowtie2-index/sabatini/sabatini"
   read_mod: "trim"
   clip_seq: ""
   sg_length: 20
   species: "human"
 dub-only:
-  fasta: ""
+  fasta: "/home/niek/Documents/references/fasta/Human/DUB-only/DUBonly.fasta"
   index_path: "/home/niek/Documents/references/bowtie2-index/dub-only/bowtie2-dub-only-index"
   read_mod: "trim"
   clip_seq: ""
