@@ -3,6 +3,14 @@
 This bioinformatic pipeline will automate analysis of NGS data from CRISPR-Cas9 screen experiments. It uses MAGeCK for statistical analysis.
 
 
+### Index
+
+[Software dependencies](https://github.com/niekwit/CRISPR-tools#software-dependencies)
+[Installation](https://github.com/niekwit/CRISPR-tools#installation)
+[Configuration](https://github.com/niekwit/CRISPR-tools#configuration)
+[Usage](https://github.com/niekwit/CRISPR-tools#usage)
+[Output](https://github.com/niekwit/CRISPR-tools#output)
+
 ### Software dependencies:
 
 - [Python 3](https://www.python.org/)
