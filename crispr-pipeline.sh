@@ -10,12 +10,12 @@ max_threads=""
 working_dir=$(pwd)
 
 usage() {                                    
-	echo "Usage: $0 [-l <CRISPR library>] [-r <rename.config> OPTIONAL] [-m <INT> mismatches allowed for alignment (standard is zero) OPTIONAL] [-t <INT> number of CPU threads to be used]"
+	echo "Usage: $0 [-l <CRISPR library>] [-r OPTIONAL:renames NGS files] [-m <INT> mismatches allowed for alignment (standard is zero) OPTIONAL] [-t <INT> number of CPU threads to be used]"
 	echo -e "CRISPR library options:\nbassik (Morgens et al 2017 Nat. Comm.)\nmoffat_tko1 (Hart et al 2015 Cell)\nmoffat_tko3 (Hart et al 2017 G3/Mair et al 2019 Cell Rep)\nsabatini (Park et al 2016 Nat. Gen.)\ndub-only (Nathan lab, unpublished)\nslc-mito-2ogdd (Nathan lab, unpublished)"
 	exit 2
 }
 
-while getopts 't:l:r:m:?h' c
+while getopts 't:l:rm:?h' c
 do
   case $c in
     t) 
@@ -25,7 +25,7 @@ do
     	library=$OPTARG 
     	;;
     r)	
-    	rename_config=$OPTARG 
+    	rename_config="rename.config" 
     	;;
     m)  
     	align_mm=$OPTARG
@@ -152,25 +152,24 @@ if [[ ! -d  "$count_folder" ]];
 		cd count/
 		python3 mageck-join.py $guides
 		#Normalises MAGeCK input file to total read count
-		working_dir=$(pwd)
 		Rscript "${SCRIPT_DIR}/normalise.R" $working_dir
 		
 fi
-
-mkdir "$working_dir/mageck"
-cd "$working_dir"
-#cp "$working_dir/count/counts-aggregated.tsv" "$working_dir/mageck"
 
 #Performs CRISPR maxiprep sequencing analysis (only when samples are present in counts-aggregated.tsv)
 ##Name pre-amplication sample `pre` and post-amplification sample `post`
 test_line=$(head -1 "$working_dir/count/counts-aggregated.tsv")
 if [[ "$test_line" == *"pre"* ]] && [[ "$test_line" == *"post"* ]]; 
 	then
-  		mkdir ../library-analysis
+  		mkdir "$working_dir/library-analysis"
   		echo "Performing pre- and post-library amplification comparative analysis" 
+  		cd "$working_dir/count"
   		python3 -W ignore "${SCRIPT_DIR}/library-analysis.py"
   		#Rscript "${SCRIPT_DIR}/gc-bias.R" "$working_dir"
 fi
+
+mkdir "$working_dir/mageck"
+cd "$working_dir"
 
 ###Performs MAGeCK
 #-c reference sample, -t test sample: neg rank(genes that drop out in test sample)/pos rank(genes that are overrepresented in test sample)
