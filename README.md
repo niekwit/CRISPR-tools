@@ -5,11 +5,11 @@ This bioinformatic pipeline will automate analysis of NGS data from CRISPR-Cas9 
 
 ### Index
 
-[Software dependencies](https://github.com/niekwit/CRISPR-tools#software-dependencies)
-[Installation](https://github.com/niekwit/CRISPR-tools#installation)
-[Configuration](https://github.com/niekwit/CRISPR-tools#configuration)
-[Usage](https://github.com/niekwit/CRISPR-tools#usage)
-[Output](https://github.com/niekwit/CRISPR-tools#output)
+1. [Software dependencies](https://github.com/niekwit/CRISPR-tools#software-dependencies)
+2. [Installation](https://github.com/niekwit/CRISPR-tools#installation)
+3. [Configuration](https://github.com/niekwit/CRISPR-tools#configuration)
+4. [Usage](https://github.com/niekwit/CRISPR-tools#usage)
+5. [Output](https://github.com/niekwit/CRISPR-tools#output)
 
 ### Software dependencies:
 
