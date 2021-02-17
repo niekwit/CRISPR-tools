@@ -5,7 +5,7 @@ This bioinformatic pipeline will automate analysis of NGS data from CRISPR-Cas9 
 
 ### Software dependencies:
 
-- Python 3
+- [Python 3](https://www.python.org/)
 	- [Pandas](https://pandas.pydata.org/) 
 	- [Numpy](https://numpy.org/)
 	- [Matplotlib](https://matplotlib.org/stable/index.html)
@@ -22,17 +22,24 @@ This bioinformatic pipeline will automate analysis of NGS data from CRISPR-Cas9 
 - [pigz](https://zlib.net/pigz/) (if not installed gunzip will be used, but will be slower)
 - [MAGeCK](https://sourceforge.net/p/mageck/wiki/Home/)
 
+The Python3 and R dependencies can be installed with the `setup.sh` script. Other dependencies have to be installed manually. Non-Python3/R dependencies should also be set in the environment variables:
+For example to add the Bowtie2 binary to the environment variables, add the following line to `~/.bashrc`:
+> `export PATH=/path/to/bowtie2-2.4.2-linux-x86_64:$PATH`
+
 
 ### Installation:
 
 Installation from the command line:
 > `git clone https://github.com/niekwit/CRISPR-tools.git`
 
-Dependencies can be installed by running:
+Dependencies can be installed by running (can also be done manually):
 > `./setup.sh`
 
 The `crispr-pipeline.sh` can be permamently added to $PATH by adding the following line to `~/.bashrc`:
 > `export PATH=/home/path/to/CRISPR-tools:$PATH`
+
+To enable auto-completion of the CRISPR libraries with the `-l` flag, add the following line to `~/.bashrc`:
+> `source /path/to/CRISPR-tools/auto-complete.sh`
 
 
 ### Configuration:
