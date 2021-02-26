@@ -3,8 +3,10 @@ library(tidyverse)
 
 args <- commandArgs(trailingOnly=TRUE)
 #setwd(args[1])
-setwd("/mnt/sdb1/analyses/CRISPR-screens/guine/count")
+#fasta <- args[2]
 
+setwd("/mnt/sdb1/analyses/CRISPR-screens/guine/count")
+fasta <- "/home/niek/Documents/references/fasta/Mouse/Mouse-SLC-Mito-2OGDD/mouse-2-OG-DD-SLC-mitoP-library.fasta"
 df <- read.csv(file="counts-aggregated.tsv", 
                sep="\t")
 
@@ -12,7 +14,7 @@ df <- subset(x=df,
              select=c("sgRNA","gene","pre","post"))
 
 #convert fasta to csv format
-df.fasta <- read.csv("/home/niek/Documents/references/fasta/Mouse/Mouse-SLC-Mito-2OGDD/mouse-2-OG-DD-SLC-mitoP-library.fasta",
+df.fasta <- read.csv(fasta,
                      header=FALSE)
 
 sgRNA.index <- grep(">", df.fasta$V1, invert=FALSE)

@@ -165,7 +165,7 @@ if [[ "$test_line" == *"pre"* ]] && [[ "$test_line" == *"post"* ]];
   		echo "Performing pre- and post-library amplification comparative analysis" 
   		cd "$working_dir/count"
   		python3 -W ignore "${SCRIPT_DIR}/library-analysis.py"
-  		#Rscript "${SCRIPT_DIR}/gc-bias.R" "$working_dir"
+  		#Rscript "${SCRIPT_DIR}/gc-bias.R" "$working_dir/count/" "$fasta" 
 fi
 
 mkdir "$working_dir/mageck"
