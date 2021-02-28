@@ -3,7 +3,7 @@
 This bioinformatic pipeline will automate analysis of NGS data from CRISPR-Cas9 screen experiments. It uses MAGeCK for statistical analysis.
 
 
-### Index
+## Index
 
 1. [Software dependencies](https://github.com/niekwit/CRISPR-tools#software-dependencies)
 2. [Installation](https://github.com/niekwit/CRISPR-tools#installation)
@@ -11,7 +11,7 @@ This bioinformatic pipeline will automate analysis of NGS data from CRISPR-Cas9 
 4. [Usage](https://github.com/niekwit/CRISPR-tools#usage)
 5. [Output](https://github.com/niekwit/CRISPR-tools#output)
 
-### Software dependencies:
+## Software dependencies:
 
 - [Python 3](https://www.python.org/)
 	- [Pandas](https://pandas.pydata.org/) 
@@ -30,12 +30,12 @@ This bioinformatic pipeline will automate analysis of NGS data from CRISPR-Cas9 
 - [pigz](https://zlib.net/pigz/) (if not installed gunzip will be used, but will be slower)
 - [MAGeCK](https://sourceforge.net/p/mageck/wiki/Home/)
 
-The Python3 and R dependencies can be installed with the `setup.sh` script. Other dependencies have to be installed manually. Non-Python3/R dependencies should also be set in your `$PATH`:
-For example to add the Bowtie2 binary to your `$PATH`, add the following line to `~/.bashrc`:
+The Python3 and R dependencies can be installed with the `setup.sh` script. Other dependencies have to be installed manually. Non-Python3/R dependencies should also be set in your `$PATH`,
+for example, to add the Bowtie2 binary to your `$PATH`, add the following line to `~/.bashrc`:
 > `export PATH=/path/to/bowtie2-2.4.2-linux-x86_64:$PATH`
 
 
-### Installation:
+## Installation:
 
 Installation from the command line:
 > `git clone https://github.com/niekwit/CRISPR-tools.git`
@@ -50,7 +50,7 @@ To enable auto-completion of the CRISPR libraries with the `-l` flag, add the fo
 > `source /path/to/CRISPR-tools/auto-complete.sh`
 
 
-### Configuration:
+## Configuration:
 
 CRISPR libraries can be configured in the `config.yml` file (located in the `CRISPR-tools` folder), as follows:
 ```
@@ -78,11 +78,11 @@ Explanation of `config.yml`:
 Important: when a variable is not used (e.g. `clip_seq` for a fixed sgRNA length CRISPR library), it should be left empty, see example.
 
 
-### Usage:
+## Usage:
 
 1. Create a main folder (can be any name) for the analysis that contains the subfolder `raw-data`, which contains the fastq.gz files.
 
-2. If you want to rename your sequencing files (the files names will be used as sample names for the MAGeCK analsysis so it is recommended to abbreviate them), then this can be set with the `rename.config` file.
+2. If you want to rename your sequencing files (the files names will be used as sample names for the MAGeCK analsysis so it is recommended to abbreviate them), then this can be set with the `rename.config` file that should be located in the main analysis folder.
 On each line put the existing file name and the desired new file name, seperated by a semi-colon (do not include any white space), for example:
 ```
 S25_S2_L001_R1_001.fastq.gz;S25.fastq.gz
@@ -114,7 +114,7 @@ To allow one mismatch during alignment use the `-m 1` flag.
 To set a fixed number of CPU threads use the `-t <INT>` flag.
 
 
-### Output:
+## Output:
 
 Several folder/files will be generated:
 
