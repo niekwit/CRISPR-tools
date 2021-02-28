@@ -30,8 +30,8 @@ This bioinformatic pipeline will automate analysis of NGS data from CRISPR-Cas9 
 - [pigz](https://zlib.net/pigz/) (if not installed gunzip will be used, but will be slower)
 - [MAGeCK](https://sourceforge.net/p/mageck/wiki/Home/)
 
-The Python3 and R dependencies can be installed with the `setup.sh` script. Other dependencies have to be installed manually. Non-Python3/R dependencies should also be set in the environment variables:
-For example to add the Bowtie2 binary to the environment variables, add the following line to `~/.bashrc`:
+The Python3 and R dependencies can be installed with the `setup.sh` script. Other dependencies have to be installed manually. Non-Python3/R dependencies should also be set in your `$PATH`:
+For example to add the Bowtie2 binary to your `$PATH`, add the following line to `~/.bashrc`:
 > `export PATH=/path/to/bowtie2-2.4.2-linux-x86_64:$PATH`
 
 
