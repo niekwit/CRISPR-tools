@@ -152,7 +152,7 @@ if [[ ! -d  "$count_folder" ]];
 		cd count/
 		python3 mageck-join.py $guides
 		#Normalises MAGeCK input file to total read count
-		Rscript "${SCRIPT_DIR}/normalise.R" $working_dir
+		Rscript "${SCRIPT_DIR}/normalise.R" "$working_dir/count/"
 		
 fi
 
