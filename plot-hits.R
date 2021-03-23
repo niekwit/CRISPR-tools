@@ -2,23 +2,28 @@
 
 library(ggplot2)
 library(ggrepel)
-library(GO.db)
+#library(GO.db)
 library(dplyr)
 
 args = commandArgs(trailingOnly=TRUE)
 fdr <- args[1]
 
 df <- read.csv(file=args[2], sep="\t")
+
+#setwd("/home/niek/Documents/analyses/CRISPR-screens/tekle_2021_03_17-DUB-deplete/mageck-depletion/24H_vs_24N")
+#df <- read.csv(file="24H_vs_24N.gene_summary.txt", sep="\t")
+
+fdr <- 0.25
 df$fdr.cutoff <- fdr
 
-species <- args[3]
+#species <- args[3]
 save.path <- args[4]
 
-if (species == "human") {
-	library(org.Hs.eg.db)
-} else if (species == "mouse"){
-	library(org.Mm.eg.db)
-}
+#if (species == "human") {
+#	library(org.Hs.eg.db)
+#} else if (species == "mouse"){
+#	library(org.Mm.eg.db)
+#}
 
 #function to plot top 10 hits
 plot.hits <- function(input){
@@ -51,10 +56,8 @@ plot.hits <- function(input){
   df <- arrange(df, x)
   df.label <- df[df[[x]] %in% 1:10, ]
   
-  #x <- sym("neg.rank")
-  
   #generates plot
-  ggplot(df, aes_string(x = x, y = df$`log.score`)) +
+  p <- ggplot(df, aes_string(x = x, y = df$log.score)) +
     theme_bw() +
     theme(axis.text = element_text(size=16),
           axis.title = element_text(size=16),
@@ -76,7 +79,7 @@ plot.hits <- function(input){
                size = 5,
                colour = "black",
                mapping = aes_string(x = x,
-                             y = df$`log.score`)) + 
+                             y = df$log.score)) + 
     geom_hline(yintercept= fdr.cut.off, 
                linetype="dashed", 
                color = "red") +
@@ -85,15 +88,16 @@ plot.hits <- function(input){
              y = fdr.cut.off*1.05, 
              label = paste0("FDR < ",fdr),
              size = 5,
-             colour="red") +
-    geom_label_repel(size=4,
-                     aes_string(x = x,
-                         y = df.label$`log.score`,
-                         label = df.label$`id`), 
-                     data = df.label,
-                     nudge_x = nrow(df)*0.1,
-                     nudge_y = max(df$log.score)*0.1)
+             colour="red") 
   
+  if(input == "neg"){
+    p <- p + geom_label_repel(data = df.label, 
+                              aes(x = `neg.rank`, y = `log.score`, label = `id`))
+  } else if(input == "pos") {
+    p <- p + geom_label_repel(data = df.label, 
+                              aes(x = `pos.rank`, y = `log.score`, label = `id`))
+  }
+
   ggsave(plot=p,
          file=paste0(save.path,file),
          width = 7,
