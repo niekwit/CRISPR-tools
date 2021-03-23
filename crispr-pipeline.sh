@@ -84,7 +84,7 @@ fi
 
 #Fastq quality control
 fastqc_folder="fastqc/"
-if [[ ! -d  "$fastqc_folder" ]]; 
+if [[ ! -d "$fastqc_folder" ]]; 
 	then
 		echo "Performing FastQC"
 		mkdir fastqc
@@ -158,17 +158,21 @@ fi
 
 #Performs CRISPR maxiprep sequencing analysis (only when samples are present in counts-aggregated.tsv)
 ##Name pre-amplication sample `pre` and post-amplification sample `post`
-test_line=$(head -1 "$working_dir/count/counts-aggregated.tsv")
-if [[ "$test_line" == *"pre"* ]] && [[ "$test_line" == *"post"* ]]; 
+lib_folder="library-analysis/"
+if [[ ! -d  "$fastqc_folder" ]];
 	then
-  		mkdir "$working_dir/library-analysis"
-  		echo "Performing pre- and post-library amplification comparative analysis" 
-  		cd "$working_dir/count"
-  		python3 -W ignore "${SCRIPT_DIR}/library-analysis.py"
-  		#Rscript "${SCRIPT_DIR}/gc-bias.R" "$working_dir/count/" "$fasta" 
+		test_line=$(head -1 "$working_dir/count/counts-aggregated.tsv")
+		if [[ "$test_line" == *"pre"* ]] && [[ "$test_line" == *"post"* ]]; 
+			then
+				mkdir -p "$working_dir/library-analysis"
+				echo "Performing pre- and post-library amplification comparative analysis" 
+				cd "$working_dir/count"
+				python3 -W ignore "${SCRIPT_DIR}/library-analysis.py"
+				#Rscript "${SCRIPT_DIR}/gc-bias.R" "$working_dir/count/" "$fasta" 
+		fi
 fi
 
-mkdir "$working_dir/mageck"
+mkdir -p "$working_dir/mageck"
 cd "$working_dir"
 
 ###Performs MAGeCK
