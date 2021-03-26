@@ -7,21 +7,26 @@ library(GOplot)
 library(stringr)
 library(ggrepel)
 library(ggplot2)
+library(gridExtra)
 
 args <- commandArgs(trailingOnly=TRUE)
 #email <- args[1]
-#mageck <- args[2]
+#mageck.file <- args[2]
 #fdr <- args[3]
 #species <- args[4]
+#save.path <- args[5]
 fdr <- 0.25
 email <- "nw416@cam.ac.uk"
 
 setwd("/run/user/1000/gvfs/smb-share:server=jcbc-store01.jcbc.private.cam.ac.uk,share=citiid_grp_nathan/Niek/LMB_data/Results/CRISPR SCREENING/NGS data and analysis/Screen E SHMT1+2 HDAC3 Ca9 HT Bassik/data-analysis-screen-e/mageck/E6vsE14")
 df <- read.csv(file="E6vs14.gene_summary.txt", sep="\t")
 
-#get ensemble gene IDs
+#get ensemble gene IDs (needed for DAVID)
+if(species == "human"){ensembl.species <- "hsapiens_gene_ensembl"
+} else if (species == "mouse"){ensembl.species <- "mmusculus_gene_ensembl"}
+
 ensembl <- useMart("ensembl")
-ensembl <- useDataset("hsapiens_gene_ensembl",mart=ensembl)
+ensembl <- useDataset(ensembl.species,mart=ensembl)
 df.temp <- getBM(attributes=c("hgnc_symbol","ensembl_gene_id"),
                  filters="hgnc_symbol",
                  values=df$id,
@@ -30,26 +35,37 @@ df.temp <- df.temp %>%
   rename('id' = 'hgnc_symbol')
 df <- merge(x=df,y=df.temp,by="id")
 
-#select gene below fdr cut off
-df.fdr <- df[df$neg.fdr < fdr, ]
+#select genes below fdr cut off
+go.analysis <- function(x){
+  if(input == "neg"){
+    x <- "neg.rank"
+    y <- "neg.score"
+    z <- "neg.fdr"
+    title <- "Drop out gene GO analysis"
+    file <- "GO-analysis-dropout.pdf"
+  } else if(input == "pos") {
+    x <- "pos.rank"
+    y <- "pos.score"
+    z <- "pos.fdr"
+    title <- "Enrichment gene GO analysis"
+    file <- "GO-analysis-enrichment.pdf"
+  }
+}
+
+x <- "neg.fdr"
+df.fdr <- df[df[x] < fdr, ]
 
 gene.list <- df.fdr$ensembl_gene_id
 
 david <- DAVIDWebService(email=email, url="https://david.ncifcrf.gov/webservice/services/DAVIDWebService.DAVIDWebServiceHttpSoap12Endpoint/")
-
 result <- addList(david, gene.list,idType="ENSEMBL_GENE_ID",listName="gene.list", listType="Gene")
-
 setAnnotationCategories(david, "GOTERM_BP_ALL")
-
 termCluster <- getClusterReport(david, type="Term")
-
-getClusterReportFile(david, type="Term", fileName="termClusterReport1.tab")
-
-davidGODag <- DAVIDGODag(members(termCluster) [[1]], pvalueCutoff=0.1,"BP")
-
-pdf("GO-TermGraph.pdf")
-plotGOTermGraph(g=goDag(davidGODag),r=davidGODag, max.nchar=30, node.shape="ellipse")
-dev.off()
+getClusterReportFile(david, type="Term", fileName="termClusterReport.tab")
+#davidGODag <- DAVIDGODag(members(termCluster) [[1]], pvalueCutoff=0.1,"BP")
+#pdf("GO-TermGraph.pdf")
+#plotGOTermGraph(g=goDag(davidGODag),r=davidGODag, max.nchar=30, node.shape="ellipse")
+#dev.off()
 
 #extract most enriched GO from each cluster
 cluster.total <- nrow(summary(termCluster))
@@ -85,14 +101,17 @@ circ.plot <- distinct(circ.plot)
 
 circ.label <- circ.plot[circ.plot$log.pvalue > 3, ]
 circ.table <- circ.label[ ,c("ID","term")]
-table1 <- tableGrob(circ.table, rows=NULL, theme=ttheme_minimal())
+table1 <- tableGrob(circ.table, rows=NULL, theme=ttheme_minimal(base_size=16))
 
 p <- ggplot(circ.plot, aes(x = `zscore`, 
                     y = `log.pvalue`,
                     size= `count`)) +
-  scale_size(range = c(5, 15)) +
+  scale_size(range = c(5, 15), name = "Number of genes in group:",
+             guide = guide_legend(
+               direction = "horizontal",
+               title.position = "top")) +
   theme_bw(base_size = 22) + 
-  theme(legend.position = "top") +
+  theme(legend.justification= "top",legend.direction="horizontal") +
   geom_point(shape=21,
              alpha=0.5,
              fill="red") +
@@ -101,9 +120,25 @@ p <- ggplot(circ.plot, aes(x = `zscore`,
   ylab("-log10(adj. p value)") +
   geom_text_repel(aes(x=`zscore`,y=`log.pvalue`,label=`ID`, size = 3),
                   data=circ.label,
-                  nudge_y=c(-2,2)) +
+                  nudge_y=c(-1,1),
+                  nudge_x=c(0,0.5),
+                  show.legend = FALSE) +
   geom_hline(yintercept=3, linetype="dashed", color = "black") 
 
-grid.arrange(p,table1,nrow=1, ncol=2, as.table=TRUE)
+legend <- cowplot::get_legend(p)
+
+p <- grid.arrange(p + guides(size=FALSE),
+             legend,
+             table1,
+             layout_matrix = rbind(c(1,2),
+                                   c(1,3),
+                                   c(1,3),
+                                   c(1,3),
+                                   c(1,3)))
+
+ggsave(p,file="go-analysis.pdf", width=15, height=7)
 
 
+
+input <- c("neg","pos")
+lapply(input, plot.hits)
