@@ -8,30 +8,34 @@ align_mm=0
 SCRIPT_DIR=$(find $HOME -type d -name "CRISPR-tools")
 max_threads=""
 working_dir=$(pwd)
+go_analysis=""
 
-usage() {                                    
+usage() {
 	echo "Usage: $0 [-l <CRISPR library>] [-r OPTIONAL:renames NGS files] [-m <INT> mismatches allowed for alignment (standard is zero) OPTIONAL] [-t <INT> number of CPU threads to be used]"
 	echo -e "CRISPR library options:\nbassik (Morgens et al 2017 Nat. Comm.)\nmoffat_tko1 (Hart et al 2015 Cell)\nmoffat_tko3 (Hart et al 2017 G3/Mair et al 2019 Cell Rep)\nsabatini (Park et al 2016 Nat. Gen.)\ndub-only (Nathan lab, unpublished)\nslc-mito-2ogdd (Nathan lab, unpublished)"
 	exit 2
 }
 
-while getopts 't:l:rm:?h' c
+while getopts 't:l:rgm:?h' c
 do
   case $c in
-    t) 
-    	max_threads=$OPTARG 
-    	;;
-    l) 
-    	library=$OPTARG 
+    t)
+	max_threads=$OPTARG 
+	;;
+    l)
+	library=$OPTARG 
     	;;
     r)	
-    	rename_config="rename.config" 
-    	;;
-    m)  
-    	align_mm=$OPTARG
-    	;;	
+	rename_config="rename.config" 
+	;;
+    m)
+	align_mm=$OPTARG
+	;;	
+    g)
+	go_analysis="TRUE"
+	;;
     h|?) usage 
-    	;;
+	;;
   esac
 done
 
@@ -57,6 +61,9 @@ read_mod=$(cat "$SCRIPT_DIR/config.yml" | shyaml get-value $library.read_mod)
 sg_length=$(cat "$SCRIPT_DIR/config.yml" | shyaml get-value $library.sg_length)
 clip_seq=$(cat "$SCRIPT_DIR/config.yml" | shyaml get-value $library.clip_seq)
 species=$(cat "$SCRIPT_DIR/config.yml" | shyaml get-value $library.species)
+#loads GO settings from yaml file
+email=$(cat "$SCRIPT_DIR/config.yml" | shyaml get-value GO.email)
+go_test=$(cat "$SCRIPT_DIR/config.yml" | shyaml get-value GO.test)
 
 start_time=$(date +%s)
 
@@ -216,7 +223,16 @@ if [[ -n "$file_list" ]];
 		do 
 			save_path=$(echo $file | sed 's|\(.*\)/.*|\1|') #removes file name from $file 
 			save_path="${save_path}/"
-			Rscript "${SCRIPT_DIR}/plot-hits.R" $fdr $file $species $save_path 
+			Rscript "${SCRIPT_DIR}/plot-hits.R" $fdr $file $species $save_path
+			#enter code for GO analysis depletion and enrichment:
+			go_folder=$save_path"/GO-analysis"
+			if [[ $go_analysis == "TRUE" ]];
+				then
+					if [[ ! -d $go_folder ]]
+						then
+							Rscript "${SCRIPT_DIR}/go.R" $email $file $fdr $species $save_path
+					fi
+			fi
 		done
 fi
 
