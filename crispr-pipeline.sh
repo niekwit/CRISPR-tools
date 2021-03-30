@@ -19,23 +19,12 @@ usage() {
 while getopts 't:l:rgm:?h' c
 do
   case $c in
-    t)
-	max_threads=$OPTARG 
-	;;
-    l)
-	library=$OPTARG 
-    	;;
-    r)	
-	rename_config="rename.config" 
-	;;
-    m)
-	align_mm=$OPTARG
-	;;	
-    g)
-	go_analysis="TRUE"
-	;;
-    h|?) usage 
-	;;
+    t) max_threads=$OPTARG ;;
+    l) library=$OPTARG ;;
+    r) rename_config="rename.config" ;;
+    m) align_mm=$OPTARG ;;
+    g) go_analysis="TRUE" ;;
+    h|?) usage ;;
   esac
 done
 
@@ -64,6 +53,7 @@ species=$(cat "$SCRIPT_DIR/config.yml" | shyaml get-value $library.species)
 #loads GO settings from yaml file
 email=$(cat "$SCRIPT_DIR/config.yml" | shyaml get-value GO.email)
 go_test=$(cat "$SCRIPT_DIR/config.yml" | shyaml get-value GO.test)
+go_term=$(cat "$SCRIPT_DIR/config.yml" | shyaml get-value GO.term)
 
 start_time=$(date +%s)
 
@@ -192,8 +182,8 @@ mageck_test=$(awk -F"${sep}" '{print NF-1}' <<< "${test_line}")
 
 if [[ "$test_line" == *"pre"* ]] && [[ "$test_line" == *"post"* ]] && [[ $mageck_test == 3 ]]; 
 	then
-  		rm -r "$working_dir/mageck"
-  		echo "No MAGeCK analysis performed"
+		rm -r "$working_dir/mageck"
+		echo "No MAGeCK analysis performed"
 elif [[ ! -e mageck.config ]];
 	then
 		rm -r "$working_dir/mageck"
@@ -208,8 +198,11 @@ else
 	 	test_sample=$(echo "$line" | cut -d ";" -f 1) #splits line of config file into test sample name
 		control_sample=$(echo "$line" | cut -d ";" -f 2) #splits line of config file into control sample name
 		mageck_output="${test_sample}_vs_${control_sample}"
-		mkdir $mageck_output
-		mageck test -k "$working_dir/count/counts-aggregated.tsv" -t $test_sample -c $control_sample --sort-criteria neg -n $mageck_output/$mageck_output 2>> ../crispr.log
+		if [[ ! -d $mageck_output ]];
+			then
+				mkdir -p $mageck_output
+				mageck test -k "$working_dir/count/counts-aggregated.tsv" -t $test_sample -c $control_sample --sort-criteria neg -n $mageck_output/$mageck_output 2>> ../crispr.log
+		fi
 	done < "$input"	
 fi
 
@@ -225,12 +218,13 @@ if [[ -n "$file_list" ]];
 			save_path="${save_path}/"
 			Rscript "${SCRIPT_DIR}/plot-hits.R" $fdr $file $species $save_path
 			#enter code for GO analysis depletion and enrichment:
-			go_folder=$save_path"/GO-analysis"
+			go_folder=$save_path"/GO-analysis-$go_test-$go_term"
 			if [[ $go_analysis == "TRUE" ]];
 				then
 					if [[ ! -d $go_folder ]]
 						then
-							Rscript "${SCRIPT_DIR}/go.R" $email $file $fdr $species $save_path
+							mkdir -p $go_folder
+							Rscript "${SCRIPT_DIR}/go.R" $email $file $fdr $species $go_folder $go_test $go_term
 					fi
 			fi
 		done
