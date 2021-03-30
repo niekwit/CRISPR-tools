@@ -1,5 +1,9 @@
 mageck-fdr:
   fdr: 0.25
+GO:
+  email: "your@email.here" #create an account first on https://david.ncifcrf.gov/webservice/register.htm
+  test: "Benjamini" #choose Bonferroni or Benjamini
+  term: "BP" #BP, CC or MF
 bassik:
   fasta: "/home/niek/Documents/references/fasta/Human/Bassik-library/bassik_lib.fasta"
   index_path: "/home/niek/Documents/references/bowtie2-index/bassik/bassik"
