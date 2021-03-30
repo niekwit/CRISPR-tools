@@ -17,14 +17,14 @@ for dep in $python_deps
 	done
 
 #Installs R dependencies
-r_cran_deps="ggplot2 ggrepel plyr dplyr BiocManager"
+r_cran_deps="ggplot2 ggrepel plyr dplyr BiocManager rJava GOplot stringr gridExtra"
 
 for dep in $r_cran_deps
 	do
 		echo "install.packages('${dep}')" | R --no-save
 	done
 
-r_biocman_deps="org.Hs.eg.db org.Mm.eg.db"
+r_biocman_deps="bioMart RDAVIDWebService"
 
 for dep in $r_biocman_deps
 	do

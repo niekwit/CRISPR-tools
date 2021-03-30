@@ -22,7 +22,13 @@ This bioinformatic pipeline will automate analysis of NGS data from CRISPR-Cas9 
 - [R](https://www.r-project.org/)
 	- [Tidyverse](https://www.tidyverse.org/)
 	- [ggrepel](https://www.rdocumentation.org/packages/ggrepel/versions/0.9.1)
-	- [GO.db](https://www.bioconductor.org/packages/release/data/annotation/html/GO.db.html)
+	- [rJava](https://cran.r-project.org/web/packages/rJava/index.html)
+	- [RDAVIDWebService](https://www.bioconductor.org/packages/release/bioc/html/RDAVIDWebService.html)
+	- [bioMart](https://bioconductor.org/packages/release/bioc/html/biomaRt.html)
+	- [dplyr](https://www.rdocumentation.org/packages/dplyr/versions/0.7.8)
+	- [GOplot](https://wencke.github.io/)
+	- [stringr](https://www.rdocumentation.org/packages/stringr/versions/1.4.0)
+	- [gridExtra](https://cran.r-project.org/web/packages/gridExtra/)
 - [FastQC](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/)
 - [MultiQC](https://multiqc.info/)
 - [Bowtie2](http://bowtie-bio.sourceforge.net/bowtie2/index.shtml) 
@@ -106,9 +112,9 @@ c: reference sample, t: test sample. In the MAGeCK output file: neg rank(genes t
 The `mageck.config` file should be placed in the main analysis folder.
 
 4. To start the analysis, navigate to the analysis folder in the command line and type: 
-> `path/to/crispr-pipeline.sh -l bassik -r`
+> `path/to/crispr-pipeline.sh -l bassik -r -g`
 
-This will run the pipeline with the Bassik sgRNA library and will rename the NGS files according to `rename.config`. If `-m` and `-t` are not called, it will allow zero mismatches when aligning the sample to the index, and it will use all the CPU threads that are available on your system when applicable, respectively. 
+This will run the pipeline with the Bassik sgRNA library and will rename the NGS files according to `rename.config`. If `-m` and `-t` are not called, it will allow zero mismatches when aligning the sample to the index, and it will use all the CPU threads that are available on your system when applicable, respectively. The `-g` flag will perform a GO analysis using [DAVID](https://david.ncifcrf.gov/) (only recommended for experiments using whole-genome CRISPR libraries).
 
 To allow one mismatch during alignment use the `-m 1` flag.
 To set a fixed number of CPU threads use the `-t <INT>` flag.
