@@ -1,7 +1,7 @@
 mageck-fdr:
   fdr: 0.25
 GO:
-  email: "your@email.here" #create an account first on https://david.ncifcrf.gov/webservice/register.htm
+  email: "nw416@cam.ac.uk" #create an account first on https://david.ncifcrf.gov/webservice/register.htm
   test: "Benjamini" #choose Bonferroni or Benjamini
   term: "BP" #BP, CC or MF
 bassik:

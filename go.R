@@ -1,6 +1,5 @@
 library(rJava)
 library("RDAVIDWebService")
-library("org.Hs.eg.db")
 library(biomaRt)
 library(dplyr)
 library(GOplot)
