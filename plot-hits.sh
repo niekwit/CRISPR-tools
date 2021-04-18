@@ -5,6 +5,8 @@ go=$2
 go_test=$3
 go_term=$4
 SCRIPT_DIR=$5
+email=$6
+species=$7
 
 file_list=$(find . -name "*gene_summary.txt") #lists all paths to MAGeCK output files
 
