@@ -1,5 +1,7 @@
 #!/bin/bash
 
+working_dir=$1
+
 mkdir -p "$working_dir/mageck"
 cd "$working_dir"
 

@@ -1,6 +1,7 @@
 mageck-fdr: 0.25
 GO:
   email: "your@email.com" #create an account first on https://david.ncifcrf.gov/webservice/register.htm
+  species: "human"
   test: "Benjamini" #choose Bonferroni or Benjamini
   term: "BP" #BP, CC or MF
 

@@ -9,21 +9,8 @@ args = commandArgs(trailingOnly=TRUE)
 fdr <- args[1]
 
 df <- read.csv(file=args[2], sep="\t")
-
-#setwd("/home/niek/Documents/analyses/CRISPR-screens/tekle_2021_03_17-DUB-deplete/mageck-depletion/24H_vs_24N")
-#df <- read.csv(file="24H_vs_24N.gene_summary.txt", sep="\t")
-
-fdr <- 0.25
 df$fdr.cutoff <- fdr
-
-#species <- args[3]
-save.path <- args[4]
-
-#if (species == "human") {
-#	library(org.Hs.eg.db)
-#} else if (species == "mouse"){
-#	library(org.Mm.eg.db)
-#}
+save.path <- args[3]
 
 #function to plot top 10 hits
 plot.hits <- function(input){

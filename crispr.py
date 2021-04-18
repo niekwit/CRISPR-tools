@@ -12,10 +12,11 @@ import argparse
 import subprocess
 import multiprocessing
 import yaml
+import glob
 import timeit
 import time
 
-start = timeit.default_timer()
+start = timeit.default_timer()#initiate timing of run
 
 script_dir=os.path.abspath(os.path.dirname(__file__))
 work_dir=os.getcwd()
@@ -50,12 +51,12 @@ for fname in os.listdir(work_dir+"/raw-data"):
     if fname.endswith('.fq.gz'):
         extension=".fq.gz"
         break
-    elif:
+    elif fname.endswith('.fastq.gz'):
         extension=".fastq.gz"
 
 ###run modules based on parsed arguments:
 #rename files
-    rename=args["rename"]
+rename=args["rename"]
 rename_script=script_dir+"/rename.sh"
 if rename == True:
     subprocess.run([rename_script,script_dir])
@@ -85,6 +86,21 @@ subprocess.run([library_script,work_dir,script_dir])
 #run MAGeCK
 mageck_script=script_dir+"/mageck.sh"
 subprocess.run([mageck_script,work_dir])
+
+#plot top 10 MAGeCK hits and perform GO analysis
+with open(script_dir+"/config.yaml") as file: config=yaml.full_load(file)
+go=args["go"]
+fdr=config.get("mageck-fdr")
+plot_script=script_dir+"/plot-hits.sh"
+go_test=config.get("GO", {}).get('test')
+go_term=config.get("GO", {}).get('term')
+email=config.get("GO", {}).get('email')
+species=config.get("GO", {}).get('species')
+
+subprocess.run([plot_script,fdr,go,go_test,
+                go_term,script_dir,email,species])
+
+
 
 #print total run time
 stop = timeit.default_timer()
