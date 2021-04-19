@@ -43,6 +43,8 @@ plot.hits <- function(input){
   df <- arrange(df, x)
   df.label <- df[df[[x]] %in% 1:10, ]
   
+  options(ggrepel.max.overlaps = Inf)
+  
   #generates plot
   p <- ggplot(df, aes_string(x = x, y = df$log.score)) +
     theme_bw() +
