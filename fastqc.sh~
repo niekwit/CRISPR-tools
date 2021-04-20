@@ -1,7 +1,6 @@
 #!/bin/bash
 
 threads=$1
-work_dir=$2
 
 if [[ ! -d fastqc ]];then
 	echo "Performing FastQC/MultiQC"
