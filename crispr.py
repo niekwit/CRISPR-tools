@@ -7,7 +7,7 @@ Created on Thu Apr  1 10:54:01 2021
 """
 
 import os
-#import sys
+import sys
 import argparse
 import subprocess
 import multiprocessing
@@ -88,20 +88,22 @@ mageck_script=script_dir+"/mageck.sh"
 subprocess.run([mageck_script,work_dir])
 
 ##plot top 10 MAGeCK hits and perform GO analysis
-with open(work_dir+"/config.yml") as file: config=yaml.full_load(file)
-go=args["go"]
-fdr=config.get("mageck-fdr")
-plot_script=script_dir+"/plot-hits.sh"
-go_test=config.get("GO", {}).get('test')
-go_term=config.get("GO", {}).get('term')
-email=config.get("GO", {}).get('email')
-species=config.get("GO", {}).get('species')
-
-subprocess.run([plot_script,str(fdr),str(go),go_test,
+if os.path.exists("config.yml") == True:
+    with open("config.yml") as file: config=yaml.full_load(file)
+    go=args["go"]
+    fdr=config.get("mageck-fdr")
+    plot_script=script_dir+"/plot-hits.sh"
+    go_test=config.get("GO", {}).get('test')
+    go_term=config.get("GO", {}).get('term')
+    email=config.get("GO", {}).get('email')
+    species=config.get("GO", {}).get('species')
+    
+    subprocess.run([plot_script,str(fdr),str(go),go_test,
                 go_term,script_dir,email,species])
-
-
-
+else:
+    print("ERROR: config.yml not found. Please provide this file for further analysis.")
+    sys.exit()
+    
 ###print total run time
 stop = timeit.default_timer()
 total_time = stop - start
