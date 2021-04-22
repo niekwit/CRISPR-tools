@@ -18,7 +18,7 @@ This bioinformatic pipeline will automate analysis of NGS data from CRISPR-Cas9 
 	- [Numpy](https://numpy.org/)
 	- [Matplotlib](https://matplotlib.org/stable/index.html)
 	- [seaborn](https://seaborn.pydata.org/index.html)
-	- [shyaml](https://pypi.org/project/shyaml/)
+	- [PyYAML](https://pyyaml.org/)
 - [R](https://www.r-project.org/)
 	- [Tidyverse](https://www.tidyverse.org/)
 	- [ggrepel](https://www.rdocumentation.org/packages/ggrepel/versions/0.9.1)
@@ -52,13 +52,9 @@ Dependencies can be installed by running (can also be done manually):
 The `crispr-pipeline.sh` can be permamently added to $PATH by adding the following line to `~/.bashrc`:
 > `export PATH=/home/path/to/CRISPR-tools:$PATH`
 
-To enable auto-completion of the CRISPR libraries with the `-l` flag, add the following line to `~/.bashrc`:
-> `source /path/to/CRISPR-tools/auto-complete.sh`
-
-
 ## Configuration:
 
-CRISPR libraries can be configured in the `config.yml` file (located in the `CRISPR-tools` folder), as follows:
+CRISPR libraries can be configured in the `library.yaml` file (located in the `CRISPR-tools` folder), as follows:
 ```
 bassik:
   fasta: "/home/niek/Documents/references/fasta/Human/Bassik-library/bassik_lib.fasta"
@@ -75,15 +71,24 @@ moffat_tko1:
   sg_length: 20
   species: "human"
 ```
-Explanation of `config.yml`:
-* For each library a Bowtie2 index has to be generated using `bowtie2 build` with the library fasta file as input. The path to this index has to be set as `index_path` in `config.yaml`. 
+Explanation of `library.yaml`:
+* For each library a Bowtie2 index has to be generated using `bowtie2 build` with the library fasta file as input. The path to this index has to be set as `index_path` in `library.yaml`. 
 * The path to the fasta file must be set with `fasta` (fasta files for a variety of CRISPR libraries can be found in the `Addgene_CRISPR_libraries_FASTA` folder).
 * If a CRISPR library has a fixed sgRNA length, then the length of the sgRNA must be set with the `sg_length` variable. Additionaly, set `read_mod` as "trim".
 * If a CRISPR library has variable sgRNA lengths, then `read_mod` should be set and "clip" and `clip_seq` should contain the vector sequence downstream of the sgRNA sequence.
 
 Important: when a variable is not used (e.g. `clip_seq` for a fixed sgRNA length CRISPR library), it should be left empty, see example.
 
-
+For each experiment, a settings file (`config.yml`) has to be provided in the main experimental folder. This file contains the following:
+```
+mageck-fdr: 0.25
+GO:
+  email: "your@email.com" #create an account first on https://david.ncifcrf.gov/webservice/register.htm
+  species: "human"
+  test: "Benjamini" #choose Bonferroni or Benjamini
+  term: "BP" #BP, CC or MF
+```
+The `mageck-fdr` variable sets the statistical cut off for plotting MAGeCK hits. 
 ## Usage:
 
 1. Create a main folder (can be any name) for the analysis that contains the subfolder `raw-data`, which contains the fastq.gz files.

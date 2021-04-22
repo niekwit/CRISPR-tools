@@ -1,13 +1,13 @@
 #!/usr/bin/env Rscript
 library(stringr)
-library(dplyr)
+library(dplyr, quietly = TRUE, warn.conflicts = FALSE)
 
 args = commandArgs(trailingOnly=TRUE)
 
-setwd(paste0(args[1],"/count"))
+setwd(args[1])
 fasta.file <- args[2]
 
-df <- read.csv(file="counts-aggregated.tsv",sep="\t")
+df <- read.csv(file="count/counts-aggregated.tsv",sep="\t")
 df$sgRNA <- paste0(df$gene,"_",df$sgRNA)
 df <- df[ , ! names(df) %in% "gene"]
 
@@ -26,6 +26,6 @@ df.output <- merge(df.guides,df,by="sgRNA")
 df.output <- df.output[ , ! names(df.output) %in% "sgRNA"]
 
 write.table(df.output,
-            file="counts-aggregated-bagel.txt",
+            file="bagel2/counts-aggregated-bagel.txt",
             sep="\t",
             row.names=FALSE)

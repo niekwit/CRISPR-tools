@@ -16,11 +16,11 @@ mageck_test=$(awk -F"${sep}" '{print NF-1}' <<< "${test_line}")
 if [[ "$test_line" == *"pre"* ]] && [[ "$test_line" == *"post"* ]] && [[ $mageck_test == 3 ]];
 	then
 		rm -r "$working_dir/mageck"
-		echo "No MAGeCK analysis performed"
+		echo "No MAGeCK analysis performed: no non-library samples present"
 elif [[ ! -e mageck.config ]];
 	then
 		rm -r "$working_dir/mageck"
-		echo "No MAGeCK analysis performed (mageck.config missing)"
+		echo "ERROR: No MAGeCK analysis performed: mageck.config missing"
 else
 	cd "$working_dir/mageck"
 	sed '1d' "$working_dir/mageck.config" > "$working_dir/mageck/mageck.config" #removes header from config file
