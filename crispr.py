@@ -87,6 +87,14 @@ library_script=script_dir+"/lib-analysis.sh"
 subprocess.run([library_script,work_dir,script_dir])
 
 ##run MAGeCK
+#get settings
+if os.path.exists("config.yml") == True:
+        with open("config.yml") as file: config=yaml.full_load(file)
+else:
+        print("ERROR: config.yml not found. Please provide this file for further analysis.")
+        sys.exit()
+
+
 analysis=args["analysis"]
 if analysis == "mageck":
     print("Statistical analysis with MAGeCK selected")
@@ -94,26 +102,23 @@ if analysis == "mageck":
     subprocess.run([mageck_script,script_dir])
 elif analysis == "bagel2":
     print("Statistical analysis with BAGEL2 selected")
+    bagel2_dir=config.get("BAGEL2dir")
     bagel2_script=script_dir+"/bagel2.sh"
-    subprocess.run([bagel2_script,script_dir,work_dir,fasta])
+    subprocess.run([bagel2_script,script_dir,work_dir,fasta,bagel2_dir])
 
 ##plot top 10 MAGeCK hits and perform GO analysis
 if analysis == "mageck":
-    if os.path.exists("config.yml") == True:
-        with open("config.yml") as file: config=yaml.full_load(file)
-        go=args["go"]
-        fdr=config.get("mageck-fdr")
-        plot_script=script_dir+"/plot-hits.sh"
-        go_test=config.get("GO", {}).get('test')
-        go_term=config.get("GO", {}).get('term')
-        email=config.get("GO", {}).get('email')
-        species=config.get("GO", {}).get('species')
-        
-        subprocess.run([plot_script,str(fdr),str(go),go_test,
-                    go_term,script_dir,email,species])
-    else:
-        print("ERROR: config.yml not found. Please provide this file for further analysis.")
-        sys.exit()
+    go=args["go"]
+    fdr=config.get("mageck-fdr")
+    plot_script=script_dir+"/plot-hits.sh"
+    go_test=config.get("GO", {}).get('test')
+    go_term=config.get("GO", {}).get('term')
+    email=config.get("GO", {}).get('email')
+    species=config.get("GO", {}).get('species')
+    
+    subprocess.run([plot_script,str(fdr),str(go),go_test,
+                go_term,script_dir,email,species])
+    
     
 ###print total run time
 stop = timeit.default_timer()

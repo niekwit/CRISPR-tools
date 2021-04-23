@@ -4,4 +4,5 @@ GO:
   species: "human"
   test: "Benjamini" #choose Bonferroni or Benjamini
   term: "BP" #BP, CC or MF
+BAGEL2dir: "/home/niek/Documents/scripts/bagel"
 
