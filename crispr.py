@@ -8,7 +8,7 @@ Created on Thu Apr  1 10:54:01 2021
 
 import os
 import sys
-import argparse
+import argparse, argcomplete
 import subprocess
 import multiprocessing
 import yaml
@@ -36,11 +36,13 @@ ap.add_argument("-r", "--rename", required=False, action='store_true',
    help="Rename fq files according to rename.config")
 ap.add_argument("-m", "--mismatch", required=False,choices=[0,1],
    help="<INT> number of mismatches allowed during alignment")
-ap.add_argument("-g", "--go", required=False, action='store_true',
-   help="GO analysis with DAVID")
 ap.add_argument("-a", "--analysis", required=False, default="mageck", 
                 choices=["mageck","bagel2"], 
                 help="Statistical analysis with MAGeCK or BAGEL2. Default is MAGeCK")
+ap.add_argument("-g", "--go", required=False, action='store_true',
+   help="GO analysis with DAVID")
+
+argcomplete.autocomplete(ap) #auto-completion not working yet??
 args = vars(ap.parse_args())
 
 ####set thread count for processing
