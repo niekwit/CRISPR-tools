@@ -5,8 +5,7 @@
 
 #finds CRISPR libary names
 SCRIPT_DIR=$(find $HOME -type d -name "CRISPR-tools")
-lib_list=$(cat "$SCRIPT_DIR/config.yml" | shyaml keys | tr "\n" " ")
-lib_list=$(echo ${lib_list/mageck-fdr /})
+lib_list=$(cat "$SCRIPT_DIR/library.yaml" | shyaml keys | tr "\n" " ")
 
 #enables autocompletion of `-l` flag
 function libs()
@@ -16,4 +15,4 @@ case $3 in
   esac
 }
 
-complete -F libs crispr-pipeline.sh
+complete -F libs crispr.py
