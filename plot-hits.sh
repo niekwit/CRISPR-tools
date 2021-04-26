@@ -16,7 +16,7 @@ if [[ -n "$file_list" ]];
 		do
 			save_path=$(echo $file | sed 's|\(.*\)/.*|\1|') #removes file name from $file
 			save_path="${save_path}/"
-			Rscript "${SCRIPT_DIR}/plot-hits.R" $fdr $file $save_path
+			Rscript "${SCRIPT_DIR}/plot-hits-mageck.R" $fdr $file $save_path
 			go_folder=$save_path"/GO-analysis-$go_test-$go_term"
 			if [[ $go_analysis == "True" ]];
 				then

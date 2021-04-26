@@ -8,7 +8,7 @@ Created on Thu Apr  1 10:54:01 2021
 
 import os
 import sys
-import argparse, argcomplete
+import argparse
 import subprocess
 import multiprocessing
 import yaml
@@ -42,7 +42,6 @@ ap.add_argument("-a", "--analysis", required=False, default="mageck",
 ap.add_argument("-g", "--go", required=False, action='store_true',
    help="GO analysis with DAVID")
 
-argcomplete.autocomplete(ap) #auto-completion not working yet??
 args = vars(ap.parse_args())
 
 ####set thread count for processing
