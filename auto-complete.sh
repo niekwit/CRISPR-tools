@@ -6,13 +6,15 @@
 #finds CRISPR libary names
 SCRIPT_DIR=$(find $HOME -type d -name "CRISPR-tools")
 lib_list=$(cat "$SCRIPT_DIR/library.yaml" | shyaml keys | tr "\n" " ")
+stat_list="mageck bagel2"
 
 #enables autocompletion of `-l` flag
-function libs()
+function complete()
 {
 case $3 in
-    -l) COMPREPLY=($(compgen -W "$lib_list" "${COMP_WORDS[$COMP_CWORD]}"));;
-  esac
+	-l) COMPREPLY=($(compgen -W "$lib_list" "${COMP_WORDS[$COMP_CWORD]}"));;
+	-a) COMPREPLY=($(compgen -W "$stat_list" "${COMP_WORDS[$COMP_CWORD]}"));;
+esac
 }
 
-complete -F libs crispr.py
+complete -F complete crispr.py
