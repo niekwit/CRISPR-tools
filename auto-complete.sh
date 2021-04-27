@@ -9,7 +9,7 @@ lib_list=$(cat "$SCRIPT_DIR/library.yaml" | shyaml keys | tr "\n" " ")
 stat_list="mageck bagel2"
 
 #enables autocompletion of `-l` flag
-function complete()
+function libs()
 {
 case $3 in
 	-l) COMPREPLY=($(compgen -W "$lib_list" "${COMP_WORDS[$COMP_CWORD]}"));;
@@ -17,4 +17,4 @@ case $3 in
 esac
 }
 
-complete -F complete crispr.py
+complete -F libs crispr.py
