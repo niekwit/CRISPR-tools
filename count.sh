@@ -73,6 +73,8 @@ if [[ ! -d  "$count_folder" ]];
 		python3 mageck-join.py $guides
 		#Normalises MAGeCK input file to total read count
 		Rscript "${SCRIPT_DIR}/normalise.R" "$working_dir/count/"
+		#Removes duplicate sgRNAs, needed for BAGEL2_DIR
+		Rscript "${SCRIPT_DIR}/remove-dups.R" "$working_dir/count/"
 else
 	echo "Trimming, alignment and counting already performed"
 
