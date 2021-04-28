@@ -140,8 +140,9 @@ To start an analysis, with for example the Bassik library, navigate to main anal
 > `path/to/crispr.py -l bassik -r -t max`
 
 This initiates a run that will rename your samples according to `rename.config`, allows no mismatches during alignment, will use all available CPU threads for the analysis, and uses MAGeCK for statistical analysis
-If you also want to use BAGEL2 for statistical analysis simply run afterwards:
+If you also want to use BAGEL2 for statistical analysis afterwards, simply run :
 > `path/to/crispr.py -l bassik -a bagel2`
+
 This will only run BAGEL2 and skip all steps that are common with MAGeCK.
 
 ## Output:
