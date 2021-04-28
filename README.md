@@ -66,24 +66,7 @@ bassik:
   fasta: "/home/niek/Documents/references/fasta/Human/Bassik-library/bassik_lib.fasta"
   index_path: "/home/niek/Documents/references/bowtie2-index/bassik/bassik"
   read_mod: "clip"
-  clip_seq: "GTTTAAGAGCTAAGCTGGAAACAGCATAG
-
-Installation from the command line:
-
-    git clone https://github.com/niekwit/CRISPR-tools.git
-
-Dependencies can be installed by running (can also be done manually):
-
-    ./setup.sh
-
-The crispr-pipeline.sh can be permamently added to $PATH by adding the following line to ~/.bashrc:
-
-    export PATH=/home/path/to/CRISPR-tools:$PATH
-
-OPTIONAL: to enable auto-completion of the command line options for the CRISPR library (-l) and statistical analyses (-a): Add this line to your ~/.bashrc file:
-
-    source /path/to/CRISPR-tools/auto-complete.sh
-CAA"
+  clip_seq: "GTTTAAGAGCTAAGCTGGAAACAGCATAGCAA"
   sg_length: ""
   species: "human"
 moffat_tko1:
