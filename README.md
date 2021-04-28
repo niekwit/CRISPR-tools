@@ -122,6 +122,7 @@ c: reference sample, t: test sample. In the MAGeCK output file: neg rank(genes t
 The `stats.config` file should be placed in the main analysis folder.
 
 4. To start the analysis, navigate to the analysis folder in the command line and type: 
+```
 path/to/crispr.py [-h] -l {CRISPR library} [-t N] [-r] [-m N] [-a {mageck,bagel2}] [-g]
 
 optional arguments:
@@ -135,7 +136,7 @@ optional arguments:
   -a {mageck,bagel2}, --analysis {mageck,bagel2}
                         Statistical analysis with MAGeCK or BAGEL2. Default is MAGeCK
   -g, --go              GO analysis with DAVID
-
+```
 ## Output:
 
 Several folder/files will be generated:
