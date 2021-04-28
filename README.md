@@ -121,22 +121,29 @@ c: reference sample, t: test sample. In the MAGeCK output file: neg rank(genes t
 
 The `stats.config` file should be placed in the main analysis folder.
 
-4. To start the analysis, navigate to the analysis folder in the command line and type: 
+4. To get an overview of all the options for the CRISPR analysis, type `path/to/crispr.py -h, --help` in the command line: 
 ```
 path/to/crispr.py [-h] -l {CRISPR library} [-t N] [-r] [-m N] [-a {mageck,bagel2}] [-g]
 
 optional arguments:
-  -h, --help            show this help message and exit
-  -l {CRISPR}, --library {CRISPR library}
-                        CRISPR library
-  -t N, --threads N     Number of CPU threads to use (default is 1). Use max to apply all
-                        available CPU threads
-  -r, --rename          Rename fq files according to rename.config
-  -m N, --mismatch N    Number of mismatches (0 or 1) allowed during alignment
-  -a {mageck,bagel2}, --analysis {mageck,bagel2}
-                        Statistical analysis with MAGeCK or BAGEL2. Default is MAGeCK
-  -g, --go              GO analysis with DAVID
+  -h, --help                                      show this help message and exit
+  -l {CRISPR library}, --library {CRISPR library} CRISPR library
+  -t N, --threads N                               Number (N) of CPU threads to use (default is 1). Use max to apply all
+                                                  available CPU threads
+  -r, --rename                                    Rename fq files according to rename.config
+  -m N, --mismatch N                              Number of mismatches (0 or 1) allowed during alignment
+  -a {mageck,bagel2}, --analysis {mageck,bagel2}  Statistical analysis with MAGeCK or BAGEL2. Default is MAGeCK
+  -g, --go                                        GO analysis with DAVID
 ```
+To start an analysis, with for example the Bassik library, navigate to main analysis folder in the command line and run:
+
+> `path/to/crispr.py -l bassik -r -t max`
+
+This initiates a run that will rename your samples according to `rename.config`, allows no mismatches during alignment, will use all available CPU threads for the analysis, and uses MAGeCK for statistical analysis
+If you also want to use BAGEL2 for statistical analysis simply run afterwards:
+> `path/to/crispr.py -l bassik -a bagel2`
+This will only run BAGEL2 and skip all steps that are common with MAGeCK.
+
 ## Output:
 
 Several folder/files will be generated:
