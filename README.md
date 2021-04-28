@@ -52,6 +52,10 @@ Dependencies can be installed by running (can also be done manually):
 The `crispr-pipeline.sh` can be permamently added to $PATH by adding the following line to `~/.bashrc`:
 > `export PATH=/home/path/to/CRISPR-tools:$PATH`
 
+OPTIONAL: to enable auto-completion of the command line options for the CRISPR library (-l) and statistical analyses (-a):
+Add this line to your `~/.bashrc` file:
+> `source /path/to/CRISPR-tools/auto-complete.sh`
+
 ## Configuration:
 
 CRISPR libraries can be configured in the `library.yaml` file (located in the `CRISPR-tools` folder), as follows:
@@ -87,6 +91,7 @@ GO:
   species: "human"
   test: "Benjamini" #choose Bonferroni or Benjamini
   term: "BP" #BP, CC or MF
+BAGEL2dir: "/home/niek/Documents/scripts/bagel"
 ```
 The `mageck-fdr` variable sets the statistical cut off for plotting MAGeCK hits. 
 ## Usage:
@@ -105,7 +110,7 @@ The `rename.config` file should be placed in the main analysis folder.
 
 If your samples contain sequencing data from amplifications of the CRISPR library itself, then these can be named `pre` and `post`, with `pre` being the pre-amplification DNA (i.e. what was delivered from Addgene), and  with `post` being the post-amplification DNA (i.e. your own maxiprep of the CRISPR library). Renaming these samples in this way, will trigger a comparative analysis of these two samples that will show any skew in sgRNA numbers (depicted by the [GINI index](https://en.wikipedia.org/wiki/Gini_coefficient)). A good library amplification will maintain the same sgRNA number skew as the original prep.
 
-3. If you want to perform a comparative analysis between samples using MAGeCK, then a `mageck.config` file has to be created, for example:
+3. If you want to perform a comparative analysis between samples using MAGeCK or BAGEL2, then a `stats.config` file has to be created, for example:
 ```
 t;c
 S8;L8
@@ -114,16 +119,22 @@ S25;L8
 ```
 c: reference sample, t: test sample. In the MAGeCK output file: neg rank(genes that drop out in test sample)/pos rank(genes that are overrepresented in test sample).
 
-The `mageck.config` file should be placed in the main analysis folder.
+The `stats.config` file should be placed in the main analysis folder.
 
 4. To start the analysis, navigate to the analysis folder in the command line and type: 
-> `path/to/crispr-pipeline.sh -l bassik -r -g`
+path/to/crispr.py [-h] -l {CRISPR library} [-t N] [-r] [-m N] [-a {mageck,bagel2}] [-g]
 
-This will run the pipeline with the Bassik sgRNA library and will rename the NGS files according to `rename.config`. If `-m` and `-t` are not called, it will allow zero mismatches when aligning the sample to the index, and it will use all the CPU threads that are available on your system when applicable, respectively. The `-g` flag will perform a GO analysis using [DAVID](https://david.ncifcrf.gov/) (only recommended for experiments using whole-genome CRISPR libraries).
-
-To allow one mismatch during alignment use the `-m 1` flag.
-To set a fixed number of CPU threads use the `-t <INT>` flag.
-
+optional arguments:
+  -h, --help            show this help message and exit
+  -l {CRISPR}, --library {CRISPR library}
+                        CRISPR library
+  -t N, --threads N     Number of CPU threads to use (default is 1). Use max to apply all
+                        available CPU threads
+  -r, --rename          Rename fq files according to rename.config
+  -m N, --mismatch N    Number of mismatches (0 or 1) allowed during alignment
+  -a {mageck,bagel2}, --analysis {mageck,bagel2}
+                        Statistical analysis with MAGeCK or BAGEL2. Default is MAGeCK
+  -g, --go              GO analysis with DAVID
 
 ## Output:
 
@@ -133,4 +144,5 @@ Several folder/files will be generated:
 * `count`: contains the sgRNA counts in individual files, and counts of all files collated in one file (`counts-aggregated.tsv`, MAGeCK input file). It also contains a normalised version of `counts-aggregated.tsv`.
 * `library analysis`: contains the analyses of the pre and post library amplification samples.
 * `mageck`: contains the MAGeCK output files. It will also contain plots of the results with the top 10 genes marked.
+* `bagel2`: contains the BAGEL2 output files. It will also contain plots of the results with the top 10 genes marked.
 
