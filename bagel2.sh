@@ -24,7 +24,7 @@ do
 
 done < "$input"
 
-sed '1d' "$WORKING_DIR/mageck.config" > "$WORKING_DIR/bagel2/bagel2.config" #removes header from config file
+sed '1d' "$WORKING_DIR/stats.config" | awk '{if(NF>0) {print $0}}' > "$WORKING_DIR/bagel2/bagel2.config" #removes header from config file and removes empty line, if any
 input="$WORKING_DIR/bagel2/bagel2.config"
 while IFS= read -r line
 do

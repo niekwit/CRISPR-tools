@@ -3,7 +3,7 @@
 library(ggplot2)
 library(ggrepel)
 #library(GO.db)
-library(dplyr)
+suppressWarnings(suppressMessages(library("dplyr")))
 
 args = commandArgs(trailingOnly=TRUE)
 fdr <- args[1]

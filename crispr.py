@@ -30,12 +30,12 @@ library_list=list(library.keys())
 ap = argparse.ArgumentParser()
 ap.add_argument("-l", "--library", required=True, choices=library_list,
    help="CRISPR library")
-ap.add_argument("-t", "--threads", required=False, default=1,
-   help="<INT> number of CPU threads to use (default is 1). Use max to apply all available CPU threads")
+ap.add_argument("-t", "--threads", required=False, default=1, metavar="N", type=int,
+   help="Number of CPU threads to use (default is 1). Use max to apply all available CPU threads")
 ap.add_argument("-r", "--rename", required=False, action='store_true',
    help="Rename fq files according to rename.config")
-ap.add_argument("-m", "--mismatch", required=False,choices=[0,1],
-   help="<INT> number of mismatches allowed during alignment")
+ap.add_argument("-m", "--mismatch", required=False,choices=[0,1], metavar="N",
+   help="Number of mismatches (0 or 1) allowed during alignment")
 ap.add_argument("-a", "--analysis", required=False, default="mageck", 
                 choices=["mageck","bagel2"], 
                 help="Statistical analysis with MAGeCK or BAGEL2. Default is MAGeCK")
@@ -97,30 +97,23 @@ else:
 
 
 analysis=args["analysis"]
+go=args["go"]
+fdr=config.get("mageck-fdr")
+go_test=config.get("GO", {}).get('test')
+go_term=config.get("GO", {}).get('term')
+email=config.get("GO", {}).get('email')
+species=config.get("GO", {}).get('species')
 if analysis == "mageck":
     print("Statistical analysis with MAGeCK selected")
     mageck_script=script_dir+"/mageck.sh"
-    subprocess.run([mageck_script,script_dir])
+    subprocess.run([mageck_script,str(fdr),str(go),go_test,
+                go_term,script_dir,email,species,work_dir])
 elif analysis == "bagel2":
     print("Statistical analysis with BAGEL2 selected")
     bagel2_dir=config.get("BAGEL2dir")
     bagel2_script=script_dir+"/bagel2.sh"
     subprocess.run([bagel2_script,script_dir,work_dir,fasta,bagel2_dir])
 
-##plot top 10 MAGeCK hits and perform GO analysis
-if analysis == "mageck":
-    go=args["go"]
-    fdr=config.get("mageck-fdr")
-    plot_script=script_dir+"/plot-hits.sh"
-    go_test=config.get("GO", {}).get('test')
-    go_term=config.get("GO", {}).get('term')
-    email=config.get("GO", {}).get('email')
-    species=config.get("GO", {}).get('species')
-    
-    subprocess.run([plot_script,str(fdr),str(go),go_test,
-                go_term,script_dir,email,species])
-    
-    
 ###print total run time
 stop = timeit.default_timer()
 total_time = stop - start

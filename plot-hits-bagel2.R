@@ -2,8 +2,8 @@
 
 library(ggplot2)
 library(ggrepel)
-library(dplyr)
-library(viridis)
+suppressWarnings(suppressMessages(library("dplyr")))
+suppressWarnings(suppressMessages(library("viridis")))
 
 args = commandArgs(trailingOnly=TRUE)
 
@@ -12,7 +12,7 @@ save.path <- args[2]
 title <- args[3]
 
 df.top.ten <- df[1:10, ]
-df.hits <- df[df$BF>5, ]
+#df.hits <- df[df$BF>5, ]
 df <- arrange(df, df$Gene)
 
 #plot hits
@@ -39,7 +39,7 @@ p <- ggplot(df, aes(x=`Gene`,y=`BF`)) +
   geom_hline(yintercept= 5, 
              linetype="dashed", 
              color = "red") +
-  geom_label_repel(data = df.hits, 
+  geom_label_repel(data = df.top.ten, 
                    aes(x = `Gene`, y = `BF`, label = `Gene`))
 
 file.plot <- paste0("/bagel2-hits",title, ".pdf")
@@ -50,7 +50,7 @@ ggsave(plot=p,
      height = 5,
      useDingbats = FALSE)
 
-df <- arrange(df, df$BF)
+df <- arrange(df, df$Recall)
 
 #plot Precision-Recall plot
 pp <- ggplot(df, aes(x=`Recall`,y=`Precision`)) +
@@ -64,7 +64,7 @@ pp <- ggplot(df, aes(x=`Recall`,y=`Precision`)) +
         panel.grid.major = element_blank()) +
   xlab("Recall") +
   ylab("Precision (1-FDR)") +
-  geom_line(df, mapping=aes(colour="navy")) +
+  geom_line() +
   ggtitle(paste0("Precision-Recall plot ",title))
 
 file.plot <- paste0("/precision-recall-",title, ".pdf")
