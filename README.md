@@ -13,6 +13,8 @@ This bioinformatic pipeline will automate analysis of NGS data from CRISPR-Cas9 
 
 ## Software dependencies:
 
+- Bash version > 4.0 (Bash 3.xx (on MacOS) can also be used, but BAGEL2 analysis will not work)
+	- Bash can be [upgraded](https://www.shell-tips.com/mac/upgrade-bash/) on MacOS
 - [Python 3](https://www.python.org/)
 	- [Pandas](https://pandas.pydata.org/) 
 	- [Numpy](https://numpy.org/)
@@ -49,7 +51,7 @@ Installation from the command line:
 Dependencies can be installed by running (can also be done manually):
 > `./setup.sh`
 
-The `crispr-pipeline.sh` can be permamently added to $PATH by adding the following line to `~/.bashrc`:
+`crispr.py` can be permamently added to $PATH by adding the following line to `~/.bashrc`:
 > `export PATH=/home/path/to/CRISPR-tools:$PATH`
 
 OPTIONAL: to enable auto-completion of the command line options for the CRISPR library (-l) and statistical analyses (-a):
@@ -64,7 +66,24 @@ bassik:
   fasta: "/home/niek/Documents/references/fasta/Human/Bassik-library/bassik_lib.fasta"
   index_path: "/home/niek/Documents/references/bowtie2-index/bassik/bassik"
   read_mod: "clip"
-  clip_seq: "GTTTAAGAGCTAAGCTGGAAACAGCATAGCAA"
+  clip_seq: "GTTTAAGAGCTAAGCTGGAAACAGCATAG
+
+Installation from the command line:
+
+    git clone https://github.com/niekwit/CRISPR-tools.git
+
+Dependencies can be installed by running (can also be done manually):
+
+    ./setup.sh
+
+The crispr-pipeline.sh can be permamently added to $PATH by adding the following line to ~/.bashrc:
+
+    export PATH=/home/path/to/CRISPR-tools:$PATH
+
+OPTIONAL: to enable auto-completion of the command line options for the CRISPR library (-l) and statistical analyses (-a): Add this line to your ~/.bashrc file:
+
+    source /path/to/CRISPR-tools/auto-complete.sh
+CAA"
   sg_length: ""
   species: "human"
 moffat_tko1:
@@ -139,7 +158,7 @@ To start an analysis, with for example the Bassik library, navigate to main anal
 
 > `path/to/crispr.py -l bassik -r -t max`
 
-This initiates a run that will rename your samples according to `rename.config`, allows no mismatches during alignment, will use all available CPU threads for the analysis, and uses MAGeCK for statistical analysis
+This initiates a run that will rename your samples according to `rename.config`, allows no mismatches during alignment, will use all available CPU threads for the analysis, and uses MAGeCK for statistical analysis. 
 If you also want to use BAGEL2 for statistical analysis afterwards, simply run :
 > `path/to/crispr.py -l bassik -a bagel2`
 
