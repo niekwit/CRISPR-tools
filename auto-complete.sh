@@ -6,7 +6,7 @@
 #finds CRISPR libary names
 SCRIPT_DIR=$(find $HOME -type d -name "CRISPR-tools")
 lib_list=$(cat "$SCRIPT_DIR/library.yaml" | shyaml keys | tr "\n" " ")
-stat_list="mageck bagel2"
+stat_list="mageck bagel2 ceres"
 
 #enables autocompletion of `-l` flag
 function libs()

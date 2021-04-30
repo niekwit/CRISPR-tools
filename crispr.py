@@ -13,6 +13,7 @@ import subprocess
 import multiprocessing
 import yaml
 import glob
+import urllib.request
 import timeit
 import time
 
@@ -30,14 +31,14 @@ library_list=list(library.keys())
 ap = argparse.ArgumentParser()
 ap.add_argument("-l", "--library", required=True, choices=library_list,
    help="CRISPR library")
-ap.add_argument("-t", "--threads", required=False, default=1, metavar="N", type=int,
+ap.add_argument("-t", "--threads", required=False, default=1, metavar="<int>", type=int,
    help="Number of CPU threads to use (default is 1). Use max to apply all available CPU threads")
 ap.add_argument("-r", "--rename", required=False, action='store_true',
    help="Rename fq files according to rename.config")
 ap.add_argument("-m", "--mismatch", required=False,choices=[0,1], metavar="N",
    help="Number of mismatches (0 or 1) allowed during alignment")
 ap.add_argument("-a", "--analysis", required=False, default="mageck", 
-                choices=["mageck","bagel2"], 
+                choices=["mageck","bagel2", "ceres"], 
                 help="Statistical analysis with MAGeCK or BAGEL2. Default is MAGeCK")
 ap.add_argument("-g", "--go", required=False, action='store_true',
    help="GO analysis with DAVID")
@@ -113,6 +114,34 @@ elif analysis == "bagel2":
     bagel2_dir=config.get("BAGEL2dir")
     bagel2_script=script_dir+"/bagel2.sh"
     subprocess.run([bagel2_script,script_dir,work_dir,fasta,bagel2_dir])
+'''elif analysis == "ceres":
+    print("Statistical analysis with CERES selected")
+    if os.path.isdir(script_dir+'/CERES') == False:
+        print("ERROR: no CCLE copy number file present")
+        url="https://data.broadinstitute.org/ccle_legacy_data/dna_copy_number/CCLE_copynumber_2013-12-03.seg.txt"
+        download=input("Download CCLE copy numer file from https://data.broadinstitute.org/ccle_legacy_data/dna_copy_number/ y/n?")
+        if download in ["yes","Yes","y","Y"]:
+            os.mkdir(script_dir+"/CERES")
+            urllib.request.urlretrieve(url, script_dir+"/CERES/CCLE_copynumber_2013-12-03.seg.txt")
+            print("Download finished")
+        else:
+            sys.exit()
+    ceres_cn=glob.glob(script_dir+"/CERES/*.txt")
+    if len(ceres_cn) > 1:
+        print("ERROR: more than one CCLE copy number file present. Keep only one.")
+        sys.exit()
+    elif len(ceres_cn) == 0:
+        print("ERROR: no CCLE copy number file present.")
+        url="https://data.broadinstitute.org/ccle_legacy_data/dna_copy_number/CCLE_copynumber_2013-12-03.seg.txt"
+        download=input("Download CCLE copy numer file from https://data.broadinstitute.org/ccle_legacy_data/dna_copy_number/ y/n?")
+        if download in ["yes","Yes","y","Y"]:
+            urllib.request.urlretrieve(url, script_dir+"/CERES/CCLE_copynumber_2013-12-03.seg.txt")
+            print("Download finished")
+        else:
+            sys.exit()
+    print("Running CERES")
+    ceres_cn_file=script_dir+"/CERES/CCLE_copynumber_2013-12-03.seg.txt"'''
+
 
 ###print total run time
 stop = timeit.default_timer()
