@@ -114,7 +114,7 @@ elif analysis == "bagel2":
     bagel2_dir=config.get("BAGEL2dir")
     bagel2_script=script_dir+"/bagel2.sh"
     subprocess.run([bagel2_script,script_dir,work_dir,fasta,bagel2_dir])
-'''elif analysis == "ceres":
+elif analysis == "ceres":
     print("Statistical analysis with CERES selected")
     if os.path.isdir(script_dir+'/CERES') == False:
         print("ERROR: no CCLE copy number file present")
@@ -140,7 +140,10 @@ elif analysis == "bagel2":
         else:
             sys.exit()
     print("Running CERES")
-    ceres_cn_file=script_dir+"/CERES/CCLE_copynumber_2013-12-03.seg.txt"'''
+    ceres_cn_file=script_dir+"/CERES/CCLE_copynumber_2013-12-03.seg.txt"
+    ceres_script=script_dir+"/ceres.sh"
+    bagel2_dir=config.get("BAGEL2dir")
+    subprocess.run([ceres_script,script_dir,work_dir,fasta,bagel2_dir,ceres_cn_file])
 
 
 ###print total run time
