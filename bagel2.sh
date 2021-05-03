@@ -7,12 +7,10 @@ fasta=$3
 mkdir -p bagel2
 
 ###converts count table to BAGEL2 format
-Rscript "$SCRIPT_DIR/convert4bagel.R" $WORKING_DIR $fasta 
+Rscript "$SCRIPT_DIR/convert-count.R" $WORKING_DIR $fasta "bagel2"
 
 ###performs BAGEL2
-#generate array with column names and their column numbers (needed for BAGEL.py bf)
-#to do: create counts-aggregated-bagel with only test and control sample
-head -1 bagel2/counts-aggregated-bagel.txt | tr '\t' '\012' | nl | sed 's/\"//g' > bagel2/columns.txt #gets columns names and number
+head -1 bagel2/counts-aggregated-bagel2.txt | tr '\t' '\012' | nl | sed 's/\"//g' > bagel2/columns.txt #gets columns names and number
 declare -A array #array to store column names and numbers
 input="bagel2/columns.txt"
 while IFS= read -r line
@@ -34,7 +32,7 @@ do
 	bagel2_output="${test_sample}_vs_${control_sample}"
 	mkdir -p "bagel2/$bagel2_output"
 	echo "Generating fold change table $bagel2_output"
-	"$BAGEL2_DIR/BAGEL.py" fc -i "bagel2/counts-aggregated-bagel.txt" -o "bagel2/$bagel2_output/$bagel2_output" -c $control_sample_column
+	"$BAGEL2_DIR/BAGEL.py" fc -i "bagel2/counts-aggregated-bagel2.txt" -o "bagel2/$bagel2_output/$bagel2_output" -c $control_sample_column
 done < "$input"
 
 head -1 "bagel2/$bagel2_output/$bagel2_output.foldchange" | tr '\t' '\012' | nl | sed 's/\"//g' > bagel2/columns-foldchange.txt #gets columns names and number
