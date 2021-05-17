@@ -3,6 +3,7 @@
 import pkg_resources
 import os
 import subprocess
+import yaml
 import sys
 import numpy as np
 import matplotlib.pyplot as plt
@@ -11,7 +12,7 @@ import seaborn as sns
 sns.set(style="whitegrid")
 
 def install_packages(): #check for required python packages; installs if absent
-    required = {"pyyaml"}
+    required = {"pyyaml","pandas","numpy","matplotlib","seaborn"}
     installed = {pkg.key for pkg in pkg_resources.working_set}
     missing = required - installed
     if missing:
@@ -25,6 +26,81 @@ def set_threads():
     if threads == "max":
         threads=max_threads
     return threads
+
+def rename(work_dir):
+    file=open(os.path.join(work_dir,"rename.config"), "r")
+    lines=file.readlines()
+    count=0
+    for line in lines: #removes newline characters
+        lines[count]=line.replace("\n","")
+        count+=1
+
+    for line in lines:#rename files
+        old_name,new_name=line.split(";")
+        os.rename(os.path.join(work_dir,"raw-data",old_name),os.path.join(work_dir,"raw-data",new_name))
+
+def get_extension(work_dir):
+    file_list=glob.glob(os.path.join(work_dir,"raw-data","*"))
+    test_file=file_list[0]
+    extension_index=test_file.index(".",0)
+    file_extension=test_file[extension_index:]
+    return file_extension
+
+def file_exists(file):
+    if os.path.exists(file):
+        print("Skipping "+file+" (already exists/analysed)")
+        return(True)
+    else:
+        return(False)
+
+def write2log(work_dir,command,name):
+    with open(os.path.join(work_dir,"commands.log"), "a") as file:
+        file.write(name)
+        print(*command, sep=" ",file=file)
+
+def fastqc(work_dir,threads):
+    if not os.path.isdir(os.path.join(work_dir,"fastqc")) or len(os.listdir(os.path.join(work_dir,"fastqc"))) == 0:
+        os.makedirs(work_dir+"/fastqc",exist_ok=True)
+        fastqc_command="fastqc --threads "+str(threads)+" --quiet -o fastqc/ raw-data/*.fastq.gz"
+        multiqc_command=["multiqc","-o","fastqc/","fastqc/"]
+        #log commands
+        with open(os.path.join(work_dir,"commands.log"),"w") as file:
+            file.write("FastQC: ")
+            print(fastqc_command, file=file)
+            file.write("MultiQC: ")
+            print(*multiqc_command, sep=" ", file=file)
+        print("Running FastQC on raw data")
+        subprocess.run(fastqc_command, shell=True)
+        print("Running MultiQC")
+        subprocess.run(multiqc_command)
+    else:
+        print("Skipping FastQC/MultiQC (already performed)")
+
+def count():
+    pass
+
+def normalise():
+    df=pd.read_table(os.path.join(work_dir,"count","counts-aggregated.tsv"))
+    column_range=range(2,len(df.columns))
+    for i in column_range:
+        column_sum=df.iloc[:,i].sum()
+        df.iloc[:,i]=df.iloc[:,i] / column_sum * 1E8
+        df.iloc[:,i]=df.iloc[:,i].astype(int)
+    df.to_csv(os.path.join(work_dir,"count","counts-aggregated-normalised.csv"),index=False,header=True)
+
+def remove_duplicates(work_dir):
+    df=pd.read_table(os.path.join(work_dir,"count","counts-aggregated.tsv"))
+    df=pd.DataFrame.drop_duplicates(df)
+    df.to_csv(os.path.join(work_dir,"count","counts-aggregated.tsv"),index=False,header=True,sep="\t")
+
+def mageck():
+    pass
+
+def bagel2():
+    pass
+
+def ceres():
+    pass
 
 def lib_analysis():
     import warnings
@@ -122,52 +198,5 @@ def lib_analysis():
     plt.savefig('../library-analysis/lorenz-curve.pdf')
     plt.close()
 
-def rename():
-    pass
-
-def file_exists(file):
-    if os.path.exists(file):
-        print("Skipping "+file+" (already exists/analysed)")
-        return(True)
-    else:
-        return(False)
-
-def write2log(work_dir,command,name):
-    with open(os.path.join(work_dir,"commands.log"), "a") as file:
-        file.write(name)
-        print(*command, sep=" ",file=file)
-
-def fastqc(work_dir,threads):
-    if not os.path.isdir(os.path.join(work_dir,"fastqc")) or len(os.listdir(os.path.join(work_dir,"fastqc"))) == 0:
-        os.makedirs(work_dir+"/fastqc",exist_ok=True)
-        fastqc_command="fastqc --threads "+str(threads)+" --quiet -o fastqc/ raw-data/*.fastq.gz"
-        multiqc_command=["multiqc","-o","fastqc/","fastqc/"]
-        #log commands
-        with open(os.path.join(work_dir,"commands.log"),"w") as file:
-            file.write("FastQC: ")
-            print(fastqc_command, file=file)
-            file.write("MultiQC: ")
-            print(*multiqc_command, sep=" ", file=file)
-        print("Running FastQC on raw data")
-        subprocess.run(fastqc_command, shell=True)
-        print("Running MultiQC")
-        subprocess.run(multiqc_command)
-    else:
-        print("Skipping FastQC/MultiQC (already performed)")
-
-def count():
-    pass
-
-def mageck():
-    pass
-
-def bagel2():
-    pass
-
 def go():
     pass
-
-
-
-
-
