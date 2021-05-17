@@ -10,20 +10,20 @@ mkdir -p ceres
 
 #create cell line list to check if sample cell line is in CCLE list
 if [[ ! -e "$SCRIPT_DIR/CERES/CCLE_cell-line_list.txt" ]]; then
-	cat $ceres_cn_file | awk {'print($1)'} | uniq | awk -F "_" '{if ($1 != "CCLE") print($1)}' > "$SCRIPT_DIR/CERES/CCLE_cell-line_list.txt"
+	cat $ceres_cn_file | awk {'print($1)'} | uniq | awk -F "_" '{if ($1 != "CCLE") print($1)}' | sort > "$SCRIPT_DIR/CERES/CCLE_cell-line_list.txt"
 fi
 
-#check if sample cell line are in CCLE list
+#check if sample cell line is in CCLE list
 
-input="ceres-replicate-list.tsv"
+#input="ceres-replicate-list.tsv"
 reference=$(cat "$SCRIPT_DIR/CERES/CCLE_cell-line_list.txt" | tr "\n" " ")
-while IFS= read -r line
-do
-	test_cell_line=$(echo $line | awk '{if (NR!=1) {print $2}}' | awk -F "_" '{print($1)}')
-	if [[ "$reference" != *"$test_cell_line"* ]]; then
-		echo "Cell line in ceres-replicate-list.tsv not in CCLE list"
-	fi
-done < "$input"
+test_cell_line=$(cat "$SCRIPT_DIR/config.yml" | shyaml get-value CERES)
+#test_cell_line=$(echo $line | awk '{if (NR!=1) {print $2}}' | awk -F "_" '{print($1)}')
+if [[ "$reference" != *"$test_cell_line"* ]]; then
+	echo "Cell line config.yml not in CCLE list"
+	exit 1
+fi
+
 
 
 

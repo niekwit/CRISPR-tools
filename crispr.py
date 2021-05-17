@@ -1,10 +1,5 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-Created on Thu Apr  1 10:54:01 2021
-
-@author: Niek Wit (University of Cambridge)
-"""
 
 import os
 import sys
@@ -22,6 +17,8 @@ start = timeit.default_timer()#initiate timing of run
 script_dir=os.path.abspath(os.path.dirname(__file__))
 work_dir=os.getcwd()
 
+sys.path.append(script_dir)#adds script directory to runtime (for importing modules)
+
 ###loads available CRISPR libraries from library.yaml
 with open(script_dir+"/library.yaml") as file: library=yaml.full_load(file)
 
@@ -37,8 +34,8 @@ ap.add_argument("-r", "--rename", required=False, action='store_true',
    help="Rename fq files according to rename.config")
 ap.add_argument("-m", "--mismatch", required=False,choices=[0,1], metavar="N",
    help="Number of mismatches (0 or 1) allowed during alignment")
-ap.add_argument("-a", "--analysis", required=False, default="mageck", 
-                choices=["mageck","bagel2", "ceres"], 
+ap.add_argument("-a", "--analysis", required=False, default="mageck",
+                choices=["mageck","bagel2", "ceres"],
                 help="Statistical analysis with MAGeCK or BAGEL2. Default is MAGeCK")
 ap.add_argument("-g", "--go", required=False, action='store_true',
    help="GO analysis with DAVID")
@@ -58,17 +55,17 @@ rename_script=script_dir+"/rename.sh"
 if rename == True:
     subprocess.run([rename_script,script_dir])
 
-##run FastQC/MultiQC
-fastqc_script=script_dir+"/fastqc.sh"
-subprocess.run([fastqc_script,str(threads),work_dir])
-
-##count reads
-#first determine file extension
+#determine file extension raw data
 file_list=glob.glob("raw-data/*")
 test_file=file_list[0]
 extension_index=test_file.index(".",0)
 file_extension=test_file[extension_index:]
 
+##Run FastQC/MultiQC
+from utils import fastqc
+fastqc(work_dir,threads)
+
+##count reads
 #load settings
 crispr_library=args["library"]
 mismatch=args["mismatch"]

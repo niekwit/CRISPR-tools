@@ -47,3 +47,10 @@ ubiquitome:
   clip_seq: ""
   sg_length: 20
   species: "human"
+iron-sub: 
+  fasta: "/home/niek/Documents/references/fasta/Human/iron-sub/iron-sub.fa"
+  index_path: "/home/niek/Documents/references/bowtie2-index/iron-sub/iron-sub"
+  read_mod: "trim"
+  clip_seq: ""
+  sg_length: 20
+  species: "human"

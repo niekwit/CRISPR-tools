@@ -40,7 +40,7 @@ prepare_ceres_inputs(inputs_dir=gecko_inputs_dir,
                      rep_map_file=gecko_rep_map,
                      chromosomes=paste0("chr", 1:22),
                      dep_normalize="zmad",
-                     bowtie_exe = "/home/niek/Downloads/example_data/bowtie2-2.4.2-linux-x86_64/bowtie2",
+                     bowtie_exe = "/home/niek/Downloads/example_data/bowtie-1.3.0-linux-x86_64/bowtie",
                      samtools_exe = "/home/niek/Downloads/example_data/samtools-1.12/bin/samtools")
 
 gecko_ceres <-
