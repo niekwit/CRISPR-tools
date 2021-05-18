@@ -3,8 +3,11 @@
 import pkg_resources
 import os
 import subprocess
+import multiprocessing
 import yaml
 import sys
+import csv
+import glob
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -20,11 +23,12 @@ def install_packages(): #check for required python packages; installs if absent
         print("Installing missing required Python3 packages")
         subprocess.check_call([python, '-m', 'pip3', 'install', *missing], stdout=subprocess.DEVNULL)
 
-def set_threads():
+def set_threads(args):
     max_threads=str(multiprocessing.cpu_count())
     threads=args["threads"]
     if threads == "max":
         threads=max_threads
+    threads=str(threads)
     return threads
 
 def rename(work_dir):
@@ -56,12 +60,12 @@ def file_exists(file):
 def write2log(work_dir,command,name):
     with open(os.path.join(work_dir,"commands.log"), "a") as file:
         file.write(name)
-        print(*command, sep=" ",file=file)
+        print(*command, sep="",file=file)
 
-def fastqc(work_dir,threads):
+def fastqc(work_dir,threads,file_extension):
     if not os.path.isdir(os.path.join(work_dir,"fastqc")) or len(os.listdir(os.path.join(work_dir,"fastqc"))) == 0:
         os.makedirs(work_dir+"/fastqc",exist_ok=True)
-        fastqc_command="fastqc --threads "+str(threads)+" --quiet -o fastqc/ raw-data/*.fastq.gz"
+        fastqc_command="fastqc --threads "+str(threads)+" --quiet -o fastqc/ raw-data/*"+file_extension
         multiqc_command=["multiqc","-o","fastqc/","fastqc/"]
         #log commands
         with open(os.path.join(work_dir,"commands.log"),"w") as file:
@@ -76,8 +80,96 @@ def fastqc(work_dir,threads):
     else:
         print("Skipping FastQC/MultiQC (already performed)")
 
-def count():
-    pass
+def check_index(library,crispr_library,script_dir):
+    index_path=library[crispr_library]["index_path"]
+    fasta=library[crispr_library]["fasta"]
+
+    print(crispr_library+" library selected")
+
+    if index_path == "":
+        print("No index file found for "+crispr_library)
+        if fasta == "":
+            sys.exit("ERROR:No fasta file found for "+crispr_library)
+        else:
+            index_base=os.path.join(script_dir,"index",crispr_library,crispr_library+"-index")
+            bowtie2_build_command=["bowtie2-build",fasta,index_base]
+            write2log(work_dir,bowtie2_build_command,"Bowtie2-build: ")
+
+            #Write bowtie2 index file location to library.yaml
+            with open(os.path.join(script_dir,"library.yaml")) as f:
+                doc=yaml.safe_load(f)
+            doc[crispr_library]["index_path"]=index_base
+            with open(os.path.join(script_dir,"library.yaml"), "w") as f:
+                yaml.dump(doc,f)
+
+            print("Building Bowtie2 index for "+crispr_library+"library")
+            subprocess.run(bowtie2-build-command) #build index
+
+def guide_names(library,crispr_library):
+    fasta=library[crispr_library]["fasta"]
+    output_name=fasta.replace(".fasta","-guide_names.csv")
+
+    if not os.path.exists(output_name):
+        library = pd.read_csv(fasta, names = ['guide'])
+        #creates new dataframe with only guide names:
+        library = library[library['guide'].str.contains('>')]
+        #removes '<' character from each row:
+        library = library['guide'].str.strip('>')
+        #saves guide names to a .csv file:
+        library.to_csv(output_name, index=False, header=False)
+
+def count(library,crispr_library,mismatch,threads,script_dir,work_dir,file_extension):
+    os.makedirs(os.path.join(work_dir,"count"),exist_ok=True)
+
+    read_mod=library[crispr_library]["read_mod"]
+    sg_length=library[crispr_library]["sg_length"]
+    sg_length=str(sg_length)
+    index_path=library[crispr_library]["index_path"]
+    clip_seq=library[crispr_library]["clip_seq"]
+    fasta=library[crispr_library]["fasta"]
+    mismatch=str(mismatch)
+
+    print("Aligning reads to reference (mismatches allowed: "+mismatch+")")
+
+    #bowtie2 and bash commands (common to both trim and clip)
+    bowtie2="bowtie2 --no-hd -p"+threads+" -t -N "+mismatch+" -x "+index_path+" - 2>> crispr.log | "
+    bash="sed '/XS:/d' | cut -f3 | sort | uniq -c > "
+
+    if read_mod == "trim":
+        file_list=glob.glob(os.path.join(work_dir,"raw-data","*"+file_extension))
+        for file in file_list:
+            base_file=os.path.basename(file)
+            out_file=os.path.join(work_dir,"count",base_file.replace(file_extension,".guidecounts.txt"))
+            if not file_exists(out_file):
+                print("Aligning "+base_file)
+                print(base_file, file=open("crispr.log", "a"))
+                cutadapt="cutadapt -j "+threads+" --quality-base 33 -l "+sg_length+" -o - "+file+" 2>> crispr.log | "
+                cutadapt=str(cutadapt)
+                bowtie2=str(bowtie2)
+                count_command=cutadapt+bowtie2+bash+out_file
+                write2log(work_dir,count_command,"Count: ")
+                subprocess.run(count_command,shell=True)
+    elif read_mod == "clip":
+        file_list=glob.glob(os.path.join(work_dir,"raw-data","*"+file_extension))
+        for file in file_list:
+            base_file=os.path.basename(file)
+            out_file=os.path.join(work_dir,"count",file.replace(base_file,".guidecounts.txt"))
+
+            if not file_exists(out_file):
+                print("Aligning "+base_file)
+                print(base_file, file=open("crispr.log", "a"))
+                cutadapt="cutadapt -j "+threads+" --quality-base 33 -a "+clip_seq+" -o - "+file+" 2>> crispr.log | "
+                cutadapt=str(cutadapt)
+                bowtie2=str(bowtie2)
+                count_command=cutadapt+bowtie2+bash+out_file
+                write2log(work_dir,count_command,"Count: ")
+                subprocess.run(count_command, shell=True)
+
+    #remove first line from guide count text files (bowtie2 artefact)
+    count_list=glob.glob(os.path.join(work_dir,"count","*guidecounts.txt"))
+    for file in count_list:
+        command="sed '1d' "+file+" > "+file+".temp "+"&& mv "+file+".temp "+file
+        subprocess.run(command, shell=True)
 
 def normalise():
     df=pd.read_table(os.path.join(work_dir,"count","counts-aggregated.tsv"))
@@ -92,6 +184,102 @@ def remove_duplicates(work_dir):
     df=pd.read_table(os.path.join(work_dir,"count","counts-aggregated.tsv"))
     df=pd.DataFrame.drop_duplicates(df)
     df.to_csv(os.path.join(work_dir,"count","counts-aggregated.tsv"),index=False,header=True,sep="\t")
+
+def join_counts(work_dir,library,crispr_library):
+    #load sgRNA names, used for merging data2
+    fasta=library[crispr_library]["fasta"]
+    guide_name_file=fasta.replace(".fasta","-guide_names.csv")
+
+    sgrnas_list00 = list(csv.reader(open(guide_name_file)))
+
+    sgrnas_list0 = []
+
+    for x in sgrnas_list00: #Flattens the list
+        for y in x:
+            sgrnas_list0.append(y)
+
+    #Generates sgRNA and gene columns for final output
+    sgRNA_output = []
+    gene_output = []
+
+    for n in sgrnas_list0:
+        #print(n)
+        s,g = n.split("_", 1)
+        sgRNA_output.append(g)
+        gene_output.append(s)
+
+    #Generates reference Pandas data frame from sgRNA list library file
+    d0 = {'sgRNA':pd.Series(sgRNA_output),'gene':pd.Series(gene_output),'sgRNA2':pd.Series(sgrnas_list0)}
+    dfjoin1 = pd.DataFrame(d0) #sgRNA/gene column required for MAGeCK, sgRNA2 is needed for join operation (deleted later)
+
+    #Generates a list of all count .txt files
+    file_list = glob.glob(os.path.join(work_dir,"count",'*.guidecounts.txt'))
+    file_list.sort()
+    file_list2 = [w.replace('.guidecounts.txt','') for w in file_list] #this list will generate the column headers for the output file (removes .txt)
+
+    #Counts number of .txt files in script folder
+    txtnumber = len(file_list)
+
+    #Generates list of lists for join function output
+    cycle = 1
+    master_count_list0 = []
+    while cycle <= txtnumber:
+        master_count_list0.append("count_list"+ str(cycle))
+        cycle +=1
+    master_count_list1 = []
+    for i in master_count_list0:
+        master_count_list1.append([i])
+
+    cycle = 1
+    master_sgrna_list0 = []
+    while cycle <= txtnumber:
+        master_sgrna_list0.append("sgrna_list"+ str(cycle))
+        cycle +=1
+    master_sgrna_list1 = []
+    for i in master_sgrna_list0:
+        master_sgrna_list1.append([i])
+
+    #Generates Pandas data frame and adds each of the count files in the folder to it after joining
+    counter = 0
+    while counter < txtnumber:
+        #Opens count files and extract counts and sgRNA names
+        file = list(csv.reader(open(file_list [counter])))
+
+        for x in file:
+            a = str(x)
+            if a.count(' ') > 1:
+                z,b,c = a.split()
+                bint = int(b)
+                cmod = c.replace("']","")
+                master_count_list1 [counter].append(bint)
+                master_sgrna_list1 [counter].append(cmod)
+            else:
+                b,c = a.split()
+                bint = b.replace("['","")
+                bint = int(bint)
+                cmod = c.replace("']","")
+                master_count_list1 [counter].append(bint)
+                master_sgrna_list1 [counter].append(cmod)
+
+        #Generates Pandas data frame for the data
+        d1 = {'sgRNA2':pd.Series(master_sgrna_list1 [counter]),
+            file_list2 [counter]:pd.Series(master_count_list1 [counter])}
+        df1 = pd.DataFrame(d1)
+
+        #Performs left join to merge Pandas data frames sets:
+        dfjoin1 = pd.merge(dfjoin1, df1, on='sgRNA2', how='left')
+        dfjoin1 = dfjoin1.fillna(0) #Replaces nan with zero
+
+        counter +=1
+
+    #Deletes sgRNA2 column from dataframe (only needed for joining, not for MAGeCK)
+    dfjoin2 = dfjoin1.drop(columns='sgRNA2')
+
+    #only keep base name as column names
+    ###TO DO
+
+    #Writes all data to a single .tsv file, ready for MAGeCK
+    dfjoin2.to_csv(os.path.join(work_dir,"count",'counts-aggregated.tsv'), sep='\t',index=False)
 
 def mageck():
     pass
