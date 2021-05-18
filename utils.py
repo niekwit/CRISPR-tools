@@ -276,12 +276,20 @@ def join_counts(work_dir,library,crispr_library):
     dfjoin2 = dfjoin1.drop(columns='sgRNA2')
 
     #only keep base name as column names
-    ###TO DO
+    column_number=len(dfjoin2.columns)
+    column_range=range(2,column_number)
+    for i in column_range:
+        old_name=dfjoin2.columns[i]
+        new_name=os.path.basename(old_name)
+        dfjoin2.rename(columns={list(dfjoin2)[i]:new_name},inplace=True)
 
     #Writes all data to a single .tsv file, ready for MAGeCK
     dfjoin2.to_csv(os.path.join(work_dir,"count",'counts-aggregated.tsv'), sep='\t',index=False)
 
 def mageck():
+    pass
+
+def convert4bagel():
     pass
 
 def bagel2():
