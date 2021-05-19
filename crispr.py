@@ -11,9 +11,6 @@ import urllib.request
 import timeit
 import time
 
-start = timeit.default_timer()#initiate timing of run
-
-
 def main():
     ###command line argument parser
     ap = argparse.ArgumentParser()
@@ -60,35 +57,24 @@ def main():
     utils.count(library,crispr_library,mismatch,threads,script_dir,work_dir,file_extension)
     #join count files
     utils.join_counts(work_dir,library,crispr_library)
-
+    #normalise read count table
+    utils.normalise(work_dir)
     ##run library analysis
-    library_script=script_dir+"/lib-analysis.sh"
-    subprocess.run([library_script,work_dir,script_dir])
+    utils.lib_analysis(work_dir)
 
-    ##run MAGeCK
-    #get settings
-    if os.path.exists("config.yml") == True:
-            with open("config.yml") as file: config=yaml.full_load(file)
-    else:
-            print("ERROR: config.yml not found. Please provide this file for further analysis.")
-            sys.exit()
-
-
+    ##run stats on counts
     analysis=args["analysis"]
-    go=args["go"]
-    fdr=config.get("mageck-fdr")
-    go_test=config.get("GO", {}).get('test')
-    go_term=config.get("GO", {}).get('term')
-    email=config.get("GO", {}).get('email')
-    species=config.get("GO", {}).get('species')
+
+
     if analysis == "mageck":
         print("Statistical analysis with MAGeCK selected")
-        mageck_script=script_dir+"/mageck.sh"
-        subprocess.run([mageck_script,str(fdr),str(go),go_test,
-                    go_term,script_dir,email,species,work_dir])
+        utils.mageck(work_dir,script_dir)
     elif analysis == "bagel2":
         print("Statistical analysis with BAGEL2 selected")
         bagel2_dir=config.get("BAGEL2dir")
+
+        utils.convert4bagel(work_dir,library)
+
         bagel2_script=script_dir+"/bagel2.sh"
         subprocess.run([bagel2_script,script_dir,work_dir,fasta,bagel2_dir])
     elif analysis == "ceres":
@@ -122,6 +108,8 @@ def main():
         bagel2_dir=config.get("BAGEL2dir")
         subprocess.run([ceres_script,script_dir,work_dir,fasta,bagel2_dir,ceres_cn_file])
 
+    #GO analysis
+    go=args["go"]
 
 if __name__ == "__main__":
     #start run timer

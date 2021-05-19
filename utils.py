@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import warnings
 import pkg_resources
 import os
 import subprocess
@@ -52,7 +53,7 @@ def get_extension(work_dir):
 
 def file_exists(file):
     if os.path.exists(file):
-        print("Skipping "+file+" (already exists/analysed)")
+        print("\tSkipping "+file+" (already exists/analysed)")
         return(True)
     else:
         return(False)
@@ -135,6 +136,7 @@ def count(library,crispr_library,mismatch,threads,script_dir,work_dir,file_exten
     bowtie2="bowtie2 --no-hd -p"+threads+" -t -N "+mismatch+" -x "+index_path+" - 2>> crispr.log | "
     bash="sed '/XS:/d' | cut -f3 | sort | uniq -c > "
 
+    #trim, align and count
     if read_mod == "trim":
         file_list=glob.glob(os.path.join(work_dir,"raw-data","*"+file_extension))
         for file in file_list:
@@ -142,7 +144,7 @@ def count(library,crispr_library,mismatch,threads,script_dir,work_dir,file_exten
             out_file=os.path.join(work_dir,"count",base_file.replace(file_extension,".guidecounts.txt"))
             if not file_exists(out_file):
                 print("Aligning "+base_file)
-                print(base_file, file=open("crispr.log", "a"))
+                print(base_file+":", file=open("crispr.log", "a"))
                 cutadapt="cutadapt -j "+threads+" --quality-base 33 -l "+sg_length+" -o - "+file+" 2>> crispr.log | "
                 cutadapt=str(cutadapt)
                 bowtie2=str(bowtie2)
@@ -171,7 +173,7 @@ def count(library,crispr_library,mismatch,threads,script_dir,work_dir,file_exten
         command="sed '1d' "+file+" > "+file+".temp "+"&& mv "+file+".temp "+file
         subprocess.run(command, shell=True)
 
-def normalise():
+def normalise(work_dir):
     df=pd.read_table(os.path.join(work_dir,"count","counts-aggregated.tsv"))
     column_range=range(2,len(df.columns))
     for i in column_range:
@@ -286,11 +288,89 @@ def join_counts(work_dir,library,crispr_library):
     #Writes all data to a single .tsv file, ready for MAGeCK
     dfjoin2.to_csv(os.path.join(work_dir,"count",'counts-aggregated.tsv'), sep='\t',index=False)
 
-def mageck():
-    pass
+def mageck(work_dir,script_dir):
+    #check for stats.config
+    stats_config=os.path.join(work_dir,"stats.config")
+    if not os.path.exists(stats_config):
+        print("ERROR: stats.config not found (MAGeCK comparisons)")
+        return(None)
 
-def convert4bagel():
-    pass
+    #check for config.yml
+    config_yml=os.path.join(work_dir,"config.yml")
+    if not os.path.exists(config_yml):
+        print("ERROR: config.yml not found (MAGeCK settings)")
+        return(None)
+
+    #determine number of samples in count table
+    header=subprocess.check_output(["head", "-1",os.path.join(work_dir,"count","counts-aggregated.tsv")])
+    header=header.decode("utf-8")
+    sample_count=header.count("\t") - 1
+    if sample_count ==3:
+        if "pre" and "post" in header:
+            print("Skipping MAGeCK (only CRISPR library samples present)")
+            return(None)
+
+    #open config.yml
+    with open(os.path.join(work_dir,"config.yml")) as file:
+        config=yaml.full_load(file)
+
+    fdr=config["mageck-fdr"]
+
+    #create MAGeCK dir
+    os.makedirs(os.path.join(work_dir,"mageck"),exist_ok=True)
+
+    #load MAGeCK comparisons and run MAGeCK
+    df=pd.read_csv(os.path.join(work_dir,"stats.config"),sep=";")
+    sample_number=len(df)
+    sample_range=range(sample_number)
+
+    for i in sample_range:
+        test_sample=df.loc[i]["t"]
+        control_sample=df.loc[i]["c"]
+        mageck_output=test_sample+"_vs_"+control_sample
+        print(mageck_output)
+
+        if not file_exists(os.path.join(work_dir,"mageck",mageck_output)):
+            os.makedirs(os.path.join(work_dir,"mageck",mageck_output),exist_ok=True)
+
+        prefix=os.path.join(work_dir,"mageck",mageck_output,mageck_output)
+        input=os.path.join(work_dir,"count","counts-aggregated.tsv")
+        log=" 2>> "+os.path.join(work_dir,"crispr.log")
+        mageck_command="mageck test -k "+input+" -t "+test_sample+" -c "+control_sample+" -n "+prefix+log
+        write2log(work_dir,mageck_command,"MAGeCK: ")
+        subprocess.run(mageck_command, shell=True)
+
+    #plot MAGeCK hits
+    file_list=glob.glob(os.path.join(work_dir,"mageck","*","*gene_summary.txt"))
+
+    for file in file_list:
+        save_path=os.path.dirname(file)
+        plot_command="Rscript "+os.path.join(script_dir,"plot-hits.R ")+work_dir+" "+file+" mageck "+save_path
+        write2log(work_dir,plot_command,"Plot hits MAGeCK: ")
+        subprocess.run(plot_command, shell=True)
+
+
+def convert4bagel(work_dir,library):
+    #obtain sequences of each guide
+    fasta=library[crispr_library]["fasta"]
+    df_fasta=pd.read_csv(fasta, header=None)
+
+    df_name=df_fasta[df_fasta[0].str.contains(">")]
+    names=df_name.squeeze()#convert to series
+    names=names.reset_index(drop=True)#reset index
+    names=names.str.replace(">","")#remove >
+    names.name="sgRNA"
+    df_seq=df_fasta[~df_fasta[0].str.contains(">")]
+    seq=df_seq.squeeze()#convert to series
+    seq=seq.reset_index(drop=True)#reset index
+    seq.name="SEQUENCE"
+    df_join=pd.concat([names,seq],axis=1)#create df with names and sequences
+    #reformat sgRNA to just gene name
+
+    #open MAGeCK formatted count table
+    count_file=os.path.join(work_dir,"count","counts-aggregated.tsv")
+    df_master=pd.read_csv(count_file, sep="\t")
+
 
 def bagel2():
     pass
@@ -298,73 +378,84 @@ def bagel2():
 def ceres():
     pass
 
-def lib_analysis():
-    import warnings
-    warnings.filterwarnings("ignore")
+def lib_analysis(work_dir):
+    #determine whether count file contains library samples pre and post
+    header=subprocess.check_output(["head", "-1",os.path.join(work_dir,"count","counts-aggregated.tsv")])
+    if "pre" and "post" in str(header):
+        #check if analysis has been performed already
+        out_file=os.path.join(work_dir,"library-analysis","normalised-guides-frequency.pdf")
+        if not os.path.exists(out_file):
+            print("Analysing CRISPR library quality")
+        else:
+            print("CRISPR library quality already analysed")
+            return(None)
 
-    df = pd.read_csv('counts-aggregated.tsv',sep='\t')
+        os.makedirs(os.path.join(work_dir,"library-analysis"),exist_ok=True)
+        warnings.filterwarnings("ignore")
 
-    #determines total read count per column
-    pre_lib_sum = df['pre'].sum()
-    pre_lib_sum = int(pre_lib_sum)
-    post_lib_sum = df['post'].sum()
-    post_lib_sum = int(post_lib_sum)
+        df = pd.read_csv(os.path.join(work_dir,"count",'counts-aggregated.tsv'),sep='\t')
 
-    #normalises guide counts to total guide count
-    #X: pre-amplification library, Y: post-amplification library
-    datax = df['pre']
-    datax = datax.sort_values(ascending=True)
-    X = datax.to_numpy()
-    X = X / pre_lib_sum
+        #determines total read count per column
+        pre_lib_sum = df['pre'].sum()
+        pre_lib_sum = int(pre_lib_sum)
+        post_lib_sum = df['post'].sum()
+        post_lib_sum = int(post_lib_sum)
 
-    datay = df['post']
-    datay = datay.sort_values(ascending=True)
-    Y = datay.to_numpy()
-    Y = Y / pre_lib_sum
+        #normalises guide counts to total guide count
+        #X: pre-amplification library, Y: post-amplification library
+        datax = df['pre']
+        datax = datax.sort_values(ascending=True)
+        X = datax.to_numpy()
+        X = X / pre_lib_sum
 
-    index_len = len(df.index)
+        datay = df['post']
+        datay = datay.sort_values(ascending=True)
+        Y = datay.to_numpy()
+        Y = Y / pre_lib_sum
 
-    #plots data:
-    ax = sns.lineplot(x=range(index_len),y=X, color='navy',label='Pre-amplification library')
-    ax = sns.lineplot(x=range(index_len),y=Y, color='green',label='Post-amplification library')
-    ax.set_yscale('log')
-    ax.legend(loc='lower right')
-    ax.set(ylabel='Normalised sgRNA count', xlabel='sgRNA')
-    plt.savefig('../library-analysis/normalised-guides-frequency.pdf')
-    plt.close()
+        index_len = len(df.index)
 
-    #
-    datax2 = df['pre']
-    X2 = datax2.to_numpy()
-    X2 = X2 / pre_lib_sum
+        #plots data:
+        ax = sns.lineplot(x=range(index_len),y=X, color='navy',label='Pre-amplification library')
+        ax = sns.lineplot(x=range(index_len),y=Y, color='green',label='Post-amplification library')
+        ax.set_yscale('log')
+        ax.legend(loc='lower right')
+        ax.set(ylabel='Normalised sgRNA count', xlabel='sgRNA')
+        plt.savefig(os.path.join(work_dir,"library-analysis","normalised-guides-frequency.pdf"))
+        plt.close()
 
-    datay2 = df['post']
-    Y2 = datay2.to_numpy()
-    Y2 = Y2 / pre_lib_sum
+        #
+        datax2 = df['pre']
+        X2 = datax2.to_numpy()
+        X2 = X2 / pre_lib_sum
 
-    data2 = X2 / Y2
-    data2 = np.sort(data2)
+        datay2 = df['post']
+        Y2 = datay2.to_numpy()
+        Y2 = Y2 / pre_lib_sum
 
-    ax = sns.lineplot(x=range(index_len),y=data2, color='navy')
-    ax.set(ylabel='Normalised \n pre-amplification/post-amplification', xlabel='sgRNA')
-    ax.set_yscale('log')
-    plt.tight_layout()
-    plt.savefig('../library-analysis/normalised-pre-amplification-post-amplification.pdf')
-    plt.close()
+        data2 = X2 / Y2
+        data2 = np.sort(data2)
 
-    #Calculates Gini index of data sets
-    ##Code taken and adapted from https://zhiyzuo.github.io/Plot-Lorenz/
+        ax = sns.lineplot(x=range(index_len),y=data2, color='navy')
+        ax.set(ylabel='Normalised \n pre-amplification/post-amplification', xlabel='sgRNA')
+        ax.set_yscale('log')
+        plt.tight_layout()
+        plt.savefig(os.path.join(work_dir,"library-analysis","normalised-pre-amplification-post-amplification.pdf"))
+        plt.close()
 
-    #function to calculate Gini index
-    def gini(arr):
-        ## first sort
-        sorted_arr = arr.copy()
-        sorted_arr.sort()
-        n = arr.size
-        coef_ = 2. / n
-        const_ = (n + 1.) / n
-        weighted_sum = sum([(i+1)*yi for i, yi in enumerate(sorted_arr)])
-        return coef_*weighted_sum/(sorted_arr.sum()) - const_
+        #Calculates Gini index of data sets
+        ##Code taken and adapted from https://zhiyzuo.github.io/Plot-Lorenz/
+
+        #function to calculate Gini index
+        def gini(arr):
+            ## first sort
+            sorted_arr = arr.copy()
+            sorted_arr.sort()
+            n = arr.size
+            coef_ = 2. / n
+            const_ = (n + 1.) / n
+            weighted_sum = sum([(i+1)*yi for i, yi in enumerate(sorted_arr)])
+            return coef_*weighted_sum/(sorted_arr.sum()) - const_
 
         pre_gini_index = gini(X)
         pre_gini_index = round(pre_gini_index, 3)
@@ -379,20 +470,22 @@ def lib_analysis():
         Y_lorenz = np.insert(Y_lorenz, 0, 0)
         Y_lorenz[0], Y_lorenz[-1]
 
-    #plots Lorenz curve
-    fig, ax = plt.subplots(figsize=[6,6])
-    ax.plot(np.arange(X_lorenz.size)/(X_lorenz.size-1), X_lorenz, label='Library pre-amplification',
-            color='green')
-    ax.plot(np.arange(Y_lorenz.size)/(Y_lorenz.size-1), Y_lorenz, label='Library post-amplification',
-            color='red')
-    ax.plot([0,1], [0,1], color='k', label='Ideal library')#line plot of equality
-    ax.set(ylabel='Cumulative fraction of reads represented', xlabel='sgRNAs ranked by abundance')
-    plt.text(0.075, 0.9, 'pre-amplification Gini index = '+str(pre_gini_index))
-    plt.text(0.075, 0.85, 'post-amplification Gini index = '+str(post_gini_index))
-    ax.legend(loc='lower right')
-    plt.tight_layout()
-    plt.savefig('../library-analysis/lorenz-curve.pdf')
-    plt.close()
+        #plots Lorenz curve
+        fig, ax = plt.subplots(figsize=[6,6])
+        ax.plot(np.arange(X_lorenz.size)/(X_lorenz.size-1), X_lorenz, label='Library pre-amplification',
+                color='green')
+        ax.plot(np.arange(Y_lorenz.size)/(Y_lorenz.size-1), Y_lorenz, label='Library post-amplification',
+                color='red')
+        ax.plot([0,1], [0,1], color='k', label='Ideal library')#line plot of equality
+        ax.set(ylabel='Cumulative fraction of reads represented', xlabel='sgRNAs ranked by abundance')
+        plt.text(0.075, 0.9, 'pre-amplification Gini index = '+str(pre_gini_index))
+        plt.text(0.075, 0.85, 'post-amplification Gini index = '+str(post_gini_index))
+        ax.legend(loc='lower right')
+        plt.tight_layout()
+        plt.savefig(os.path.join(work_dir,"library-analysis","lorenz-curve.pdf"))
+        plt.close()
+    else:
+        return None
 
 def go():
     pass
