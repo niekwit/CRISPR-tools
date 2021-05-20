@@ -7,7 +7,6 @@ import subprocess
 import multiprocessing
 import yaml
 import glob
-import urllib.request
 import timeit
 import time
 
@@ -23,8 +22,10 @@ def main():
     ap.add_argument("-m", "--mismatch", required=False,choices=[0,1], metavar="N",
        help="Number of mismatches (0 or 1) allowed during alignment", default=0)
     ap.add_argument("-a", "--analysis", required=False, default="mageck",
-                    choices=["mageck","bagel2", "ceres"],
+                    choices=["mageck","bagel2"],
                     help="Statistical analysis with MAGeCK or BAGEL2. Default is MAGeCK")
+    ap.add_argument("-c", "--cnv", required=False, action='store_true',
+       help="Activate CNV correction for MAGeCK")
     ap.add_argument("-g", "--go", required=False, action='store_true',
        help="GO analysis with DAVID")
 
@@ -65,48 +66,18 @@ def main():
     ##run stats on counts
     analysis=args["analysis"]
 
-
     if analysis == "mageck":
         print("Statistical analysis with MAGeCK selected")
-        utils.mageck(work_dir,script_dir)
+        cnv=args["cnv"]
+        utils.mageck(work_dir,script_dir,cnv)
     elif analysis == "bagel2":
         print("Statistical analysis with BAGEL2 selected")
-        bagel2_dir=config.get("BAGEL2dir")
-
-        utils.convert4bagel(work_dir,library)
-
-        bagel2_script=script_dir+"/bagel2.sh"
-        subprocess.run([bagel2_script,script_dir,work_dir,fasta,bagel2_dir])
-    elif analysis == "ceres":
-        print("Statistical analysis with CERES selected")
-        if os.path.isdir(script_dir+'/CERES') == False:
-            print("ERROR: no CCLE copy number file present")
-            url="https://data.broadinstitute.org/ccle_legacy_data/dna_copy_number/CCLE_copynumber_2013-12-03.seg.txt"
-            download=input("Download CCLE copy numer file from https://data.broadinstitute.org/ccle_legacy_data/dna_copy_number/ y/n?")
-            if download in ["yes","Yes","y","Y"]:
-                os.mkdir(script_dir+"/CERES")
-                urllib.request.urlretrieve(url, script_dir+"/CERES/CCLE_copynumber_2013-12-03.seg.txt")
-                print("Download finished")
-            else:
-                sys.exit()
-        ceres_cn=glob.glob(script_dir+"/CERES/*.txt")
-        if len(ceres_cn) > 1:
-            print("ERROR: more than one CCLE copy number file present. Keep only one.")
-            sys.exit()
-        elif len(ceres_cn) == 0:
-            print("ERROR: no CCLE copy number file present.")
-            url="https://data.broadinstitute.org/ccle_legacy_data/dna_copy_number/CCLE_copynumber_2013-12-03.seg.txt"
-            download=input("Download CCLE copy numer file from https://data.broadinstitute.org/ccle_legacy_data/dna_copy_number/ y/n?")
-            if download in ["yes","Yes","y","Y"]:
-                urllib.request.urlretrieve(url, script_dir+"/CERES/CCLE_copynumber_2013-12-03.seg.txt")
-                print("Download finished")
-            else:
-                sys.exit()
-        print("Running CERES")
-        ceres_cn_file=script_dir+"/CERES/CCLE_copynumber_2013-12-03.seg.txt"
-        ceres_script=script_dir+"/ceres.sh"
-        bagel2_dir=config.get("BAGEL2dir")
-        subprocess.run([ceres_script,script_dir,work_dir,fasta,bagel2_dir,ceres_cn_file])
+        utils.convert4bagel(work_dir,library,crispr_library)
+        utils.bagel2(work_dir)
+        #bagel2_dir="/home/niek/Documents/scripts/bagel"
+        #fasta="/home/niek/Documents/references/fasta/Human/DUB-only/DUBonly.fasta"
+        #bagel2_script=script_dir+"/bagel2.sh"
+        #subprocess.run([bagel2_script,script_dir,work_dir,fasta,bagel2_dir])
 
     #GO analysis
     go=args["go"]
@@ -120,7 +91,7 @@ if __name__ == "__main__":
 
     #adds script directory to runtime for importing modules
     sys.path.append(script_dir)
-    import utils
+    import crispr_utils as utils
 
     ###loads available CRISPR libraries from library.yaml
     with open(os.path.join(script_dir,"library.yaml")) as file:

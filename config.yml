@@ -1,8 +1,8 @@
 mageck-fdr: 0.25
+CNV-cell-line: 
 GO:
   email: "your@email.com" #create an account first on https://david.ncifcrf.gov/webservice/register.htm
   species: "human"
   test: "Benjamini" #choose Bonferroni or Benjamini
   term: "BP" #BP, CC or MF
-BAGEL2dir: "/home/niek/Documents/scripts/bagel"
 
