@@ -65,22 +65,20 @@ def main():
 
     ##run stats on counts
     analysis=args["analysis"]
+    go=args["go"]
 
     if analysis == "mageck":
         print("Statistical analysis with MAGeCK selected")
         cnv=args["cnv"]
         utils.mageck(work_dir,script_dir,cnv)
+        #GO analysis
+        if go == True:
+            utils.go(work_dir,script_dir)
     elif analysis == "bagel2":
         print("Statistical analysis with BAGEL2 selected")
         utils.convert4bagel(work_dir,library,crispr_library)
-        utils.bagel2(work_dir)
-        #bagel2_dir="/home/niek/Documents/scripts/bagel"
-        #fasta="/home/niek/Documents/references/fasta/Human/DUB-only/DUBonly.fasta"
-        #bagel2_script=script_dir+"/bagel2.sh"
-        #subprocess.run([bagel2_script,script_dir,work_dir,fasta,bagel2_dir])
+        utils.bagel2(work_dir,script_dir)
 
-    #GO analysis
-    go=args["go"]
 
 if __name__ == "__main__":
     #start run timer

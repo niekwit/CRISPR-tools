@@ -63,7 +63,7 @@ def get_extension(work_dir):
 
 def file_exists(file):
     if os.path.exists(file):
-        print("\tSkipping "+file+" (already exists/analysed)")
+        print("Skipping "+file+" (already exists/analysed)")
         return(True)
     else:
         return(False)
@@ -151,7 +151,7 @@ def count(library,crispr_library,mismatch,threads,script_dir,work_dir,file_exten
     print("Aligning reads to reference (mismatches allowed: "+mismatch+")")
 
     #bowtie2 and bash commands (common to both trim and clip)
-    bowtie2="bowtie2 --no-hd -p"+threads+" -t -N "+mismatch+" -x "+index_path+" - 2>> crispr.log | "
+    bowtie2="bowtie2 --no-hd -p "+threads+" -t -N "+mismatch+" -x "+index_path+" - 2>> crispr.log | "
     bash="sed '/XS:/d' | cut -f3 | sort | uniq -c > "
 
     #trim, align and count
@@ -409,7 +409,7 @@ def mageck(work_dir,script_dir,cnv):
 
     for file in file_list:
         save_path=os.path.dirname(file)
-        plot_command="Rscript "+os.path.join(script_dir,"R","plot-hits.R ")+work_dir+" "+file+" mageck "+save_path
+        plot_command="Rscript "+os.path.join(script_dir,"R","plot-hits.R ")+work_dir+" "+file+" mageck "+save_path+" "+mageck_output
         write2log(work_dir,plot_command,"Plot hits MAGeCK: ")
         try:
             subprocess.run(plot_command, shell=True)
@@ -468,14 +468,14 @@ def convert4bagel(work_dir,library,crispr_library): #convert MAGeCK formatted co
         os.makedirs(os.path.join(work_dir,"bagel2"),exist_ok=True)
         df_merge.to_csv(count_table_bagel2, sep='\t',index=False)
 
-def bagel2(work_dir):
+def bagel2(work_dir,script_dir):
     #find BAGEL2 dir
     find_command="find "+"$HOME "+"-type "+"d "+"-name "+"bagel"
     bagel2_dir=subprocess.check_output(find_command, shell=True)
     bagel2_dir=bagel2_dir.decode("utf-8")
     dir_count=bagel2_dir.count("\n")
     if dir_count == 0:
-        sys.exit("ERROR: BAGEL2 directory not found ")
+        sys.exit("ERROR: BAGEL2 directory not found")
     elif dir_count > 1:
         sys.exit("ERROR: multiple BAGEL2 directories found (keep only one)")
     elif dir_count == 1:
@@ -492,6 +492,12 @@ def bagel2(work_dir):
     column_dict={key: i for i, key in enumerate(header)}
     column_dict={key: column_dict[key] - 1 for key in column_dict} #first sample column should have value 1
 
+    count_table=os.path.join(work_dir,"bagel2",'counts-aggregated-bagel2.tsv')
+
+    #reference genes files for Bayes Factor calculation
+    essential_genes=os.path.join(bagel2_dir,"CEGv2.txt")
+    nonessential_genes=os.path.join(bagel2_dir,"NEGv1.txt")
+
     #load stats.config for sample comparisons
     df=pd.read_csv(os.path.join(work_dir,"stats.config"),sep=";")
     sample_number=len(df)
@@ -502,7 +508,7 @@ def bagel2(work_dir):
         test_sample=df.loc[i]["t"]
         control_sample=df.loc[i]["c"]
         bagel2_output=test_sample+"_vs_"+control_sample
-        bagel2_output_dir=os.path.join(work_dir,"bagel2",bagel2_output,bagel2_output)
+        bagel2_output_base=os.path.join(work_dir,"bagel2",bagel2_output,bagel2_output)
         test_sample_column=column_dict[test_sample]
         control_sample_column=column_dict[control_sample]
 
@@ -510,13 +516,56 @@ def bagel2(work_dir):
             os.makedirs(os.path.join(work_dir,"bagel2",bagel2_output),exist_ok=True)
 
         print("Generatig fold change table for "+bagel2_output)
-        count_table=os.path.join(work_dir,"bagel2",'counts-aggregated-bagel2.tsv')
-        bagel2fc_command="python3 "+bagel2_exe+" fc"+" -i "+count_table+" -o "+bagel2_output_dir+" -c "+str(control_sample_column)
-        write2log(work_dir,bagel2fc_command,"BAGEL2 fc: ")
-        try:
-            subprocess.run(bagel2fc_command, shell=True)
-        except:
-            sys.exit("ERROR: generation of BAGEL2 fc file failed, check log")
+        fc_file=os.path.join(bagel2_output_base+".foldchange")
+        if not file_exists(fc_file):
+            bagel2fc_command="python3 "+bagel2_exe+" fc"+" -i "+count_table+" -o "+bagel2_output_base+" -c "+str(control_sample_column)
+            write2log(work_dir,bagel2fc_command,"BAGEL2 fc: ")
+            try:
+                subprocess.run(bagel2fc_command, shell=True)
+            except:
+                sys.exit("ERROR: generation of BAGEL2 fc file failed, check log")
+
+        print("Calculating Bayes Factors for "+bagel2_output)
+        bf_file=os.path.join(bagel2_output_base+".bf")
+        if not file_exists(bf_file):
+            #get sample names from BAGEL2 foldchange table
+            header2=subprocess.check_output(["head", "-1",os.path.join(bagel2_output_base+".foldchange")])
+            header2=header2.decode("utf-8")
+            header2=header2.replace("\n","")
+            header2=list(header2.split("\t"))# convert string into list
+
+            #create dictionary that holds column name (key) and column index
+            column_dict2={key: i for i, key in enumerate(header2)}
+            column_dict2={key: column_dict2[key] - 1 for key in column_dict2} #first sample column should have value 1
+            test_sample_column2=column_dict2[test_sample]
+
+            bagel2bf_command="python3 "+bagel2_exe+" bf"+" -i "+fc_file+" -o "+bf_file+" -e "+essential_genes+" -n "+nonessential_genes+" -c "+str(test_sample_column2)
+            write2log(work_dir,bagel2bf_command,"BAGEL2 bf: ")
+            try:
+                subprocess.run(bagel2bf_command, shell=True)
+            except:
+                sys.exit("ERROR: Calculation of Bayes Factors failed, check log")
+
+        print("Calculating precision-recall for "+bagel2_output)
+        pr_file=os.path.join(bagel2_output_base+".pr")
+        if not file_exists(pr_file):
+            bagel2pr_command="python3 "+bagel2_exe+" pr"+" -i "+bf_file+" -o "+pr_file+" -e "+essential_genes+" -n "+nonessential_genes
+            write2log(work_dir,bagel2pr_command,"BAGEL2 pr: ")
+            try:
+                subprocess.run(bagel2pr_command, shell=True)
+            except:
+                sys.exit("ERROR: Calculation of precision-recall failed, check log")
+
+        print("Plotting BAGEL2 results for "+bagel2_output)
+        plot_file=os.path.join(work_dir,"bagel2",bagel2_output,"PR-"+bagel2_output+".pdf")
+        if not file_exists(plot_file):
+            plot_script=os.path.join(script_dir,"R","plot-hits.R")
+            plot_command="Rscript "+plot_script+" "+work_dir+" "+pr_file+" bagel2 "+os.path.join(work_dir,"bagel2",bagel2_output)+" "+bagel2_output
+            write2log(work_dir,plot_command,"BAGEL2 plot: ")
+            try:
+                subprocess.run(plot_command, shell=True)
+            except:
+                sys.exit("ERROR: Calculation of precision-recall failed, check log")
 
 
 def lib_analysis(work_dir):
@@ -628,5 +677,28 @@ def lib_analysis(work_dir):
     else:
         return None
 
-def go():
-    pass
+def go(work_dir,script_dir):
+    #load GO analysis settings
+    with open(os.path.join(work_dir,"config.yml")) as file:
+        config=yaml.full_load(file)
+
+    email=config["GO"]["email"]
+    fdr=config["mageck-fdr"]
+    species=config["GO"]["species"]
+    go_test=config["GO"]["test"]
+    go_term=config["GO"]["term"]
+
+    #get list og MAGeCK gene summary file_exists
+    find_command="find "+work_dir+" -name "+"*gene_summary.txt"
+    file_list=subprocess.check_output(find_command, shell=True)
+    file_list=file_list.decode("utf-8")
+    file_list=list(file_list.split("\n"))
+
+    for file in file_list:
+        save_path=os.path.dirname(file)
+        go_command=os.path.join(script_dir,"R","go.R ")+email+" "+file+" "+fdr+" "+species+" "+save_path+" "+go_test+" "+go_term
+        write2log(work_dir,go_command,"MAGeCK GO: ")
+        try:
+            subprocess.run(go_command, shell=True)
+        except:
+            sys.exit("ERROR: GO analysis failed, check log")
