@@ -25,11 +25,18 @@ def main():
                     choices=["mageck","bagel2"],
                     help="Statistical analysis with MAGeCK or BAGEL2. Default is MAGeCK")
     ap.add_argument("-c", "--cnv", required=False, action='store_true',
-       help="Activate CNV correction for MAGeCK")
+       help="Activate CNV correction for MAGeCK/BAGEL2")
     ap.add_argument("-g", "--go", required=False, action='store_true',
        help="GO analysis with DAVID")
 
     args = vars(ap.parse_args())
+
+    #check if software requirements are met
+    install_python_packages(work_dir)
+
+    exe_dict=os.path.join(script_dir,".exe_dict.obj") #stores location of non-Python dependencies
+    if not os.path.exists(exe_dict):
+        check_env(script_dir,work_dir)
 
     ####set thread count for processing
     threads=utils.set_threads(args)

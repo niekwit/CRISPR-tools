@@ -1,6 +1,6 @@
 # CRISPR screen bioinformatic pipeline
 
-This bioinformatic pipeline will automate analysis of NGS data from CRISPR-Cas9 screen experiments. It uses MAGeCK for statistical analysis.
+This bioinformatic pipeline will automate analysis of NGS data from CRISPR-Cas9 screen experiments. It can use MAGeCK or BAGEL2 for statistical analysis.
 
 
 ## Index
@@ -13,6 +13,7 @@ This bioinformatic pipeline will automate analysis of NGS data from CRISPR-Cas9 
 
 ## Software dependencies:
 
+- [git](https://git-scm.com/)
 - [Python 3](https://www.python.org/)
 	- [Pandas](https://pandas.pydata.org/)
 	- [Numpy](https://numpy.org/)
@@ -37,7 +38,7 @@ This bioinformatic pipeline will automate analysis of NGS data from CRISPR-Cas9 
 - [MAGeCK](https://sourceforge.net/p/mageck/wiki/Home/)
 - [BAGEL2](https://github.com/hart-lab/bagel)
 
-Non-Python3/R dependencies should be set in your `$PATH`.
+Non-Python3/R dependencies (except pigz) should be set in your `$PATH`.
 For example, to add the Bowtie2 directory to your `$PATH`, add the following line to `~/.bashrc`:
 > `export PATH=/path/to/bowtie2-2.4.2-linux-x86_64:$PATH`
 

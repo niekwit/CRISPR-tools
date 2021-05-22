@@ -5,6 +5,9 @@ import pkg_resources
 import os
 import subprocess
 import multiprocessing
+from zipfile import ZipFile
+import tarfile
+import pickle
 import yaml
 import sys
 import csv
@@ -20,8 +23,115 @@ def write2log(work_dir,command,name):
         file.write(name)
         print(*command, sep="",file=file)
 
-def install_packages(work_dir): #check for required python packages; installs if absent
-    required = {"pyyaml","pandas","numpy","matplotlib","seaborn"}
+def install_fastqc(script_dir):
+    url="https://www.bioinformatics.babraham.ac.uk/projects/fastqc/fastqc_v0.11.9.zip"
+    download_file=os.path.join(script_dir,"fastqc_v0.11.9.zip")
+    download_command="wget "+url+" --output-document="+download_file
+    download=input("Download and install FastQC? y/n")
+    if download in ["yes","Yes","y","Y"]:
+        try:
+            write2log(work_dir,download_command,"Download FastQC: ")
+            subprocess.run(download_command, shell=True)
+            #unzip FastQC file
+            with ZipFile(download_file, 'r') as zip_ref:
+                zip_ref.extractall(script_dir)
+        except:
+            print("FastQC installation failed, check log")
+    else:
+        sys.exit("FastQC installation aborted")
+
+def install_mageck(script_dir,exe_dict):
+    url="https://sourceforge.net/projects/mageck/files/0.5/mageck-0.5.9.4.tar.gz/download"
+    download=input("Download and install MAGeCK? y/n")
+    if download in ["yes","Yes","y","Y"]:
+        try:
+            write2log(work_dir,download_command,"Download MAGeCK: ")
+            subprocess.run(download_command, shell=True)
+            #unpack MAGeCK file
+            untar_command=""################################################################
+        except:
+            print("MAGeCK installation failed, check log")
+    else:
+        sys.exit("MAGeCK installation aborted")
+
+def install_bowtie2(script_dir,exe_dict):
+    if sys.platform in ["linux","linux2"]:
+        url="https://sourceforge.net/projects/bowtie-bio/files/bowtie2/2.4.3/bowtie2-2.4.3-linux-x86_64.zip/download"
+        download_file=os.path.join(script_dir,"bowtie2-2.4.3-linux-x86_64.zip")
+    elif sys.platform == "darwin":
+        url="https://sourceforge.net/projects/bowtie-bio/files/bowtie2/2.4.3/bowtie2-2.4.3-macos-x86_64.zip/download"
+        download_file=os.path.join(script_dir,"bowtie2-2.4.3-macos-x86_64.zip")
+    download_command="wget "+url+" --output-document="+download_file
+    download=input("Download and install Bowtie2? y/n")
+    if download in ["yes","Yes","y","Y"]:
+        try:
+            write2log(work_dir,download_command,"Download Bowtie2: ")
+            subprocess.run(download_command, shell=True)
+            #unzip Bowtie2 file
+            with ZipFile(download_file, 'r') as zip_ref:
+                zip_ref.extractall(script_dir)
+        except:
+            print("Bowtie2 installation failed, check log")
+    else:
+        sys.exit("Bowtie2 installation aborted")
+
+def install_bagel2(script_dir):
+    print("Installing BAGEL2 to "+script_dir)
+    bagel2_git="https://github.com/hart-lab/bagel.git"
+    clone_command="git "+"clone "+"https://github.com/hart-lab/bagel.git "+os.path.join(script_dir,"bagel2")
+    write2log(work_dir,clone_command,"Clone BAGEL2 git: ")
+    subprocess.run(clone_command, shell=True)
+
+def check_env(script_dir,work_dir): #check if required binary directories are set in $PATH
+    env=dict(os.environ)
+    required={"fastqc","mageck","bowtie2"}
+
+    exe_dict=dict() #to store FastQC and MAGeCK binary locations
+
+    for i in required:
+        if not i in env["PATH"].lower():
+            find_command="find "+"$HOME "+"-name "+i
+            i_dir=subprocess.check_output(find_command, shell=True)
+            i_dir=i_dir.decode("utf-8")
+            dir_count=i_dir.count("\n")
+            if dir_count == 0:
+                print("Warning: "+i+" directory not found")
+                if i == "fastqc":
+                    install_fastqc(script_dir)
+                    fastqc_dir=os.path.join(script_dir,"FastQC","fastqc")
+                    exe_dict.update({"fastqc":fastqc_dir})
+                elif i == "mageck":
+                    install_mageck(script_dir)
+                    #mageck_dir=os.path.join(script_dir,"FastQC","fastqc")
+                    exe_dict.update({"mageck":mageck_dir})
+                elif i == "bowtie2":
+                    install_bowtie2(script_dir)
+                    #bowtie2_dir=os.path.join(script_dir,"FastQC","fastqc")
+                    exe_dict.update({"bowtie2":bowtie2_dir})
+            elif dir_count == 1:
+                if i == "mageck":
+                    pass
+                elif i == "bowtie2":
+                    pass
+            elif dir_count == 2:
+                if i == "fastqc":
+                    i_dir=list(i_dir.split("\n"))[0]
+                else:
+                    sys.exit("ERROR: multiple "+i+" directories found (keep only one)")
+            elif dir_count > 2:
+                sys.exit("ERROR: multiple "+i+" directories found (keep only one)")
+
+    #write exe_dict to file in script_dir for future reference
+    try:
+        pickle.dump(exe_dict, file=open(os.path.join(script_dir,".exe_dict.obj"),"wb"))
+    except pickle.PicklingError:
+        print("Storing of dictionary with dependency locations failed")
+
+    #open with
+    #exe_dict=pickle.load(open(os.path.join(script_dir,".exe_dict.obj"),"rb"))
+
+def install_python_packages(work_dir): #check for required python packages; installs if absent
+    required = {"pyyaml","pandas","numpy","matplotlib","seaborn","multiqc","cutadapt"}
     installed = {pkg.key for pkg in pkg_resources.working_set}
     missing = required - installed
     if missing:
@@ -29,7 +139,7 @@ def install_packages(work_dir): #check for required python packages; installs if
         print("Installing missing required Python3 packages")
         try:
             install_command=[python, '-m', 'pip3', 'install', *missing]
-            write2log(work_dir,install_command,"Missing package(s) installation: ")
+            write2log(work_dir,install_command,"Missing package installation: ")
             subprocess.check_call(install_command, stdout=subprocess.DEVNULL)
         except:
             sys.exit("ERROR: package installation failed, check log")
@@ -474,8 +584,15 @@ def bagel2(work_dir,script_dir):
     bagel2_dir=subprocess.check_output(find_command, shell=True)
     bagel2_dir=bagel2_dir.decode("utf-8")
     dir_count=bagel2_dir.count("\n")
+
     if dir_count == 0:
-        sys.exit("ERROR: BAGEL2 directory not found")
+        print("ERROR: BAGEL2 directory not found")
+        download=input("Download and install BAGEL2? y/n")
+        if download in ["yes","Yes","y","Y"]:
+            install_bagel2(script_dir)
+            bagel2_exe=os.path.join(script_dir,"bagel2")
+        else:
+            sys.exit("BAGEL2 install aborted")
     elif dir_count > 1:
         sys.exit("ERROR: multiple BAGEL2 directories found (keep only one)")
     elif dir_count == 1:
