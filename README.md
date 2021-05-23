@@ -38,11 +38,6 @@ This bioinformatic pipeline will automate analysis of NGS data from CRISPR-Cas9 
 - [MAGeCK](https://sourceforge.net/p/mageck/wiki/Home/)
 - [BAGEL2](https://github.com/hart-lab/bagel)
 
-Non-Python3/R dependencies (except pigz) should be set in your `$PATH`.
-For example, to add the Bowtie2 directory to your `$PATH`, add the following line to `~/.bashrc`:
-> `export PATH=/path/to/bowtie2-2.4.2-linux-x86_64:$PATH`
-
-
 ## Installation:
 
 Installation from the command line:
@@ -53,6 +48,8 @@ The `CRISPR-tools` can be permamently added to $PATH by adding the following lin
 
 OPTIONAL: to enable auto-completion of the command line options for the CRISPR library and analysis (`-l`/`--library` and `-a`/`--analysis`), add this line to your `~/.bashrc` file:
 > `source /path/to/CRISPR-tools/auto-complete.sh`
+
+With the first run, `crispr.py` will search for all software dependencies. They will be installed automatically in case any of them are missing.
 
 ## Configuration:
 
