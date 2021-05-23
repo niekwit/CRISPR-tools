@@ -28,6 +28,7 @@ def install_fastqc(script_dir):
     download_file=os.path.join(script_dir,"fastqc_v0.11.9.zip")
     download_command="wget "+url+" --output-document="+download_file
     download=input("Download and install FastQC? y/n")
+
     if download in ["yes","Yes","y","Y"]:
         try:
             write2log(work_dir,download_command,"Download FastQC: ")
@@ -39,22 +40,31 @@ def install_fastqc(script_dir):
             print("FastQC installation failed, check log")
     else:
         sys.exit("FastQC installation aborted")
+    fastqc_folder=os.path.join(script_dir,"FastQC")
+    return(fastqc_folder)
 
-def install_mageck(script_dir,exe_dict):
+def install_mageck(script_dir):
     url="https://sourceforge.net/projects/mageck/files/0.5/mageck-0.5.9.4.tar.gz/download"
     download=input("Download and install MAGeCK? y/n")
+    download_file=os.path.join(script_dir,"mageck-0.5.9.4.tar.gz")
+    download_command="wget "+url+" --output-document="+download_file
+
     if download in ["yes","Yes","y","Y"]:
         try:
             write2log(work_dir,download_command,"Download MAGeCK: ")
             subprocess.run(download_command, shell=True)
             #unpack MAGeCK file
-            untar_command=""################################################################
+            tar = tarfile.open(download_file, "r:gz")
+            tar.extractall()
+            tar.close()
         except:
             print("MAGeCK installation failed, check log")
     else:
         sys.exit("MAGeCK installation aborted")
+    mageck_folder=os.path.join(script_dir,"mageck-0.5.9.4/bin")
+    return(mageck_folder)
 
-def install_bowtie2(script_dir,exe_dict):
+def install_bowtie2(script_dir):
     if sys.platform in ["linux","linux2"]:
         url="https://sourceforge.net/projects/bowtie-bio/files/bowtie2/2.4.3/bowtie2-2.4.3-linux-x86_64.zip/download"
         download_file=os.path.join(script_dir,"bowtie2-2.4.3-linux-x86_64.zip")
@@ -74,6 +84,9 @@ def install_bowtie2(script_dir,exe_dict):
             print("Bowtie2 installation failed, check log")
     else:
         sys.exit("Bowtie2 installation aborted")
+    bowtie2_folder=os.path.join(script_dir,"bowtie2-2.4.3-linux-x86_64")
+    return(bowtie2_folder)
+
 
 def install_bagel2(script_dir):
     print("Installing BAGEL2 to "+script_dir)
@@ -97,22 +110,24 @@ def check_env(script_dir,work_dir): #check if required binary directories are se
             if dir_count == 0:
                 print("Warning: "+i+" directory not found")
                 if i == "fastqc":
-                    install_fastqc(script_dir)
-                    fastqc_dir=os.path.join(script_dir,"FastQC","fastqc")
+                    #installs FastQC and writes dir to exe_dict
+                    fastqc_dir=install_fastqc(script_dir)
                     exe_dict.update({"fastqc":fastqc_dir})
                 elif i == "mageck":
-                    install_mageck(script_dir)
-                    #mageck_dir=os.path.join(script_dir,"FastQC","fastqc")
+                    #installs MAGeCK and writes dir to exe_dict
+                    mageck_dir=install_mageck(script_dir)
                     exe_dict.update({"mageck":mageck_dir})
                 elif i == "bowtie2":
-                    install_bowtie2(script_dir)
-                    #bowtie2_dir=os.path.join(script_dir,"FastQC","fastqc")
+                    #installs Bowtie2 and writes dir to exe_dict
+                    bowtie2_dir=install_bowtie2(script_dir)
                     exe_dict.update({"bowtie2":bowtie2_dir})
             elif dir_count == 1:
                 if i == "mageck":
-                    pass
+                    i_dir=i_dir.replace("\n","")
+                    exe_dict.update({"mageck":i_dir})
                 elif i == "bowtie2":
-                    pass
+                    i_dir=i_dir.replace("\n","")
+                    exe_dict.update({"bowtie2":i_dir})
             elif dir_count == 2:
                 if i == "fastqc":
                     i_dir=list(i_dir.split("\n"))[0]
@@ -579,25 +594,31 @@ def convert4bagel(work_dir,library,crispr_library): #convert MAGeCK formatted co
         df_merge.to_csv(count_table_bagel2, sep='\t',index=False)
 
 def bagel2(work_dir,script_dir):
-    #find BAGEL2 dir
-    find_command="find "+"$HOME "+"-type "+"d "+"-name "+"bagel"
-    bagel2_dir=subprocess.check_output(find_command, shell=True)
-    bagel2_dir=bagel2_dir.decode("utf-8")
-    dir_count=bagel2_dir.count("\n")
+    #find BAGEL2 dir if not in .exe_dict_obj
+    exe_dict=pickle.load(open(os.path.join(script_dir,".exe_dict.obj"),"rb"))
+    if "bagel2" not in exe_dict:
+        find_command="find "+"$HOME "+"-type "+"d "+"-name "+"bagel"
+        bagel2_dir=subprocess.check_output(find_command, shell=True)
+        bagel2_dir=bagel2_dir.decode("utf-8")
+        dir_count=bagel2_dir.count("\n")
 
-    if dir_count == 0:
-        print("ERROR: BAGEL2 directory not found")
-        download=input("Download and install BAGEL2? y/n")
-        if download in ["yes","Yes","y","Y"]:
-            install_bagel2(script_dir)
-            bagel2_exe=os.path.join(script_dir,"bagel2")
-        else:
-            sys.exit("BAGEL2 install aborted")
-    elif dir_count > 1:
-        sys.exit("ERROR: multiple BAGEL2 directories found (keep only one)")
-    elif dir_count == 1:
-        bagel2_dir=bagel2_dir.replace("\n","")
-        bagel2_exe=os.path.join(bagel2_dir,"BAGEL.py")
+        if dir_count == 0:
+            print("ERROR: BAGEL2 directory not found")
+            download=input("Download and install BAGEL2? y/n")
+            if download in ["yes","Yes","y","Y"]:
+                install_bagel2(script_dir)
+                bagel2_exe=os.path.join(script_dir,"bagel2","BAGEL.py")
+                exe_dict.update({"bagel2":bagel2_exe})
+            else:
+                sys.exit("BAGEL2 install aborted")
+        elif dir_count > 1:
+            sys.exit("ERROR: multiple BAGEL2 directories found (keep only one)")
+        elif dir_count == 1:
+            bagel2_dir=bagel2_dir.replace("\n","")
+            bagel2_exe=os.path.join(bagel2_dir,"BAGEL.py")
+            exe_dict.update({"bagel2":bagel2_exe})
+    else:
+        bagel2_exe=exe_dict["bagel2"]
 
     #get sample names from BAGEL2 count table
     header=subprocess.check_output(["head", "-1",os.path.join(work_dir,"bagel2","counts-aggregated-bagel2.tsv")])
