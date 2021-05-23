@@ -1,3 +1,27 @@
+#check packages
+cran.packages <- c("BiocManager","ggplot2","yaml","ggrepel",
+                   "viridis","dplyr","gridExtra","GOplot",
+                   "stringr","cowplot","rJava")
+installed.packages <- installed.packages()[,1]
+
+#install CRAN packages
+for (i in cran.packages){
+  if(!i %in% installed.packages){
+    cat(i,"package missing, installing now\n")
+    install.packages(i,repos='http://cran.us.r-project.org')
+  }
+}
+
+#install BiocManager packages
+bioc.packages <- c("RDAVIDWebService", "biomaRt")
+
+for (i in bioc.packages){
+  if(!i %in% installed.packages){
+    cat(i,"package missing, installing now\n")
+    BiocManager::install(i, force = TRUE)
+  }
+}
+
 library(rJava)
 library("RDAVIDWebService")
 library(biomaRt)
@@ -7,6 +31,7 @@ library(stringr)
 library(ggrepel)
 library(ggplot2)
 library(gridExtra)
+library(BiocManager)
 
 args <- commandArgs(trailingOnly=TRUE)
 email <- args[1]
