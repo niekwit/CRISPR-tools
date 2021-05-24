@@ -4,6 +4,7 @@ import subprocess
 import pkg_resources
 import os
 import sys
+import pickle
 
 def write2log(work_dir,command,name):
     with open(os.path.join(work_dir,"commands.log"), "a") as file:
@@ -23,6 +24,8 @@ def install_python_packages(): #check for required python packages; installs if 
             subprocess.check_call(install_command, stdout=subprocess.DEVNULL)
         except:
             sys.exit("ERROR: package installation failed, check log")
+    else:
+        print("All required Python3 packages already installed")
 
 def install_fastqc(script_dir):
     url="https://www.bioinformatics.babraham.ac.uk/projects/fastqc/fastqc_v0.11.9.zip"
@@ -88,6 +91,32 @@ def install_bowtie2(script_dir):
     bowtie2_folder=os.path.join(script_dir,"bowtie2-2.4.3-linux-x86_64")
     return(bowtie2_folder)
 
+def find_bagel2(script_dir):
+    #find BAGEL2 dir if not in .exe_dict_obj
+    exe_dict=pickle.load(open(os.path.join(script_dir,".exe_dict.obj"),"rb"))
+    if "bagel2" not in exe_dict:
+        find_command="find "+"$HOME "+"-type "+"d "+"-name "+"bagel"
+        bagel2_dir=subprocess.check_output(find_command, shell=True)
+        bagel2_dir=bagel2_dir.decode("utf-8")
+        dir_count=bagel2_dir.count("\n")
+
+        if dir_count == 0:
+            print("ERROR: BAGEL2 directory not found")
+            download=input("Download and install BAGEL2? y/n")
+            if download in ["yes","Yes","y","Y"]:
+                install_bagel2(script_dir)
+                bagel2_exe=os.path.join(script_dir,"bagel2","BAGEL.py")
+                exe_dict.update({"bagel2":bagel2_exe})
+            else:
+                sys.exit("BAGEL2 install aborted")
+        elif dir_count > 1:
+            sys.exit("ERROR: multiple BAGEL2 directories found (keep only one)")
+        elif dir_count == 1:
+            bagel2_dir=bagel2_dir.replace("\n","")
+            bagel2_exe=os.path.join(bagel2_dir,"BAGEL.py")
+            exe_dict.update({"bagel2":bagel2_exe})
+    else:
+        bagel2_exe=exe_dict["bagel2"]
 
 def install_bagel2(script_dir):
     print("Installing BAGEL2 to "+script_dir)
@@ -103,7 +132,7 @@ def check_env(script_dir,work_dir): #check if required binary directories are se
     exe_dict=dict() #to store FastQC and MAGeCK binary locations
 
     for i in required:
-        if not i in env["PATH"]:
+        if i not in env["PATH"]:
             find_command="find "+"$HOME "+"-name "+i
             i_dir=subprocess.check_output(find_command, shell=True)
             i_dir=i_dir.decode("utf-8")
