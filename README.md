@@ -14,12 +14,14 @@ This bioinformatic pipeline will automate analysis of NGS data from CRISPR-Cas9 
 ## Software dependencies:
 
 - [git](https://git-scm.com/)
+- [pip3](https://stackoverflow.com/questions/6587507/how-to-install-pip-with-python-3)
 - [Python 3](https://www.python.org/)
 	- [Pandas](https://pandas.pydata.org/)
 	- [Numpy](https://numpy.org/)
 	- [Matplotlib](https://matplotlib.org/stable/index.html)
 	- [seaborn](https://seaborn.pydata.org/index.html)
 	- [PyYAML](https://pyyaml.org/)
+	- [shyaml](https://pypi.org/project/shyaml/)
 - [R](https://www.r-project.org/)
 	- [Tidyverse](https://www.tidyverse.org/)
 	- [ggrepel](https://www.rdocumentation.org/packages/ggrepel/versions/0.9.1)
@@ -49,7 +51,9 @@ The `CRISPR-tools` can be permamently added to $PATH by adding the following lin
 OPTIONAL: to enable auto-completion of the command line options for the CRISPR library and analysis (`-l`/`--library` and `-a`/`--analysis`), add this line to your `~/.bashrc` file:
 > `source /path/to/CRISPR-tools/auto-complete.sh`
 
-With the first run, `crispr.py` will search for all software dependencies. They will be installed automatically in case any of them are missing.
+Before the first analysis, install [pip3](https://stackoverflow.com/questions/6587507/how-to-install-pip-with-python-3) and run the `setup.py` file as follows:
+
+> `python3 setup.py`
 
 ## Configuration:
 
