@@ -40,7 +40,7 @@ def install_fastqc(script_dir):
             print("FastQC installation failed, check log")
     else:
         sys.exit("FastQC installation aborted")
-    fastqc_folder=os.path.join(script_dir,"FastQC")
+    fastqc_folder=os.path.join(script_dir,"fastqc_v0.11.9",FastQC)
     return(fastqc_folder)
 
 def install_mageck(script_dir):
@@ -97,12 +97,12 @@ def install_bagel2(script_dir):
 
 def check_env(script_dir,work_dir): #check if required binary directories are set in $PATH
     env=dict(os.environ)
-    required={"fastqc","mageck","bowtie2"}
+    required={"FastQC","mageck-0.5.9.4","bowtie2"}
 
     exe_dict=dict() #to store FastQC and MAGeCK binary locations
 
     for i in required:
-        if not i in env["PATH"].lower():
+        if not i in env["PATH"]:
             find_command="find "+"$HOME "+"-name "+i
             i_dir=subprocess.check_output(find_command, shell=True)
             i_dir=i_dir.decode("utf-8")
@@ -145,7 +145,7 @@ def check_env(script_dir,work_dir): #check if required binary directories are se
     #open with
     #exe_dict=pickle.load(open(os.path.join(script_dir,".exe_dict.obj"),"rb"))
 
-def install_python_packages(work_dir): #check for required python packages; installs if absent
+def install_python_packages(): #check for required python packages; installs if absent
     required = {"pyyaml","pandas","numpy","matplotlib","seaborn","multiqc","cutadapt"}
     installed = {pkg.key for pkg in pkg_resources.working_set}
     missing = required - installed

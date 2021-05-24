@@ -32,11 +32,12 @@ def main():
     args = vars(ap.parse_args())
 
     ###check if software requirements are met
-    install_python_packages(work_dir)
+    '''
+    utils.install_python_packages(work_dir)
 
     exe_dict=os.path.join(script_dir,".exe_dict.obj") #stores location of non-Python dependencies
     if not os.path.exists(exe_dict):
-        check_env(script_dir,work_dir)
+        utils.check_env(script_dir,work_dir)
     else:
         exe_dict=pickle.load(open(os.path.join(script_dir,".exe_dict.obj"),"rb"))
 
@@ -44,7 +45,7 @@ def main():
     for i in required:
         if not i in exe_dict:
             sys.exit(i+" directory not detected, check log")
-
+    '''
 
     ###set thread count for processing
     threads=utils.set_threads(args)
