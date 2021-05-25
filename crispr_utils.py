@@ -58,7 +58,7 @@ def fastqc(work_dir,threads,file_extension,exe_dict):
     fastqc_exe=os.path.join(exe_dict["fastqc"],"fastqc")
     if not os.path.isdir(os.path.join(work_dir,"fastqc")) or len(os.listdir(os.path.join(work_dir,"fastqc"))) == 0:
         os.makedirs(work_dir+"/fastqc",exist_ok=True)
-        fastqc_command=fastqc_exe+"--threads "+str(threads)+" --quiet -o fastqc/ raw-data/*"+file_extension
+        fastqc_command=fastqc_exe+" --threads "+str(threads)+" --quiet -o fastqc/ raw-data/*"+file_extension
         multiqc_command=["multiqc","-o","fastqc/","fastqc/"]
         #log commands
         with open(os.path.join(work_dir,"commands.log"),"w") as file:
