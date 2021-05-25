@@ -34,7 +34,7 @@ def main():
 
     ###check if software requirements are met
     exe_dict=pickle.load(open(os.path.join(script_dir,".exe_dict.obj"),"rb"))
-    dep_list=("fastqc","bowtie2","mageck","bagel")
+    dep_list=("fastqc","bowtie2","mageck","bagel2")
     for i in dep_list:
         if not i in exe_dict:
             sys.exit("ERROR: %s directory not found\nRun setup.py again\n" % i)
