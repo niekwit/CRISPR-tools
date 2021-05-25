@@ -45,15 +45,19 @@ This bioinformatic pipeline will automate analysis of NGS data from CRISPR-Cas9 
 Installation from the command line:
 > `git clone https://github.com/niekwit/CRISPR-tools.git`
 
-The `CRISPR-tools` can be permamently added to $PATH by adding the following line to `~/.bashrc`:
+The `CRISPR-tools` can be permamently added to $PATH by adding the following line to your `~/.bashrc`:
 > `export PATH=/home/path/to/CRISPR-tools:$PATH`
 
 OPTIONAL: to enable auto-completion of the command line options for the CRISPR library and analysis (`-l`/`--library` and `-a`/`--analysis`), add this line to your `~/.bashrc` file:
 > `source /path/to/CRISPR-tools/auto-complete.sh`
 
-Before the first analysis, install [pip3](https://stackoverflow.com/questions/6587507/how-to-install-pip-with-python-3) and run the `setup.py` file as follows:
+Before the first analysis, install [pip3](https://stackoverflow.com/questions/6587507/how-to-install-pip-with-python-3) and run the `setup.py` file from the command line as follows:
 
 > `python3 setup.py`
+
+To get the latest updates run from the CRISPR-tools folder:
+
+> `git pull`
 
 ## Configuration:
 

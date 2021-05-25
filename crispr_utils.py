@@ -543,7 +543,7 @@ def mageck(work_dir,script_dir,cnv):
 
 
 def convert4bagel(work_dir,library,crispr_library): #convert MAGeCK formatted count table to BAGEL2 format
-    count_table_bagel2=os.path.join(work_dir,"bagel2",'counts-aggregated-bagel2.tsv')
+    count_table_bagel2=os.path.join(work_dir,"bagel",'counts-aggregated-bagel2.tsv')
 
     if not file_exists(count_table_bagel2):
         #obtain sequences of each guide
@@ -590,14 +590,14 @@ def convert4bagel(work_dir,library,crispr_library): #convert MAGeCK formatted co
         df_merge=df_merge.loc[:,cols]
 
         #save df to file
-        os.makedirs(os.path.join(work_dir,"bagel2"),exist_ok=True)
+        os.makedirs(os.path.join(work_dir,"bagel"),exist_ok=True)
         df_merge.to_csv(count_table_bagel2, sep='\t',index=False)
 
 def bagel2(work_dir,script_dir):
     #find BAGEL2 dir if not in .exe_dict_obj
     exe_dict=pickle.load(open(os.path.join(script_dir,".exe_dict.obj"),"rb"))
     if "bagel2" not in exe_dict:
-        find_command="find "+"$HOME "+"-type "+"d "+"-name "+"bagel"
+        find_command="find "+"$HOME "+"-type "+"d "+"-name "+"bagel2"
         bagel2_dir=subprocess.check_output(find_command, shell=True)
         bagel2_dir=bagel2_dir.decode("utf-8")
         dir_count=bagel2_dir.count("\n")
@@ -621,7 +621,7 @@ def bagel2(work_dir,script_dir):
         bagel2_exe=exe_dict["bagel2"]
 
     #get sample names from BAGEL2 count table
-    header=subprocess.check_output(["head", "-1",os.path.join(work_dir,"bagel2","counts-aggregated-bagel2.tsv")])
+    header=subprocess.check_output(["head", "-1",os.path.join(work_dir,"bagel","counts-aggregated-bagel2.tsv")])
     header=header.decode("utf-8")
     header=header.replace("\n","")
     header=list(header.split("\t"))# convert string into list
@@ -630,7 +630,7 @@ def bagel2(work_dir,script_dir):
     column_dict={key: i for i, key in enumerate(header)}
     column_dict={key: column_dict[key] - 1 for key in column_dict} #first sample column should have value 1
 
-    count_table=os.path.join(work_dir,"bagel2",'counts-aggregated-bagel2.tsv')
+    count_table=os.path.join(work_dir,"bagel",'counts-aggregated-bagel2.tsv')
 
     #reference genes files for Bayes Factor calculation
     essential_genes=os.path.join(bagel2_dir,"CEGv2.txt")
@@ -646,12 +646,12 @@ def bagel2(work_dir,script_dir):
         test_sample=df.loc[i]["t"]
         control_sample=df.loc[i]["c"]
         bagel2_output=test_sample+"_vs_"+control_sample
-        bagel2_output_base=os.path.join(work_dir,"bagel2",bagel2_output,bagel2_output)
+        bagel2_output_base=os.path.join(work_dir,"bagel",bagel2_output,bagel2_output)
         test_sample_column=column_dict[test_sample]
         control_sample_column=column_dict[control_sample]
 
-        if not file_exists(os.path.join(work_dir,"bagel2",bagel2_output)):
-            os.makedirs(os.path.join(work_dir,"bagel2",bagel2_output),exist_ok=True)
+        if not file_exists(os.path.join(work_dir,"bagel",bagel2_output)):
+            os.makedirs(os.path.join(work_dir,"bagel",bagel2_output),exist_ok=True)
 
         print("Generatig fold change table for "+bagel2_output)
         fc_file=os.path.join(bagel2_output_base+".foldchange")
@@ -695,10 +695,10 @@ def bagel2(work_dir,script_dir):
                 sys.exit("ERROR: Calculation of precision-recall failed, check log")
 
         print("Plotting BAGEL2 results for "+bagel2_output)
-        plot_file=os.path.join(work_dir,"bagel2",bagel2_output,"PR-"+bagel2_output+".pdf")
+        plot_file=os.path.join(work_dir,"bagel",bagel2_output,"PR-"+bagel2_output+".pdf")
         if not file_exists(plot_file):
             plot_script=os.path.join(script_dir,"R","plot-hits.R")
-            plot_command="Rscript "+plot_script+" "+work_dir+" "+pr_file+" bagel2 "+os.path.join(work_dir,"bagel2",bagel2_output)+" "+bagel2_output
+            plot_command="Rscript "+plot_script+" "+work_dir+" "+pr_file+" bagel2 "+os.path.join(work_dir,"bagel",bagel2_output)+" "+bagel2_output
             write2log(work_dir,plot_command,"BAGEL2 plot: ")
             try:
                 subprocess.run(plot_command, shell=True)

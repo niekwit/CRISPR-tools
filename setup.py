@@ -5,6 +5,7 @@ import pkg_resources
 import os
 import sys
 import pickle
+from zipfile import ZipFile
 
 def write2log(work_dir,command,name):
     with open(os.path.join(work_dir,"commands.log"), "a") as file:
