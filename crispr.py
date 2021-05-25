@@ -58,7 +58,7 @@ def main():
     #get parsed arguments
     crispr_library=args["library"]
     #check if bowtie2 index is build for CRISPR library
-    utils.check_index(library,crispr_library,script_dir)
+    utils.check_index(library,crispr_library,script_dir,exe_dict)
     #check if file with just guide names exists
     utils.guide_names(library,crispr_library)
     #count sgRNAs

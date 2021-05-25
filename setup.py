@@ -29,7 +29,7 @@ def install_fastqc(script_dir,fastqc_dir):
     if not "fastqc" in exe_dict:
         url="https://www.bioinformatics.babraham.ac.uk/projects/fastqc/fastqc_v0.11.9.zip"
         download_file=os.path.join(script_dir,"fastqc_v0.11.9.zip")
-        print("Installing FastQC "+script_dir)
+        print("Installing FastQC to "+script_dir)
         urllib.request.urlretrieve(url,download_file)
         #unzip FastQC file
         with ZipFile(download_file, 'r') as zip_ref:
@@ -107,7 +107,7 @@ def install_bagel2(script_dir,bagel2_dir):
             print("Storing of BAGEL2 dir to dictionary with dependency locations failed")
 
 def check_env(script_dir,work_dir):
-    fastqc_dir=os.path.join(script_dir,"fastqc_v0.11.9","FastQC")
+    fastqc_dir=os.path.join(script_dir,"FastQC")
     mageck_dir=os.path.join(script_dir,"mageck-0.5.9.4","bin")
     bagel2_dir=os.path.join(script_dir,"bagel2")
 
