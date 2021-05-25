@@ -1,12 +1,9 @@
 #!/usr/bin/env python3
 
 import warnings
-import pkg_resources
 import os
 import subprocess
 import multiprocessing
-from zipfile import ZipFile
-import tarfile
 import pickle
 import yaml
 import sys
@@ -22,142 +19,6 @@ def write2log(work_dir,command,name):
     with open(os.path.join(work_dir,"commands.log"), "a") as file:
         file.write(name)
         print(*command, sep="",file=file)
-
-def install_fastqc(script_dir):
-    url="https://www.bioinformatics.babraham.ac.uk/projects/fastqc/fastqc_v0.11.9.zip"
-    download_file=os.path.join(script_dir,"fastqc_v0.11.9.zip")
-    download_command="wget "+url+" --output-document="+download_file
-    download=input("Download and install FastQC? y/n")
-
-    if download in ["yes","Yes","y","Y"]:
-        try:
-            write2log(work_dir,download_command,"Download FastQC: ")
-            subprocess.run(download_command, shell=True)
-            #unzip FastQC file
-            with ZipFile(download_file, 'r') as zip_ref:
-                zip_ref.extractall(script_dir)
-        except:
-            print("FastQC installation failed, check log")
-    else:
-        sys.exit("FastQC installation aborted")
-    fastqc_folder=os.path.join(script_dir,"fastqc_v0.11.9",FastQC)
-    return(fastqc_folder)
-
-def install_mageck(script_dir):
-    url="https://sourceforge.net/projects/mageck/files/0.5/mageck-0.5.9.4.tar.gz/download"
-    download=input("Download and install MAGeCK? y/n")
-    download_file=os.path.join(script_dir,"mageck-0.5.9.4.tar.gz")
-    download_command="wget "+url+" --output-document="+download_file
-
-    if download in ["yes","Yes","y","Y"]:
-        try:
-            write2log(work_dir,download_command,"Download MAGeCK: ")
-            subprocess.run(download_command, shell=True)
-            #unpack MAGeCK file
-            tar = tarfile.open(download_file, "r:gz")
-            tar.extractall()
-            tar.close()
-        except:
-            print("MAGeCK installation failed, check log")
-    else:
-        sys.exit("MAGeCK installation aborted")
-    mageck_folder=os.path.join(script_dir,"mageck-0.5.9.4/bin")
-    return(mageck_folder)
-
-def install_bowtie2(script_dir):
-    if sys.platform in ["linux","linux2"]:
-        url="https://sourceforge.net/projects/bowtie-bio/files/bowtie2/2.4.3/bowtie2-2.4.3-linux-x86_64.zip/download"
-        download_file=os.path.join(script_dir,"bowtie2-2.4.3-linux-x86_64.zip")
-    elif sys.platform == "darwin":
-        url="https://sourceforge.net/projects/bowtie-bio/files/bowtie2/2.4.3/bowtie2-2.4.3-macos-x86_64.zip/download"
-        download_file=os.path.join(script_dir,"bowtie2-2.4.3-macos-x86_64.zip")
-    download_command="wget "+url+" --output-document="+download_file
-    download=input("Download and install Bowtie2? y/n")
-    if download in ["yes","Yes","y","Y"]:
-        try:
-            write2log(work_dir,download_command,"Download Bowtie2: ")
-            subprocess.run(download_command, shell=True)
-            #unzip Bowtie2 file
-            with ZipFile(download_file, 'r') as zip_ref:
-                zip_ref.extractall(script_dir)
-        except:
-            print("Bowtie2 installation failed, check log")
-    else:
-        sys.exit("Bowtie2 installation aborted")
-    bowtie2_folder=os.path.join(script_dir,"bowtie2-2.4.3-linux-x86_64")
-    return(bowtie2_folder)
-
-
-def install_bagel2(script_dir):
-    print("Installing BAGEL2 to "+script_dir)
-    bagel2_git="https://github.com/hart-lab/bagel.git"
-    clone_command="git "+"clone "+"https://github.com/hart-lab/bagel.git "+os.path.join(script_dir,"bagel2")
-    write2log(work_dir,clone_command,"Clone BAGEL2 git: ")
-    subprocess.run(clone_command, shell=True)
-
-def check_env(script_dir,work_dir): #check if required binary directories are set in $PATH
-    env=dict(os.environ)
-    required={"FastQC","mageck-0.5.9.4","bowtie2"}
-
-    exe_dict=dict() #to store FastQC and MAGeCK binary locations
-
-    for i in required:
-        if not i in env["PATH"]:
-            find_command="find "+"$HOME "+"-name "+i
-            i_dir=subprocess.check_output(find_command, shell=True)
-            i_dir=i_dir.decode("utf-8")
-            dir_count=i_dir.count("\n")
-            if dir_count == 0:
-                print("Warning: "+i+" directory not found")
-                if i == "fastqc":
-                    #installs FastQC and writes dir to exe_dict
-                    fastqc_dir=install_fastqc(script_dir)
-                    exe_dict.update({"fastqc":fastqc_dir})
-                elif i == "mageck":
-                    #installs MAGeCK and writes dir to exe_dict
-                    mageck_dir=install_mageck(script_dir)
-                    exe_dict.update({"mageck":mageck_dir})
-                elif i == "bowtie2":
-                    #installs Bowtie2 and writes dir to exe_dict
-                    bowtie2_dir=install_bowtie2(script_dir)
-                    exe_dict.update({"bowtie2":bowtie2_dir})
-            elif dir_count == 1:
-                if i == "mageck":
-                    i_dir=i_dir.replace("\n","")
-                    exe_dict.update({"mageck":i_dir})
-                elif i == "bowtie2":
-                    i_dir=i_dir.replace("\n","")
-                    exe_dict.update({"bowtie2":i_dir})
-            elif dir_count == 2:
-                if i == "fastqc":
-                    i_dir=list(i_dir.split("\n"))[0]
-                else:
-                    sys.exit("ERROR: multiple "+i+" directories found (keep only one)")
-            elif dir_count > 2:
-                sys.exit("ERROR: multiple "+i+" directories found (keep only one)")
-
-    #write exe_dict to file in script_dir for future reference
-    try:
-        pickle.dump(exe_dict, file=open(os.path.join(script_dir,".exe_dict.obj"),"wb"))
-    except pickle.PicklingError:
-        print("Storing of dictionary with dependency locations failed")
-
-    #open with
-    #exe_dict=pickle.load(open(os.path.join(script_dir,".exe_dict.obj"),"rb"))
-
-def install_python_packages(): #check for required python packages; installs if absent
-    required = {"pyyaml","pandas","numpy","matplotlib","seaborn","multiqc","cutadapt"}
-    installed = {pkg.key for pkg in pkg_resources.working_set}
-    missing = required - installed
-    if missing:
-        python = sys.executable
-        print("Installing missing required Python3 packages")
-        try:
-            install_command=[python, '-m', 'pip3', 'install', *missing]
-            write2log(work_dir,install_command,"Missing package installation: ")
-            subprocess.check_call(install_command, stdout=subprocess.DEVNULL)
-        except:
-            sys.exit("ERROR: package installation failed, check log")
 
 def set_threads(args):
     max_threads=str(multiprocessing.cpu_count())
@@ -193,10 +54,11 @@ def file_exists(file):
     else:
         return(False)
 
-def fastqc(work_dir,threads,file_extension):
+def fastqc(work_dir,threads,file_extension,exe_dict):
+    fastqc_exe=os.path.join(exe_dict["fastqc"],"fastqc")
     if not os.path.isdir(os.path.join(work_dir,"fastqc")) or len(os.listdir(os.path.join(work_dir,"fastqc"))) == 0:
         os.makedirs(work_dir+"/fastqc",exist_ok=True)
-        fastqc_command="fastqc --threads "+str(threads)+" --quiet -o fastqc/ raw-data/*"+file_extension
+        fastqc_command=fastqc_exe "--threads "+str(threads)+" --quiet -o fastqc/ raw-data/*"+file_extension
         multiqc_command=["multiqc","-o","fastqc/","fastqc/"]
         #log commands
         with open(os.path.join(work_dir,"commands.log"),"w") as file:
@@ -214,7 +76,8 @@ def fastqc(work_dir,threads,file_extension):
     else:
         print("Skipping FastQC/MultiQC (already performed)")
 
-def check_index(library,crispr_library,script_dir):
+def check_index(library,crispr_library,script_dir,exe_dict):
+    bowtie2_dir=exe_dict["bowtie2"]
     try:
         index_path=library[crispr_library]["index_path"]
         fasta=library[crispr_library]["fasta"]
@@ -226,7 +89,7 @@ def check_index(library,crispr_library,script_dir):
                 sys.exit("ERROR:No fasta file found for "+crispr_library)
             else:
                 index_base=os.path.join(script_dir,"index",crispr_library,crispr_library+"-index")
-                bowtie2_build_command=["bowtie2-build",fasta,index_base]
+                bowtie2_build_command=[os.path.join(bowtie2_dir,"bowtie2-build"),fasta,index_base]
                 write2log(work_dir,bowtie2_build_command,"Bowtie2-build: ")
 
                 #Write bowtie2 index file location to library.yaml
@@ -260,7 +123,7 @@ def guide_names(library,crispr_library):
         #saves guide names to a .csv file:
         library.to_csv(output_name, index=False, header=False)
 
-def count(library,crispr_library,mismatch,threads,script_dir,work_dir,file_extension):
+def count(library,crispr_library,mismatch,threads,script_dir,work_dir,file_extension,exe_dict):
     os.makedirs(os.path.join(work_dir,"count"),exist_ok=True)
     try:
         read_mod=library[crispr_library]["read_mod"]
@@ -276,7 +139,8 @@ def count(library,crispr_library,mismatch,threads,script_dir,work_dir,file_exten
     print("Aligning reads to reference (mismatches allowed: "+mismatch+")")
 
     #bowtie2 and bash commands (common to both trim and clip)
-    bowtie2="bowtie2 --no-hd -p "+threads+" -t -N "+mismatch+" -x "+index_path+" - 2>> crispr.log | "
+    bowtie2_dir=exe_dict["bowtie2"]
+    bowtie2= os.path.join(bowtie2_dir,"bowtie2")+" --no-hd -p "+threads+" -t -N "+mismatch+" -x "+index_path+" - 2>> crispr.log | "
     bash="sed '/XS:/d' | cut -f3 | sort | uniq -c > "
 
     #trim, align and count
@@ -440,7 +304,8 @@ def join_counts(work_dir,library,crispr_library):
     #Writes all data to a single .tsv file, ready for MAGeCK
     dfjoin2.to_csv(os.path.join(work_dir,"count",'counts-aggregated.tsv'), sep='\t',index=False)
 
-def mageck(work_dir,script_dir,cnv):
+def mageck(work_dir,script_dir,cnv,exe_dict):
+    mageck_dir=exe_dict["mageck"]
     #check for stats.config
     stats_config=os.path.join(work_dir,"stats.config")
     if not os.path.exists(stats_config):
@@ -521,10 +386,10 @@ def mageck(work_dir,script_dir,cnv):
         prefix=os.path.join(work_dir,"mageck",mageck_output,mageck_output)
         input=os.path.join(work_dir,"count","counts-aggregated.tsv")
         log=" 2>> "+os.path.join(work_dir,"crispr.log")
-        mageck_command="mageck test -k "+input+" -t "+test_sample+" -c "+control_sample+" -n "+prefix+log
+        mageck_command=os.path.join(mageck_dir,"mageck")+" test -k "+input+" -t "+test_sample+" -c "+control_sample+" -n "+prefix+log
         if cnv == True:
             prefix=os.path.join(work_dir,"mageck-cnv",mageck_output,mageck_output)
-            mageck_command="mageck test -k "+input+" -t "+test_sample+" -c "+control_sample+" -n "+prefix+log
+            mageck_command=os.path.join(mageck_dir,"mageck")+" test -k "+input+" -t "+test_sample+" -c "+control_sample+" -n "+prefix+log
             mageck_command=mageck_command+cnv_command
         write2log(work_dir,mageck_command,"MAGeCK: ")
         subprocess.run(mageck_command, shell=True)
@@ -593,32 +458,9 @@ def convert4bagel(work_dir,library,crispr_library): #convert MAGeCK formatted co
         os.makedirs(os.path.join(work_dir,"bagel"),exist_ok=True)
         df_merge.to_csv(count_table_bagel2, sep='\t',index=False)
 
-def bagel2(work_dir,script_dir):
-    #find BAGEL2 dir if not in .exe_dict_obj
-    exe_dict=pickle.load(open(os.path.join(script_dir,".exe_dict.obj"),"rb"))
-    if "bagel2" not in exe_dict:
-        find_command="find "+"$HOME "+"-type "+"d "+"-name "+"bagel2"
-        bagel2_dir=subprocess.check_output(find_command, shell=True)
-        bagel2_dir=bagel2_dir.decode("utf-8")
-        dir_count=bagel2_dir.count("\n")
-
-        if dir_count == 0:
-            print("ERROR: BAGEL2 directory not found")
-            download=input("Download and install BAGEL2? y/n")
-            if download in ["yes","Yes","y","Y"]:
-                install_bagel2(script_dir)
-                bagel2_exe=os.path.join(script_dir,"bagel2","BAGEL.py")
-                exe_dict.update({"bagel2":bagel2_exe})
-            else:
-                sys.exit("BAGEL2 install aborted")
-        elif dir_count > 1:
-            sys.exit("ERROR: multiple BAGEL2 directories found (keep only one)")
-        elif dir_count == 1:
-            bagel2_dir=bagel2_dir.replace("\n","")
-            bagel2_exe=os.path.join(bagel2_dir,"BAGEL.py")
-            exe_dict.update({"bagel2":bagel2_exe})
-    else:
-        bagel2_exe=exe_dict["bagel2"]
+def bagel2(work_dir,script_dir,exe_dict):
+    bagel2_dir=exe_dict["bagel2"]
+    bagel2_exe=os.path.join(bagel2_dir,"BAGEL.py")
 
     #get sample names from BAGEL2 count table
     header=subprocess.check_output(["head", "-1",os.path.join(work_dir,"bagel","counts-aggregated-bagel2.tsv")])

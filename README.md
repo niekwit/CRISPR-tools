@@ -55,10 +55,6 @@ Before the first analysis, install [pip3](https://stackoverflow.com/questions/65
 
 > `python3 setup.py`
 
-To get the latest updates run from the CRISPR-tools folder:
-
-> `git pull`
-
 ## Configuration:
 
 CRISPR libraries can be configured in the `library.yaml` file (located in the `CRISPR-tools` folder), as follows:

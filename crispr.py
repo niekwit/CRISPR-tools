@@ -32,20 +32,11 @@ def main():
     args = vars(ap.parse_args())
 
     ###check if software requirements are met
-    '''
-    utils.install_python_packages(work_dir)
-
-    exe_dict=os.path.join(script_dir,".exe_dict.obj") #stores location of non-Python dependencies
-    if not os.path.exists(exe_dict):
-        utils.check_env(script_dir,work_dir)
-    else:
-        exe_dict=pickle.load(open(os.path.join(script_dir,".exe_dict.obj"),"rb"))
-
-    required={"fastqc","mageck","bowtie2","bagel2"}
-    for i in required:
+    exe_dict=pickle.load(open(os.path.join(script_dir,".exe_dict.obj"),"rb"))
+    dep_list=("fastqc","bowtie2","mageck","bagel")
+    for i in dep_list:
         if not i in exe_dict:
-            sys.exit(i+" directory not detected, check log")
-    '''
+            sys.exit("ERROR: %s directory not found\nRun setup.py again\n" % i)
 
     ###set thread count for processing
     threads=utils.set_threads(args)
@@ -60,7 +51,7 @@ def main():
     file_extension=utils.get_extension(work_dir)
 
     ##Run FastQC/MultiQC
-    utils.fastqc(work_dir,threads,file_extension)
+    utils.fastqc(work_dir,threads,file_extension,exe_dict)
 
     ##count reads
     #get parsed arguments
@@ -71,7 +62,7 @@ def main():
     utils.guide_names(library,crispr_library)
     #count sgRNAs
     mismatch=args["mismatch"]
-    utils.count(library,crispr_library,mismatch,threads,script_dir,work_dir,file_extension)
+    utils.count(library,crispr_library,mismatch,threads,script_dir,work_dir,file_extension,exe_dict)
     #join count files
     utils.join_counts(work_dir,library,crispr_library)
     #normalise read count table
@@ -86,14 +77,14 @@ def main():
     if analysis == "mageck":
         print("Statistical analysis with MAGeCK selected")
         cnv=args["cnv"]
-        utils.mageck(work_dir,script_dir,cnv)
+        utils.mageck(work_dir,script_dir,cnv,exe_dict)
         #GO analysis
         if go == True:
             utils.go(work_dir,script_dir)
     elif analysis == "bagel2":
         print("Statistical analysis with BAGEL2 selected")
         utils.convert4bagel(work_dir,library,crispr_library)
-        utils.bagel2(work_dir,script_dir)
+        utils.bagel2(work_dir,script_dir,exe_dict)
 
 
 if __name__ == "__main__":

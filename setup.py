@@ -7,6 +7,7 @@ import sys
 import pickle
 from zipfile import ZipFile
 import tarfile
+import urllib.request
 
 def install_python_packages(): #check for required python packages; installs if absent
     required = {"shyaml","pyyaml","pandas","numpy","matplotlib","seaborn","multiqc","cutadapt"}
@@ -28,8 +29,8 @@ def install_fastqc(script_dir,fastqc_dir):
     if not "fastqc" in exe_dict:
         url="https://www.bioinformatics.babraham.ac.uk/projects/fastqc/fastqc_v0.11.9.zip"
         download_file=os.path.join(script_dir,"fastqc_v0.11.9.zip")
-        download_command="wget "+url+" --output-document="+download_file
-        subprocess.run(download_command, shell=True)
+        print("Installing FastQC "+script_dir)
+        urllib.request.urlretrieve(url,download_file)
         #unzip FastQC file
         with ZipFile(download_file, 'r') as zip_ref:
             zip_ref.extractall(script_dir)
@@ -40,14 +41,16 @@ def install_fastqc(script_dir,fastqc_dir):
             pickle.dump(exe_dict, file=open(os.path.join(script_dir,".exe_dict.obj"),"wb"))
         except pickle.PicklingError:
             print("Storing of FastQC dir to dictionary with dependency locations failed")
+        #remove download file
+        os.remove(download_file)
 
 def install_mageck(script_dir,mageck_dir):
     exe_dict=pickle.load(open(os.path.join(script_dir,".exe_dict.obj"),"rb"))
     if not "mageck" in exe_dict:
         url="https://sourceforge.net/projects/mageck/files/0.5/mageck-0.5.9.4.tar.gz/download"
         download_file=os.path.join(script_dir,"mageck-0.5.9.4.tar.gz")
-        download_command="wget "+url+" --output-document="+download_file
-        subprocess.run(download_command, shell=True)
+        print("Installing MAGeCK to "+script_dir)
+        urllib.request.urlretrieve(url,download_file)
         #unpack MAGeCK file
         tar = tarfile.open(download_file, "r:gz")
         tar.extractall()
@@ -59,6 +62,8 @@ def install_mageck(script_dir,mageck_dir):
             pickle.dump(exe_dict, file=open(os.path.join(script_dir,".exe_dict.obj"),"wb"))
         except pickle.PicklingError:
             print("Storing of MAGeCK dir to dictionary with dependency locations failed")
+        #remove download file
+        os.remove(download_file)
 
 def install_bowtie2(script_dir):
     exe_dict=pickle.load(open(os.path.join(script_dir,".exe_dict.obj"),"rb"))
@@ -71,8 +76,8 @@ def install_bowtie2(script_dir):
             url="https://sourceforge.net/projects/bowtie-bio/files/bowtie2/2.4.3/bowtie2-2.4.3-macos-x86_64.zip/download"
             download_file=os.path.join(script_dir,"bowtie2-2.4.3-macos-x86_64.zip")
             bowtie2_dir=os.path.join(script_dir,"bowtie2-2.4.3-macos-x86_64")
-        download_command="wget "+url+" --output-document="+download_file
-        subprocess.run(download_command, shell=True)
+        print("Installing Bowtie2 to"+script_dir)
+        urllib.request.urlretrieve(url,download_file)
         #unzip Bowtie2 file
         with ZipFile(download_file, 'r') as zip_ref:
             zip_ref.extractall(script_dir)
@@ -83,6 +88,8 @@ def install_bowtie2(script_dir):
             pickle.dump(exe_dict, file=open(os.path.join(script_dir,".exe_dict.obj"),"wb"))
         except pickle.PicklingError:
             print("Storing of Bowtie2 dir to dictionary with dependency locations failed")
+        #remove download file
+        os.remove(download_file)
 
 def install_bagel2(script_dir,bagel2_dir):
     exe_dict=pickle.load(open(os.path.join(script_dir,".exe_dict.obj"),"rb"))
@@ -117,6 +124,8 @@ def check_env(script_dir,work_dir):
     install_mageck(script_dir,mageck_dir)
     install_bowtie2(script_dir)
     install_bagel2(script_dir,bagel2_dir)
+
+    print("Installation successful")
 
 if __name__ == "__main__":
     work_dir=os.getcwd()
