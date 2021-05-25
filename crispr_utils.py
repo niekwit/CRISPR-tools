@@ -89,21 +89,21 @@ def check_index(library,crispr_library,script_dir,exe_dict,work_dir):
                 sys.exit("ERROR:No fasta file found for "+crispr_library)
             else:
                 index_base=os.path.join(script_dir,"index",crispr_library,crispr_library+"-index")
-                bowtie2_build_command=os.path.join(bowtie2_dir,"bowtie2-build "),fasta," ",index_base
+                index_dir=os.path.join(script_dir,"index",crispr_library)
+                os.makedirs(index_dir,exist_ok=True)
+                bowtie2_build_command=os.path.join(bowtie2_dir,"bowtie2-build ")+fasta+" "+index_base
                 write2log(work_dir,bowtie2_build_command,"Bowtie2-build: ")
-
-                #Write bowtie2 index file location to library.yaml
-                with open(os.path.join(script_dir,"library.yaml")) as f:
-                    doc=yaml.safe_load(f)
-                doc[crispr_library]["index_path"]=index_base
-                with open(os.path.join(script_dir,"library.yaml"), "w") as f:
-                    yaml.dump(doc,f)
-
-                print("Building Bowtie2 index for "+crispr_library+"library")
+                print("Building Bowtie2 index for "+crispr_library+" library")
                 try:
-                    subprocess.run(bowtie2-build-command, shell=True) #build index
+                    subprocess.run(bowtie2_build_command, shell=True) #build index
+                    #Write bowtie2 index file location to library.yaml
+                    with open(os.path.join(script_dir,"library.yaml")) as f:
+                        doc=yaml.safe_load(f)
+                        doc[crispr_library]["index_path"]=index_base
+                        with open(os.path.join(script_dir,"library.yaml"), "w") as f:
+                            yaml.dump(doc,f)
                 except:
-                    sys.exit("ERROR: bpwtie2-build failed, check logs")
+                    sys.exit("ERROR: bowtie2-build failed, check logs")
     except KeyError:
         sys.exit("ERROR: CRISPR library not specified in command line")
 
@@ -386,7 +386,7 @@ def mageck(work_dir,script_dir,cnv,exe_dict):
         prefix=os.path.join(work_dir,"mageck",mageck_output,mageck_output)
         input=os.path.join(work_dir,"count","counts-aggregated.tsv")
         log=" 2>> "+os.path.join(work_dir,"crispr.log")
-        mageck_command=os.path.join(mageck_dir,"mageck")+" test -k "+input+" -t "+test_sample+" -c "+control_sample+" -n "+prefix+log
+        mageck_command="mageck test -k "+input+" -t "+test_sample+" -c "+control_sample+" -n "+prefix+log
         if cnv == True:
             prefix=os.path.join(work_dir,"mageck-cnv",mageck_output,mageck_output)
             mageck_command=os.path.join(mageck_dir,"mageck")+" test -k "+input+" -t "+test_sample+" -c "+control_sample+" -n "+prefix+log

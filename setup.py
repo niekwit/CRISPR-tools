@@ -8,11 +8,12 @@ import stat
 import sys
 import pickle
 from zipfile import ZipFile
-import tarfile
+#import tarfile
 import urllib.request
+import shutil
 
 def install_python_packages(): #check for required python packages; installs if absent
-    required = {"shyaml","pyyaml","pandas","numpy","matplotlib","seaborn","multiqc","cutadapt"}
+    required = {"shyaml","pyyaml","pandas","numpy","matplotlib","seaborn","multiqc","cutadapt","scipy","scikit-learn"}
     installed = {pkg.key for pkg in pkg_resources.working_set}
     missing = required - installed
     if missing:
@@ -58,9 +59,13 @@ def install_mageck(script_dir,mageck_dir):
         print("Installing MAGeCK to "+script_dir)
         urllib.request.urlretrieve(url,download_file)
         #unpack MAGeCK file
-        tar = tarfile.open(download_file, "r:gz")
-        tar.extractall()
-        tar.close()
+        tar_command="tar -xzf "+ download_file
+        subprocess.run(tar_command,shell=True)
+        curr_dir=os.getcwd()
+        os.chdir(os.path.join(script_dir,"mageck-0.5.9.4"))
+        mageck_install_command="python3 "+os.path.join(script_dir,"mageck-0.5.9.4","setup.py"+" install --user")
+        subprocess.run(mageck_install_command,shell=True)
+        os.chdir(curr_dir)
         #add MAGeCK directory to exe_dict
         exe_dict["mageck"]=mageck_dir
         #save exe_dict to file
@@ -68,9 +73,10 @@ def install_mageck(script_dir,mageck_dir):
             pickle.dump(exe_dict, file=open(os.path.join(script_dir,".exe_dict.obj"),"wb"))
         except pickle.PicklingError:
             print("Storing of MAGeCK dir to dictionary with dependency locations failed")
-        #remove download file
+        #remove download file and folder
         os.remove(download_file)
-
+        shutil.rmtree(os.path.join(script_dir,"mageck-0.5.9.4"))
+        
 def install_bowtie2(script_dir):
     exe_dict=pickle.load(open(os.path.join(script_dir,".exe_dict.obj"),"rb"))
     if not "bowtie2" in exe_dict:
