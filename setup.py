@@ -8,11 +8,6 @@ import pickle
 from zipfile import ZipFile
 import tarfile
 
-def write2log(work_dir,command,name):
-    with open(os.path.join(work_dir,"commands.log"), "a") as file:
-        file.write(name)
-        print(*command, sep="",file=file)
-
 def install_python_packages(): #check for required python packages; installs if absent
     required = {"shyaml","pyyaml","pandas","numpy","matplotlib","seaborn","multiqc","cutadapt"}
     installed = {pkg.key for pkg in pkg_resources.working_set}
@@ -22,7 +17,6 @@ def install_python_packages(): #check for required python packages; installs if 
         print("Installing missing required Python3 packages")
         try:
             install_command=[python, '-m', 'pip', 'install', *missing]
-            #write2log(work_dir,install_command,"Missing package installation: ")
             subprocess.check_call(install_command, stdout=subprocess.DEVNULL)
         except:
             sys.exit("ERROR: package installation failed, check log")
@@ -35,7 +29,6 @@ def install_fastqc(script_dir,fastqc_dir):
         url="https://www.bioinformatics.babraham.ac.uk/projects/fastqc/fastqc_v0.11.9.zip"
         download_file=os.path.join(script_dir,"fastqc_v0.11.9.zip")
         download_command="wget "+url+" --output-document="+download_file
-        write2log(work_dir,download_command,"Download FastQC: ")
         subprocess.run(download_command, shell=True)
         #unzip FastQC file
         with ZipFile(download_file, 'r') as zip_ref:
@@ -99,7 +92,7 @@ def install_bagel2(script_dir,bagel2_dir):
         clone_command="git "+"clone "+"https://github.com/hart-lab/bagel.git "+os.path.join(script_dir,"bagel2")
         subprocess.run(clone_command, shell=True)
         #add Bowtie directory to exe_dict
-        exe_dict["bagel2"]=bowtie2_dir
+        exe_dict["bagel2"]=bagel2_dir
         #save exe_dict to file
         try:
             pickle.dump(exe_dict, file=open(os.path.join(script_dir,".exe_dict.obj"),"wb"))
