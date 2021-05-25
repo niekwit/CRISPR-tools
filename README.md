@@ -52,7 +52,7 @@ The `CRISPR-tools` can be permamently added to $PATH by adding the following lin
 OPTIONAL: to enable auto-completion of the command line options for the CRISPR library and analysis (`-l`/`--library` and `-a`/`--analysis`), add this line to your `~/.bashrc` file:
 > `source /path/to/CRISPR-tools/auto-complete.sh`
 
-Before the first analysis, install [pip3](https://stackoverflow.com/questions/6587507/how-to-install-pip-with-python-3) and run the `setup.py` file from the command line as follows:
+Before the first analysis, install [pip3](https://stackoverflow.com/questions/6587507/how-to-install-pip-with-python-3) and a Java Runtime Environment, and then run the `setup.py` file from the command line as follows:
 
 > `python3 setup.py`
 

@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import glob
 import subprocess
 import pkg_resources
 import os
@@ -84,8 +85,9 @@ def install_bowtie2(script_dir):
         print("Installing Bowtie2 to"+script_dir)
         urllib.request.urlretrieve(url,download_file)
         #unzip Bowtie2 file
-        with ZipFile(download_file, 'r') as zip_ref:
-            zip_ref.extractall(script_dir)
+        unzip_command="unzip -qq "+download_file+" -d "+script_dir
+        subprocess.run(unzip_command,shell=True)
+
         #add Bowtie directory to exe_dict
         exe_dict["bowtie2"]=bowtie2_dir
         #save exe_dict to file
@@ -93,6 +95,7 @@ def install_bowtie2(script_dir):
             pickle.dump(exe_dict, file=open(os.path.join(script_dir,".exe_dict.obj"),"wb"))
         except pickle.PicklingError:
             print("Storing of Bowtie2 dir to dictionary with dependency locations failed")
+
         #remove download file
         os.remove(download_file)
 
@@ -101,7 +104,7 @@ def install_bagel2(script_dir,bagel2_dir):
     if not "bagel2" in exe_dict:
         print("Installing BAGEL2 to "+script_dir)
         bagel2_git="https://github.com/hart-lab/bagel.git"
-        clone_command="git "+"clone "+"https://github.com/hart-lab/bagel.git "+os.path.join(script_dir,"bagel2")
+        clone_command="git "+"clone --quiet "+"https://github.com/hart-lab/bagel.git "+os.path.join(script_dir,"bagel2")
         subprocess.run(clone_command, shell=True)
         #add Bowtie directory to exe_dict
         exe_dict["bagel2"]=bagel2_dir
