@@ -15,6 +15,7 @@ This bioinformatic pipeline will automate analysis of NGS data from CRISPR-Cas9 
 
 - [git](https://git-scm.com/)
 - [pip3](https://stackoverflow.com/questions/6587507/how-to-install-pip-with-python-3)
+- [JRE](https://ubuntu.com/tutorials/install-jre#1-overview)
 - [Python 3](https://www.python.org/)
 	- [Pandas](https://pandas.pydata.org/)
 	- [Numpy](https://numpy.org/)

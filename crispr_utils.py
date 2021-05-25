@@ -76,7 +76,7 @@ def fastqc(work_dir,threads,file_extension,exe_dict):
     else:
         print("Skipping FastQC/MultiQC (already performed)")
 
-def check_index(library,crispr_library,script_dir,exe_dict):
+def check_index(library,crispr_library,script_dir,exe_dict,work_dir):
     bowtie2_dir=exe_dict["bowtie2"]
     try:
         index_path=library[crispr_library]["index_path"]
