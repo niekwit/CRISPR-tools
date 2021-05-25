@@ -89,7 +89,7 @@ def check_index(library,crispr_library,script_dir,exe_dict,work_dir):
                 sys.exit("ERROR:No fasta file found for "+crispr_library)
             else:
                 index_base=os.path.join(script_dir,"index",crispr_library,crispr_library+"-index")
-                bowtie2_build_command=[os.path.join(bowtie2_dir,"bowtie2-build"),fasta,index_base]
+                bowtie2_build_command=os.path.join(bowtie2_dir,"bowtie2-build "),fasta," ",index_base
                 write2log(work_dir,bowtie2_build_command,"Bowtie2-build: ")
 
                 #Write bowtie2 index file location to library.yaml
@@ -101,7 +101,7 @@ def check_index(library,crispr_library,script_dir,exe_dict,work_dir):
 
                 print("Building Bowtie2 index for "+crispr_library+"library")
                 try:
-                    subprocess.run(bowtie2-build-command) #build index
+                    subprocess.run(bowtie2-build-command, shell=True) #build index
                 except:
                     sys.exit("ERROR: bpwtie2-build failed, check logs")
     except KeyError:
