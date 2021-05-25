@@ -3,6 +3,7 @@
 import subprocess
 import pkg_resources
 import os
+import stat
 import sys
 import pickle
 from zipfile import ZipFile
@@ -41,6 +42,10 @@ def install_fastqc(script_dir,fastqc_dir):
             pickle.dump(exe_dict, file=open(os.path.join(script_dir,".exe_dict.obj"),"wb"))
         except pickle.PicklingError:
             print("Storing of FastQC dir to dictionary with dependency locations failed")
+        #chmod +x fastqc
+        fastqc_file=os.path.join(fastqc_dir,"fastqc")
+        st = os.stat(fastqc_file)
+        os.chmod(fastqc_file, st.st_mode | stat.S_IEXEC)
         #remove download file
         os.remove(download_file)
 
