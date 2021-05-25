@@ -9,6 +9,7 @@ import yaml
 import glob
 import timeit
 import time
+import pickle
 
 def main():
     ###command line argument parser
