@@ -67,15 +67,17 @@ def install_mageck(script_dir,mageck_dir):
         except pickle.PicklingError:
             print("Storing of MAGeCK dir to dictionary with dependency locations failed")
 
-def install_bowtie2(script_dir,bowtie2_dir):
+def install_bowtie2(script_dir):
     exe_dict=pickle.load(open(os.path.join(script_dir,".exe_dict.obj"),"rb"))
     if not "bowtie2" in exe_dict:
         if sys.platform in ["linux","linux2"]:
             url="https://sourceforge.net/projects/bowtie-bio/files/bowtie2/2.4.3/bowtie2-2.4.3-linux-x86_64.zip/download"
             download_file=os.path.join(script_dir,"bowtie2-2.4.3-linux-x86_64.zip")
+            bowtie2_dir=os.path.join(script_dir,"bowtie2-2.4.3-linux-x86_64")
         elif sys.platform == "darwin":
             url="https://sourceforge.net/projects/bowtie-bio/files/bowtie2/2.4.3/bowtie2-2.4.3-macos-x86_64.zip/download"
             download_file=os.path.join(script_dir,"bowtie2-2.4.3-macos-x86_64.zip")
+            bowtie2_dir=os.path.join(script_dir,"bowtie2-2.4.3-macos-x86_64")
         download_command="wget "+url+" --output-document="+download_file
         subprocess.run(download_command, shell=True)
         #unzip Bowtie2 file
@@ -108,10 +110,6 @@ def check_env(script_dir,work_dir):
     fastqc_dir=os.path.join(script_dir,"fastqc_v0.11.9","FastQC")
     mageck_dir=os.path.join(script_dir,"mageck-0.5.9.4","bin")
     bagel2_dir=os.path.join(script_dir,"bagel2")
-    if sys.platform in ["linux","linux2"]:
-        bowtie2_dir=os.path.join(script_dir,"bowtie2-2.4.3-linux-x86_64")
-    elif sys.platform == "darwin":
-        bowtie2_dir=os.path.join(script_dir,"bowtie2-2.4.3-macos-x86_64")
 
     #create dictionary for storing paths and save to file
     exe_dict=dict()
@@ -124,7 +122,7 @@ def check_env(script_dir,work_dir):
     #download dependencies and store path to exe_dict
     install_fastqc(script_dir,fastqc_dir)
     install_mageck(script_dir,mageck_dir)
-    install_bowtie2(script_dir,bowtie2_dir)
+    install_bowtie2(script_dir)
     install_bagel2(script_dir,bagel2_dir)
 
 if __name__ == "__main__":
