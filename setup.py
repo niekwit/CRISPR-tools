@@ -76,7 +76,7 @@ def install_mageck(script_dir,mageck_dir):
         #remove download file and folder
         os.remove(download_file)
         shutil.rmtree(os.path.join(script_dir,"mageck-0.5.9.4"))
-        
+
 def install_bowtie2(script_dir):
     exe_dict=pickle.load(open(os.path.join(script_dir,".exe_dict.obj"),"rb"))
     if not "bowtie2" in exe_dict:
@@ -120,6 +120,10 @@ def install_bagel2(script_dir,bagel2_dir):
         except pickle.PicklingError:
             print("Storing of BAGEL2 dir to dictionary with dependency locations failed")
 
+def install_R_packages():
+    install_command="Rscript "+os.path.join("R","install_R_packages.R")
+    subprocess.run(install_command,shell=True)
+
 def check_env(script_dir,work_dir):
     fastqc_dir=os.path.join(script_dir,"FastQC")
     mageck_dir=os.path.join(script_dir,"mageck-0.5.9.4","bin")
@@ -138,8 +142,9 @@ def check_env(script_dir,work_dir):
     install_mageck(script_dir,mageck_dir)
     install_bowtie2(script_dir)
     install_bagel2(script_dir,bagel2_dir)
+    install_R_packages()
 
-    print("Installation successful")
+    print("Installation finished")
 
 if __name__ == "__main__":
     work_dir=os.getcwd()

@@ -33,11 +33,14 @@ def main():
     args = vars(ap.parse_args())
 
     ###check if software requirements are met
-    exe_dict=pickle.load(open(os.path.join(script_dir,".exe_dict.obj"),"rb"))
-    dep_list=("fastqc","bowtie2","mageck","bagel2")
-    for i in dep_list:
-        if not i in exe_dict:
-            sys.exit("ERROR: %s directory not found\nRun setup.py again\n" % i)
+    try:
+        exe_dict=pickle.load(open(os.path.join(script_dir,".exe_dict.obj"),"rb"))
+        dep_list=("fastqc","bowtie2","mageck","bagel2")
+        for i in dep_list:
+            if not i in exe_dict:
+                sys.exit("ERROR: %s directory not found\nRun setup.py again\n" % i)
+    except FileNotFoundError:
+        sys.exit("setup.py not run before first analysis")
 
     ###set thread count for processing
     threads=utils.set_threads(args)
@@ -63,7 +66,7 @@ def main():
     utils.guide_names(library,crispr_library)
     #count sgRNAs
     mismatch=args["mismatch"]
-    utils.count(library,crispr_library,mismatch,threads,script_dir,work_dir,file_extension,exe_dict)
+    utils.count(library,crispr_library,mismatch,threads,script_dir,work_dir,file_extension)
     #join count files
     utils.join_counts(work_dir,library,crispr_library)
     #normalise read count table
@@ -78,7 +81,7 @@ def main():
     if analysis == "mageck":
         print("Statistical analysis with MAGeCK selected")
         cnv=args["cnv"]
-        utils.mageck(work_dir,script_dir,cnv,exe_dict)
+        utils.mageck(work_dir,script_dir,cnv)
         #GO analysis
         if go == True:
             utils.go(work_dir,script_dir)

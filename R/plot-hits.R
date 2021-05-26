@@ -6,7 +6,7 @@ installed.packages <- installed.packages()[,1]
 
 for (i in cran.packages){
   if(!i %in% installed.packages){
-    cat(i,"package missing, installing now\n")
+    cat("R: ",i,"package missing, installing now\n")
     install.packages(i,repos='http://cran.us.r-project.org')
   }
 }
@@ -244,6 +244,7 @@ df.file <- args[2]
 test <- args[3]
 save.path <- args[4]
 title <- args[5]
+script.dir <- args[6]
 
 if(test == "mageck"){plot.mageck(work.dir,df.file,save.path)
 } else if(test == "bagel2"){plot.bagel2(work.dir,df.file,save.path,title)

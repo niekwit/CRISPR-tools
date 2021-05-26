@@ -123,7 +123,8 @@ def guide_names(library,crispr_library):
         #saves guide names to a .csv file:
         library.to_csv(output_name, index=False, header=False)
 
-def count(library,crispr_library,mismatch,threads,script_dir,work_dir,file_extension,exe_dict):
+def count(library,crispr_library,mismatch,threads,script_dir,work_dir,file_extension):
+    exe_dict=pickle.load(open(os.path.join(script_dir,".exe_dict.obj"),"rb"))
     os.makedirs(os.path.join(work_dir,"count"),exist_ok=True)
     try:
         read_mod=library[crispr_library]["read_mod"]
@@ -304,8 +305,7 @@ def join_counts(work_dir,library,crispr_library):
     #Writes all data to a single .tsv file, ready for MAGeCK
     dfjoin2.to_csv(os.path.join(work_dir,"count",'counts-aggregated.tsv'), sep='\t',index=False)
 
-def mageck(work_dir,script_dir,cnv,exe_dict):
-    mageck_dir=exe_dict["mageck"]
+def mageck(work_dir,script_dir,cnv):
     #check for stats.config
     stats_config=os.path.join(work_dir,"stats.config")
     if not os.path.exists(stats_config):
@@ -399,7 +399,7 @@ def mageck(work_dir,script_dir,cnv,exe_dict):
 
     for file in file_list:
         save_path=os.path.dirname(file)
-        plot_command="Rscript "+os.path.join(script_dir,"R","plot-hits.R ")+work_dir+" "+file+" mageck "+save_path+" "+mageck_output
+        plot_command="Rscript "+os.path.join(script_dir,"R","plot-hits.R ")+work_dir+" "+file+" mageck "+save_path+" "+mageck_output+" "+script_dir
         write2log(work_dir,plot_command,"Plot hits MAGeCK: ")
         try:
             subprocess.run(plot_command, shell=True)
