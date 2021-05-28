@@ -66,7 +66,7 @@ def main():
     utils.guide_names(library,crispr_library)
     #count sgRNAs
     mismatch=args["mismatch"]
-    utils.count(library,crispr_library,mismatch,threads,script_dir,work_dir,file_extension)
+    utils.count(library,crispr_library,mismatch,threads,script_dir,work_dir)
     #join count files
     utils.join_counts(work_dir,library,crispr_library)
     #normalise read count table

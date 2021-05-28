@@ -8,7 +8,6 @@ import stat
 import sys
 import pickle
 from zipfile import ZipFile
-#import tarfile
 import urllib.request
 import shutil
 
@@ -50,6 +49,9 @@ def install_fastqc(script_dir,fastqc_dir):
         os.chmod(fastqc_file, st.st_mode | stat.S_IEXEC)
         #remove download file
         os.remove(download_file)
+    else:
+        print("FastQC already installed")
+        return(None)
 
 def install_mageck(script_dir,mageck_dir):
     exe_dict=pickle.load(open(os.path.join(script_dir,".exe_dict.obj"),"rb"))
@@ -76,6 +78,9 @@ def install_mageck(script_dir,mageck_dir):
         #remove download file and folder
         os.remove(download_file)
         shutil.rmtree(os.path.join(script_dir,"mageck-0.5.9.4"))
+    else:
+        print("MAGeCK already installed")
+        return(None)
 
 def install_bowtie2(script_dir):
     exe_dict=pickle.load(open(os.path.join(script_dir,".exe_dict.obj"),"rb"))
@@ -104,6 +109,9 @@ def install_bowtie2(script_dir):
 
         #remove download file
         os.remove(download_file)
+    else:
+        print("Bowtie2 already installed")
+        return(None)
 
 def install_bagel2(script_dir,bagel2_dir):
     exe_dict=pickle.load(open(os.path.join(script_dir,".exe_dict.obj"),"rb"))
@@ -119,6 +127,9 @@ def install_bagel2(script_dir,bagel2_dir):
             pickle.dump(exe_dict, file=open(os.path.join(script_dir,".exe_dict.obj"),"wb"))
         except pickle.PicklingError:
             print("Storing of BAGEL2 dir to dictionary with dependency locations failed")
+    else:
+        print("BAGEL2 already installed")
+        return(None)
 
 def install_R_packages():
     install_command="Rscript "+os.path.join("R","install_R_packages.R")
@@ -142,8 +153,6 @@ def check_env(script_dir,work_dir):
     install_mageck(script_dir,mageck_dir)
     install_bowtie2(script_dir)
     install_bagel2(script_dir,bagel2_dir)
-    install_R_packages()
-
     print("Installation finished")
 
 if __name__ == "__main__":
@@ -151,4 +160,5 @@ if __name__ == "__main__":
     script_dir=os.path.abspath(os.path.dirname(__file__))
 
     install_python_packages()
+    install_R_packages()
     check_env(script_dir,work_dir)

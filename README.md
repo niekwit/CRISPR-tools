@@ -52,7 +52,7 @@ The `CRISPR-tools` can be permamently added to $PATH by adding the following lin
 OPTIONAL: to enable auto-completion of the command line options for the CRISPR library and analysis (`-l`/`--library` and `-a`/`--analysis`), add this line to your `~/.bashrc` file:
 > `source /path/to/CRISPR-tools/auto-complete.sh`
 
-Before the first analysis, install [pip3](https://stackoverflow.com/questions/6587507/how-to-install-pip-with-python-3) and a Java Runtime Environment, and then run the `setup.py` file from the command line as follows:
+Before the first analysis, install [pip3](https://stackoverflow.com/questions/6587507/how-to-install-pip-with-python-3) and a Java Runtime Environment ([Ubuntu](https://ubuntu.com/tutorials/install-jre)/[MacOS](https://docs.oracle.com/javase/10/install/installation-jdk-and-jre-macos.htm#JSJIG-GUID-2FE451B0-9572-4E38-A1A5-568B77B146DE)), and then run the `setup.py` file from the command line as follows:
 
 > `python3 setup.py`
 
@@ -76,8 +76,8 @@ moffat_tko1:
   species: human
 ```
 Explanation of `library.yaml`:
-* For each library a Bowtie2 index has to be generated using `bowtie2 build` with the library fasta file as input. The path to this index has to be set as `index_path` in `library.yaml`.
 * The path to the fasta file must be set with `fasta` (fasta files for a variety of CRISPR libraries can be found in the `Addgene_CRISPR_libraries_FASTA` folder).
+* The entry for `index_path` can be left empty, as the Bowtie2 index can be made during the analysis (will be added to this yaml file automatically)
 * If a CRISPR library has a fixed sgRNA length, then the length of the sgRNA must be set with the `sg_length` variable. Additionaly, set `read_mod` as "trim".
 * If a CRISPR library has variable sgRNA lengths, then `read_mod` should be set and "clip" and `clip_seq` should contain the vector sequence downstream of the sgRNA sequence.
 
@@ -94,6 +94,7 @@ GO:
   term: BP #BP, CC or MF
 ```
 The `mageck-fdr` variable sets the statistical cut off for plotting MAGeCK hits.
+
 ## Usage:
 
 1. Create a main folder (can be any name) for the analysis that contains the subfolder `raw-data`, which contains the fastq.gz files.
@@ -142,12 +143,13 @@ optional arguments:
 ```
 To start an analysis, for example with the Bassik whole-genome CRISPR library, navigate to main analysis folder in the command line and run:
 
-> `path/to/crispr.py -l bassik -r -t max`
+> `crispr.py -l bassik -r -t max`
 
 This initiates a run that will rename your samples according to `rename.config`, allows no mismatches during alignment, will use all available CPU threads for the analysis, and uses MAGeCK for statistical analysis.
 If you also want to use BAGEL2 for statistical analysis afterwards, simply run:
 
-> `path/to/crispr.py -l bassik -a bagel2`
+> `crispr.py -l bassik -a bagel2`
+
 This will only run BAGEL2 and skip all steps that are common with MAGeCK.
 
 Both MAGeCK and BAGEL2 have the possibility to correct the effects from copy number variations. To enable this feature the `-c`/`--cnv` flag can be added to the command line.

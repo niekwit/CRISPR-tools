@@ -47,10 +47,11 @@ def get_extension(work_dir):
     file_extension=test_file[extension_index:]
     return file_extension
 
-def file_exists(file):
+def file_exists(file): #check if file exists/is not size zero
     if os.path.exists(file):
-        print("Skipping "+file+" (already exists/analysed)")
-        return(True)
+            if os.path.getsize(file) > 0:
+                print("Skipping "+file+" (already exists/analysed)")
+                return(True)
     else:
         return(False)
 
@@ -123,7 +124,7 @@ def guide_names(library,crispr_library):
         #saves guide names to a .csv file:
         library.to_csv(output_name, index=False, header=False)
 
-def count(library,crispr_library,mismatch,threads,script_dir,work_dir,file_extension):
+def count(library,crispr_library,mismatch,threads,script_dir,work_dir):
     exe_dict=pickle.load(open(os.path.join(script_dir,".exe_dict.obj"),"rb"))
     os.makedirs(os.path.join(work_dir,"count"),exist_ok=True)
     try:
@@ -136,6 +137,8 @@ def count(library,crispr_library,mismatch,threads,script_dir,work_dir,file_exten
         mismatch=str(mismatch)
     except KeyError:
         sys.exit("ERROR: CRISPR library not specified in command line")
+
+    file_extension=get_extension(work_dir)
 
     print("Aligning reads to reference (mismatches allowed: "+mismatch+")")
 
@@ -166,7 +169,7 @@ def count(library,crispr_library,mismatch,threads,script_dir,work_dir,file_exten
         file_list=glob.glob(os.path.join(work_dir,"raw-data","*"+file_extension))
         for file in file_list:
             base_file=os.path.basename(file)
-            out_file=os.path.join(work_dir,"count",file.replace(base_file,".guidecounts.txt"))
+            out_file=os.path.join(work_dir,"count",base_file.replace(file_extension,".guidecounts.txt"))
 
             if not file_exists(out_file):
                 print("Aligning "+base_file)
