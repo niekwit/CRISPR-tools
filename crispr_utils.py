@@ -202,11 +202,6 @@ def normalise(work_dir):
         df.iloc[:,i]=df.iloc[:,i].astype(int)
     df.to_csv(os.path.join(work_dir,"count","counts-aggregated-normalised.csv"),index=False,header=True)
 
-def remove_duplicates(work_dir):
-    df=pd.read_table(os.path.join(work_dir,"count","counts-aggregated.tsv"))
-    df=pd.DataFrame.drop_duplicates(df)
-    df.to_csv(os.path.join(work_dir,"count","counts-aggregated.tsv"),index=False,header=True,sep="\t")
-
 def join_counts(work_dir,library,crispr_library):
     #load sgRNA names, used for merging data2
     fasta=library[crispr_library]["fasta"]
@@ -409,6 +404,10 @@ def mageck(work_dir,script_dir,cnv):
         except:
             sys.exit("ERROR: plotting hits failed, check log")
 
+def remove_duplicates(work_dir):
+    df=pd.read_table(os.path.join(work_dir,"count","counts-aggregated.tsv"))
+    df.drop_duplicates(subset="sgRNA", keep="first", inplace=True)
+    df.to_csv(os.path.join(work_dir,"count","counts-aggregated.tsv"),index=False,header=True,sep="\t")
 
 def convert4bagel(work_dir,library,crispr_library): #convert MAGeCK formatted count table to BAGEL2 format
     count_table_bagel2=os.path.join(work_dir,"bagel",'counts-aggregated-bagel2.tsv')

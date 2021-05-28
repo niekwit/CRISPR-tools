@@ -87,6 +87,7 @@ def main():
             utils.go(work_dir,script_dir)
     elif analysis == "bagel2":
         print("Statistical analysis with BAGEL2 selected")
+        utils.remove_duplicates(work_dir)
         utils.convert4bagel(work_dir,library,crispr_library)
         utils.bagel2(work_dir,script_dir,exe_dict)
 
