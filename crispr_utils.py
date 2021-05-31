@@ -193,6 +193,37 @@ def count(library,crispr_library,mismatch,threads,script_dir,work_dir):
         except:
             sys.exit("ERROR: removal of first line of count file failed")
 
+def plot_alignment_rate():
+    open("files.txt","w").writelines([ line for line in open("crispr.log") if ".gz:" in line ])
+    open("alignment-rate.txt","w").writelines([ line for line in open("crispr.log") if "overall alignment rate" in line ])
+
+    line_number=len(open(os.path.join(work_dir,"files.txt")).readlines())
+    df=pd.DataFrame(columns=["file","alignment_rate"],index=np.arange(line_number))
+
+    counter=0
+    for line in open(os.path.join(work_dir,"files.txt")):
+        line=line.replace(":","")
+        line=line.replace("\n","")
+        df.iloc[counter,0]=line
+        counter+=1
+
+    counter=0
+    for line in open(os.path.join(work_dir,"alignment-rate.txt")):
+        line=line.replace("% overall alignment rate","")
+        line=line.replace("\n","")
+        df.iloc[counter,1]=line
+        counter+=1
+
+    os.remove(os.path.join(work_dir,"files.txt"))
+    os.remove(os.path.join(work_dir,"alignment_rate"))
+
+    #plot alignment rate
+    df["alignment_rate"]=pd.to_numeric(df["alignment_rate"])
+    df.plot.bar(x="file",y="alignment_rate")
+    plt.tight_layout()
+    plt.savefig(os.path.join(work_dir,count,"alignment-rate.pdf"))
+
+
 def normalise(work_dir):
     df=pd.read_table(os.path.join(work_dir,"count","counts-aggregated.tsv"))
     column_range=range(2,len(df.columns))
