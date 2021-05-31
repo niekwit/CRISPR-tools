@@ -67,6 +67,8 @@ def main():
     #count sgRNAs
     mismatch=args["mismatch"]
     utils.count(library,crispr_library,mismatch,threads,script_dir,work_dir)
+    #plot alignment rates
+    utils.plot_alignment_rate(work_dir)
     #join count files
     utils.join_counts(work_dir,library,crispr_library)
     #normalise read count table
