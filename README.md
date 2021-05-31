@@ -1,4 +1,4 @@
-[![made-with-python](https://img.shields.io/badge/Made%20with-Python-1f425f.svg)](https://www.python.org/)[![GitHub license](https://img.shields.io/github/license/Naereen/StrapDown.js.svg)](https://github.com/niekwit/CRISPR-tools/blob/master/LICENSE)
+[![made-with-python](https://img.shields.io/badge/Made%20with-Python-1f425f.svg)](https://www.python.org/)[![GitHub license](https://img.shields.io/github/license/Naereen/StrapDown.js.svg)](https://github.com/niekwit/CRISPR-tools/blob/master/LICENSE)[![GitHub forks](https://img.shields.io/github/forks/Naereen/StrapDown.js.svg?style=social&label=Fork&maxAge=2592000)](https://github.com/niekwit/CRISPR-tools/network)[![GitHub stars](https://img.shields.io/github/stars/Naereen/StrapDown.js.svg?style=social&label=Star&maxAge=2592000)](https://github.com/niekwit/CRISPR-tools/stargazers/)
 
 # CRISPR screen bioinformatic pipeline
 
@@ -28,8 +28,6 @@ This bioinformatic pipeline will automate analysis of NGS data from CRISPR-Cas9 
 - [R](https://www.r-project.org/)
 	- [Tidyverse](https://www.tidyverse.org/)
 	- [ggrepel](https://www.rdocumentation.org/packages/ggrepel/versions/0.9.1)
-	- [rJava](https://cran.r-project.org/web/packages/rJava/index.html)
-	- [RDAVIDWebService](https://www.bioconductor.org/packages/release/bioc/html/RDAVIDWebService.html)
 	- [bioMart](https://bioconductor.org/packages/release/bioc/html/biomaRt.html)
 	- [dplyr](https://www.rdocumentation.org/packages/dplyr/versions/0.7.8)
 	- [GOplot](https://wencke.github.io/)
