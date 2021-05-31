@@ -1,3 +1,5 @@
+[![made-with-python](https://img.shields.io/badge/Made%20with-Python-1f425f.svg)](https://www.python.org/)[![GitHub license](https://img.shields.io/github/license/Naereen/StrapDown.js.svg)](https://github.com/niekwit/CRISPR-tools/blob/master/LICENSE)
+
 # CRISPR screen bioinformatic pipeline
 
 This bioinformatic pipeline will automate analysis of NGS data from CRISPR-Cas9 screen experiments. It can use MAGeCK or BAGEL2 for statistical analysis.
