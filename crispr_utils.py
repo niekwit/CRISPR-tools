@@ -84,7 +84,7 @@ def check_index(library,crispr_library,script_dir,exe_dict,work_dir):
         fasta=library[crispr_library]["fasta"]
         print(crispr_library+" library selected")
 
-        if index_path == "":
+        if index_path in ["",None]:
             print("No index file found for "+crispr_library)
             if fasta == "":
                 sys.exit("ERROR:No fasta file found for "+crispr_library)
@@ -124,8 +124,11 @@ def guide_names(library,crispr_library):
         #saves guide names to a .csv file:
         library.to_csv(output_name, index=False, header=False)
 
-def count(library,crispr_library,mismatch,threads,script_dir,work_dir):
-    exe_dict=pickle.load(open(os.path.join(script_dir,".exe_dict.obj"),"rb"))
+def count(library,crispr_library,mismatch,threads,script_dir,work_dir,exe_dict):
+    #reload library yaml
+    with open(os.path.join(script_dir,"library.yaml")) as file:
+        library=yaml.full_load(file)
+
     os.makedirs(os.path.join(work_dir,"count"),exist_ok=True)
     try:
         read_mod=library[crispr_library]["read_mod"]
@@ -173,7 +176,7 @@ def count(library,crispr_library,mismatch,threads,script_dir,work_dir):
 
             if not file_exists(out_file):
                 print("Aligning "+base_file)
-                print(base_file, file=open("crispr.log", "a"))
+                print(base_file+":", file=open("crispr.log", "a"))
                 cutadapt="cutadapt -j "+threads+" --quality-base 33 -a "+clip_seq+" -o - "+file+" 2>> crispr.log | "
                 cutadapt=str(cutadapt)
                 bowtie2=str(bowtie2)
@@ -225,7 +228,6 @@ def plot_alignment_rate(work_dir):
         plt.xlabel("")
         plt.tight_layout()
         plt.savefig(os.path.join(work_dir,"count","alignment-rate.pdf"))
-
 
 def normalise(work_dir):
     df=pd.read_table(os.path.join(work_dir,"count","counts-aggregated.tsv"))
@@ -583,7 +585,6 @@ def bagel2(work_dir,script_dir,exe_dict):
             except:
                 sys.exit("ERROR: Calculation of precision-recall failed, check log")
 
-
 def lib_analysis(work_dir):
     #determine whether count file contains library samples pre and post
     header=subprocess.check_output(["head", "-1",os.path.join(work_dir,"count","counts-aggregated.tsv")])
@@ -705,10 +706,7 @@ def go(work_dir,script_dir):
     go_term=config["GO"]["term"]
 
     #get list og MAGeCK gene summary file_exists
-    find_command="find "+work_dir+" -name "+"*gene_summary.txt"
-    file_list=subprocess.check_output(find_command, shell=True)
-    file_list=file_list.decode("utf-8")
-    file_list=list(file_list.split("\n"))
+    file_list=glob.glob(os.path.join(work_dir,"mageck","*","*gene_summary.txt"))
 
     for file in file_list:
         save_path=os.path.dirname(file)

@@ -25,9 +25,9 @@ def main():
     ap.add_argument("-a", "--analysis", required=False, default="mageck",
                     choices=["mageck","bagel2"],
                     help="Statistical analysis with MAGeCK or BAGEL2. Default is MAGeCK")
-    ap.add_argument("-c", "--cnv", required=False, action='store_true',
+    ap.add_argument("--cnv", required=False, action='store_true',
        help="Activate CNV correction for MAGeCK/BAGEL2")
-    ap.add_argument("-g", "--go", required=False, action='store_true',
+    ap.add_argument("--go", required=False, action='store_true',
        help="GO analysis with DAVID")
 
     args = vars(ap.parse_args())
@@ -66,13 +66,15 @@ def main():
     utils.guide_names(library,crispr_library)
     #count sgRNAs
     mismatch=args["mismatch"]
-    utils.count(library,crispr_library,mismatch,threads,script_dir,work_dir)
+    utils.count(library,crispr_library,mismatch,threads,script_dir,work_dir,exe_dict)
     #plot alignment rates
     utils.plot_alignment_rate(work_dir)
     #join count files
-    utils.join_counts(work_dir,library,crispr_library)
+    if not utils.file_exists(os.path.join(work_dir,"count",'counts-aggregated.tsv')):
+        utils.join_counts(work_dir,library,crispr_library)
     #normalise read count table
-    utils.normalise(work_dir)
+    if not utils.file_exists(os.path.join(work_dir,"count","counts-aggregated-normalised.csv")):
+        utils.normalise(work_dir)
     ##run library analysis
     utils.lib_analysis(work_dir)
 
