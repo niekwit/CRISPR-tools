@@ -131,6 +131,9 @@ def install_bagel2(script_dir,bagel2_dir):
         print("BAGEL2 already installed")
         return(None)
 
+def install_GSEA(script_dir):
+    pass
+
 def install_R_packages():
     install_command="Rscript "+os.path.join("R","install_R_packages.R")
     subprocess.run(install_command,shell=True)
