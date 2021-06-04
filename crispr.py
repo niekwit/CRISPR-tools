@@ -25,9 +25,11 @@ def main():
     ap.add_argument("-a", "--analysis", required=False, default="mageck",
                     choices=["mageck","bagel2"],
                     help="Statistical analysis with MAGeCK or BAGEL2. Default is MAGeCK")
-    ap.add_argument("--cnv", required=False, action='store_true',
-       help="Activate CNV correction for MAGeCK/BAGEL2")
-    ap.add_argument("--go", required=False, action='store_true',
+    ap.add_argument("-f","--fdr", required=False, metavar="<FDR value>", default=0.25,
+       help="Set FDR cut off for MAGeCK hits (default is 0.25)")
+    ap.add_argument("-c","--cnv", required=False, metavar="<CCLE cell line>",
+       help="Activate CNV correction for MAGeCK/BAGEL2 with given cell line")
+    ap.add_argument("--go", required=False, action='store_true', default=None
        help="GO analysis with DAVID")
 
     args = vars(ap.parse_args())
@@ -80,12 +82,17 @@ def main():
 
     ##run stats on counts
     analysis=args["analysis"]
-    go=args["go"]
 
     if analysis == "mageck":
         print("Statistical analysis with MAGeCK selected")
+        #set FDR
+        fdr=float(args["fdr"])
+        if fdr > 0.25:
+            print("WARNING: MAGeCK FDR cut off set higher than default 0.25")
+
         cnv=args["cnv"]
-        utils.mageck(work_dir,script_dir,cnv)
+        if not cnv:
+            utils.mageck(work_dir,script_dir,cnv,fdr)
         #GO analysis
         if go == True:
             utils.go(work_dir,script_dir)
@@ -95,6 +102,9 @@ def main():
         utils.convert4bagel(work_dir,library,crispr_library)
         utils.bagel2(work_dir,script_dir,exe_dict)
 
+    go=args["go"]
+    if go == True:
+        utils.go(work_dir,script_dir,analysis)
 
 if __name__ == "__main__":
     #start run timer

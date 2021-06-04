@@ -339,7 +339,7 @@ def join_counts(work_dir,library,crispr_library):
     #Writes all data to a single .tsv file, ready for MAGeCK
     dfjoin2.to_csv(os.path.join(work_dir,"count",'counts-aggregated.tsv'), sep='\t',index=False)
 
-def mageck(work_dir,script_dir,cnv):
+def mageck(work_dir,script_dir,cnv,fdr):
     #check for stats.config
     stats_config=os.path.join(work_dir,"stats.config")
     if not os.path.exists(stats_config):
@@ -356,15 +356,15 @@ def mageck(work_dir,script_dir,cnv):
     with open(os.path.join(work_dir,"config.yml")) as file:
         config=yaml.full_load(file)
 
-    def cnv_com(script_dir,config): #generate MAGeCK command for CNV correction
+    def cnv_com(script_dir,config,cnv,ccle_ref): #generate MAGeCK command for CNV correction
         #check if specified cell line is in CCLE data list
         cell_line_list=subprocess.check_output(["head","-1",os.path.join(script_dir,"CCLE","CCLE_copynumber_byGene_2013-12-03.txt")])
-        cell_line=config["CNV-cell-line"]
+        cell_line=cnv
         cnv_command=" --cnv-norm "+ccle_ref+" --cell-line "+cell_line
         return(cnv_command)
 
     #check if CNV correction is requested and perform checks
-    if cnv == True:
+    if cnv != None:
         ccle_ref=os.path.join(script_dir,"CCLE","CCLE_copynumber_byGene_2013-12-03.txt")
         if not os.path.exists(ccle_ref):
             print("WARNING: no CCLE copy number file found")
@@ -377,7 +377,7 @@ def mageck(work_dir,script_dir,cnv):
                     subprocess.run(download_command, shell=True)
                 except:
                     sys.exit("ERROR: download failed, check log and url")
-                cnv_command=cnv_com(script_dir,config)
+                cnv_command=cnv_com(script_dir,config,cnv)
                 if not cell_line in cell_line_list:
                     print("ERROR: specified cell line not found in CCLE reference file")
                     print("Skipping CNV correction for MAGeCK")
@@ -397,9 +397,6 @@ def mageck(work_dir,script_dir,cnv):
         if "pre" and "post" in header:
             print("Skipping MAGeCK (only CRISPR library samples present)")
             return(None)
-
-    #load FDR cut off from config
-    fdr=config["mageck-fdr"]
 
     #create MAGeCK dir
     os.makedirs(os.path.join(work_dir,"mageck"),exist_ok=True)
@@ -433,7 +430,7 @@ def mageck(work_dir,script_dir,cnv):
 
     for file in file_list:
         save_path=os.path.dirname(file)
-        plot_command="Rscript "+os.path.join(script_dir,"R","plot-hits.R ")+work_dir+" "+file+" mageck "+save_path+" "+mageck_output+" "+script_dir
+        plot_command="Rscript "+os.path.join(script_dir,"R","plot-hits.R ")+work_dir+" "+file+" mageck "+save_path+" "+mageck_output+" "+script_dir+" "+fdr
         write2log(work_dir,plot_command,"Plot hits MAGeCK: ")
         try:
             subprocess.run(plot_command, shell=True)
@@ -694,24 +691,20 @@ def lib_analysis(work_dir):
     else:
         return None
 
-def go(work_dir,script_dir):
+def go(work_dir,script_dir,analysis):
     #load GO analysis settings
     with open(os.path.join(work_dir,"config.yml")) as file:
         config=yaml.full_load(file)
 
-    email=config["GO"]["email"]
-    fdr=config["mageck-fdr"]
-    species=config["GO"]["species"]
-    go_test=config["GO"]["test"]
-    go_term=config["GO"]["term"]
 
     #get list og MAGeCK gene summary file_exists
     file_list=glob.glob(os.path.join(work_dir,"mageck","*","*gene_summary.txt"))
 
     for file in file_list:
+        print("Performing gene set enrichment analysis")
         save_path=os.path.dirname(file)
-        go_command=os.path.join(script_dir,"R","go.R ")+email+" "+file+" "+fdr+" "+species+" "+save_path+" "+go_test+" "+go_term
-        write2log(work_dir,go_command,"MAGeCK GO: ")
+        go_command=os.path.join(script_dir,"R","go.R ")+file+" "+save_path+" "+analysis
+        write2log(work_dir,go_command,"Gene set enrichment analysis: ")
         try:
             subprocess.run(go_command, shell=True)
         except:

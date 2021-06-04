@@ -1,7 +1,7 @@
 #!/usr/bin/env Rscript
 
 #check packages
-cran.packages <- c("ggplot2","yaml","ggrepel","viridis","dplyr")
+cran.packages <- c("ggplot2","ggrepel","viridis","dplyr")
 installed.packages <- installed.packages()[,1]
 
 for (i in cran.packages){
@@ -11,7 +11,6 @@ for (i in cran.packages){
   }
 }
 
-library(yaml)
 library(ggplot2)
 library(ggrepel)
 library(viridis)
@@ -86,12 +85,8 @@ plot.bagel2 <- function(work.dir,df.file,save.path,title){
 }
 
 
-plot.mageck <- function(work.dir,df.file,save.path){
+plot.mageck <- function(work.dir,df.file,save.path,fdr){
 
-  #read fdr from config.yml
-  config <- read_yaml(file.path(work.dir,"config.yml"))
-  fdr <- config[["mageck-fdr"]]
-  
   df <- read.csv(file=df.file, sep="\t")
   df$fdr.cutoff <- fdr
   
@@ -245,7 +240,8 @@ test <- args[3]
 save.path <- args[4]
 title <- args[5]
 script.dir <- args[6]
+fdr <- args[7]
 
-if(test == "mageck"){plot.mageck(work.dir,df.file,save.path)
+if(test == "mageck"){plot.mageck(work.dir,df.file,save.path,fdr)
 } else if(test == "bagel2"){plot.bagel2(work.dir,df.file,save.path,title)
     }
