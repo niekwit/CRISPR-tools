@@ -28,9 +28,7 @@ This bioinformatic pipeline will automate analysis of NGS data from CRISPR-Cas9 
 - [R](https://www.r-project.org/)
 	- [Tidyverse](https://www.tidyverse.org/)
 	- [ggrepel](https://www.rdocumentation.org/packages/ggrepel/versions/0.9.1)
-	- [bioMart](https://bioconductor.org/packages/release/bioc/html/biomaRt.html)
 	- [dplyr](https://www.rdocumentation.org/packages/dplyr/versions/0.7.8)
-	- [GOplot](https://wencke.github.io/)
 	- [stringr](https://www.rdocumentation.org/packages/stringr/versions/1.4.0)
 	- [gridExtra](https://cran.r-project.org/web/packages/gridExtra/)
 - [FastQC](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/)
@@ -83,18 +81,6 @@ Explanation of `library.yaml`:
 
 Important: when a variable is not used (e.g. `clip_seq` for a fixed sgRNA length CRISPR library), it should be left empty, see example.
 
-For each experiment, a settings file (`config.yml`) has to be provided in the main experimental folder. This file contains the following:
-```
-mageck-fdr: 0.25
-CNV-cell-line:
-GO:
-  email: your@email.com #create an account first on https://david.ncifcrf.gov/webservice/register.htm
-  species: human
-  test: Benjamini #choose Bonferroni or Benjamini
-  term: BP #BP, CC or MF
-```
-The `mageck-fdr` variable sets the statistical cut off for plotting MAGeCK hits.
-
 ## Usage:
 
 1. Create a main folder (can be any name) for the analysis that contains the subfolder `raw-data`, which contains the fastq.gz files.
@@ -124,12 +110,11 @@ The `stats.config` file should be placed in the main analysis folder.
 
 4. To get an overview of all the options for the CRISPR analysis, type `path/to/crispr.py -h, --help` in the command line:
 ```
-usage: crispr.py [-h] -l {CRISPR library} [-t <int>]
-                 [-r] [-m N] [-a {mageck,bagel2}] [-c] [-g]
+usage: crispr.py [-h] -l {CRISPR library} [-t <int>] [-r] [-m N] [-a {mageck,bagel2}] [-f <FDR value>] [-c <CCLE cell line>] [--go]
 
 optional arguments:
   -h, --help            show this help message and exit
-  -l {CRISPR library}
+  -l {CRISPR library}, --library {CRISPR library}
                         CRISPR library
   -t <int>, --threads <int>
                         Number of CPU threads to use (default is 1). Use max to apply all available CPU threads
@@ -137,15 +122,18 @@ optional arguments:
   -m N, --mismatch N    Number of mismatches (0 or 1) allowed during alignment
   -a {mageck,bagel2}, --analysis {mageck,bagel2}
                         Statistical analysis with MAGeCK or BAGEL2. Default is MAGeCK
-  -c, --cnv             Activate CNV correction for MAGeCK/BAGEL2
-  -g, --go              GO analysis with DAVID
+  -f <FDR value>, --fdr <FDR value>
+                        Set FDR cut off for MAGeCK hits (default is 0.25)
+  -c <CCLE cell line>, --cnv <CCLE cell line>
+                        Activate CNV correction for MAGeCK/BAGEL2 with given cell line
+  --go                  Gene set enrichment analysis with enrichR
 
 ```
 To start an analysis, for example with the Bassik whole-genome CRISPR library, navigate to main analysis folder in the command line and run:
 
 > `crispr.py -l bassik -r -t max`
 
-This initiates a run that will rename your samples according to `rename.config`, allows no mismatches during alignment, will use all available CPU threads for the analysis, and uses MAGeCK for statistical analysis.
+This initiates a run that will rename your samples according to `rename.config`, allows no mismatches during alignment, will use all available CPU threads for the analysis, and uses MAGeCK for statistical analysis. The FDR cut off to determine significant hits is set at 0.25, and can be changed with the `-f/--fdr` flag.
 If you also want to use BAGEL2 for statistical analysis afterwards, simply run:
 
 > `crispr.py -l bassik -a bagel2`
