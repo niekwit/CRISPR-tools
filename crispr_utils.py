@@ -347,16 +347,16 @@ def mageck(work_dir,script_dir,cnv,fdr):
         return(None)
 
     #check for config.yml
-    config_yml=os.path.join(work_dir,"config.yml")
-    if not os.path.exists(config_yml):
-        print("ERROR: config.yml not found (MAGeCK settings)")
-        return(None)
+    #config_yml=os.path.join(work_dir,"config.yml")
+    #if not os.path.exists(config_yml):
+    #    print("ERROR: fdr (MAGeCK settings)")
+    #    return(None)
 
     #open config.yml
-    with open(os.path.join(work_dir,"config.yml")) as file:
-        config=yaml.full_load(file)
+    #with open(os.path.join(work_dir,"config.yml")) as file:
+    #    config=yaml.full_load(file)
 
-    def cnv_com(script_dir,config,cnv,ccle_ref): #generate MAGeCK command for CNV correction
+    def cnv_com(script_dir,cnv,ccle_ref): #generate MAGeCK command for CNV correction
         #check if specified cell line is in CCLE data list
         cell_line_list=subprocess.check_output(["head","-1",os.path.join(script_dir,"CCLE","CCLE_copynumber_byGene_2013-12-03.txt")])
         cell_line=cnv
@@ -377,7 +377,7 @@ def mageck(work_dir,script_dir,cnv,fdr):
                     subprocess.run(download_command, shell=True)
                 except:
                     sys.exit("ERROR: download failed, check log and url")
-                cnv_command=cnv_com(script_dir,config,cnv)
+                cnv_command=cnv_com(script_dir,cnv)
                 if not cell_line in cell_line_list:
                     print("ERROR: specified cell line not found in CCLE reference file")
                     print("Skipping CNV correction for MAGeCK")
@@ -430,7 +430,7 @@ def mageck(work_dir,script_dir,cnv,fdr):
 
     for file in file_list:
         save_path=os.path.dirname(file)
-        plot_command="Rscript "+os.path.join(script_dir,"R","plot-hits.R ")+work_dir+" "+file+" mageck "+save_path+" "+mageck_output+" "+script_dir+" "+fdr
+        plot_command="Rscript "+os.path.join(script_dir,"R","plot-hits.R ")+work_dir+" "+file+" mageck "+save_path+" "+mageck_output+" "+script_dir+" "+str(fdr)
         write2log(work_dir,plot_command,"Plot hits MAGeCK: ")
         try:
             subprocess.run(plot_command, shell=True)
@@ -693,17 +693,17 @@ def lib_analysis(work_dir):
 
 def go(work_dir,script_dir,analysis):
     #load GO analysis settings
-    with open(os.path.join(work_dir,"config.yml")) as file:
-        config=yaml.full_load(file)
+    #with open(os.path.join(work_dir,"config.yml")) as file:
+    #    config=yaml.full_load(file)
 
 
     #get list og MAGeCK gene summary file_exists
     file_list=glob.glob(os.path.join(work_dir,"mageck","*","*gene_summary.txt"))
 
     for file in file_list:
-        print("Performing gene set enrichment analysis")
+        print("Performing gene set enrichment analysis with enrichR")
         save_path=os.path.dirname(file)
-        go_command=os.path.join(script_dir,"R","go.R ")+file+" "+save_path+" "+analysis
+        go_command="Rscript "+os.path.join(script_dir,"R","go.R ")+file+" "+save_path+" "+analysis
         write2log(work_dir,go_command,"Gene set enrichment analysis: ")
         try:
             subprocess.run(go_command, shell=True)

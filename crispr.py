@@ -27,9 +27,9 @@ def main():
                     help="Statistical analysis with MAGeCK or BAGEL2. Default is MAGeCK")
     ap.add_argument("-f","--fdr", required=False, metavar="<FDR value>", default=0.25,
        help="Set FDR cut off for MAGeCK hits (default is 0.25)")
-    ap.add_argument("-c","--cnv", required=False, metavar="<CCLE cell line>",
+    ap.add_argument("-c","--cnv", required=False, metavar="<CCLE cell line>",default=None,
        help="Activate CNV correction for MAGeCK/BAGEL2 with given cell line")
-    ap.add_argument("--go", required=False, action='store_true', default=None
+    ap.add_argument("--go", required=False, action='store_true', default=None,
        help="GO analysis with DAVID")
 
     args = vars(ap.parse_args())
@@ -82,9 +82,10 @@ def main():
 
     ##run stats on counts
     analysis=args["analysis"]
+    go=args["go"]
 
     if analysis == "mageck":
-        print("Statistical analysis with MAGeCK selected")
+        print("Running MAGeCK")
         #set FDR
         fdr=float(args["fdr"])
         if fdr > 0.25:
@@ -93,16 +94,14 @@ def main():
         cnv=args["cnv"]
         if not cnv:
             utils.mageck(work_dir,script_dir,cnv,fdr)
-        #GO analysis
-        if go == True:
-            utils.go(work_dir,script_dir)
+
     elif analysis == "bagel2":
-        print("Statistical analysis with BAGEL2 selected")
+        print("Running BAGEL2")
         utils.remove_duplicates(work_dir)
         utils.convert4bagel(work_dir,library,crispr_library)
         utils.bagel2(work_dir,script_dir,exe_dict)
 
-    go=args["go"]
+
     if go == True:
         utils.go(work_dir,script_dir,analysis)
 
