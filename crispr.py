@@ -30,7 +30,7 @@ def main():
     ap.add_argument("-c","--cnv", required=False, metavar="<CCLE cell line>",default=None,
        help="Activate CNV correction for MAGeCK/BAGEL2 with given cell line")
     ap.add_argument("--go", required=False, action='store_true', default=None,
-       help="GO analysis with DAVID")
+       help="Gene set enrichment analysis with enrichR")
 
     args = vars(ap.parse_args())
 
@@ -103,7 +103,7 @@ def main():
 
 
     if go == True:
-        utils.go(work_dir,script_dir,analysis)
+        utils.go(work_dir,script_dir,analysis,fdr)
 
 if __name__ == "__main__":
     #start run timer

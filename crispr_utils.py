@@ -691,7 +691,7 @@ def lib_analysis(work_dir):
     else:
         return None
 
-def go(work_dir,script_dir,analysis):
+def go(work_dir,script_dir,analysis,fdr):
     #load GO analysis settings
     #with open(os.path.join(work_dir,"config.yml")) as file:
     #    config=yaml.full_load(file)
@@ -703,7 +703,7 @@ def go(work_dir,script_dir,analysis):
     for file in file_list:
         print("Performing gene set enrichment analysis with enrichR")
         save_path=os.path.dirname(file)
-        go_command="Rscript "+os.path.join(script_dir,"R","go.R ")+file+" "+save_path+" "+analysis
+        go_command="Rscript "+os.path.join(script_dir,"R","go.R ")+file+" "+save_path+" "+analysis+" "+str(fdr)
         write2log(work_dir,go_command,"Gene set enrichment analysis: ")
         try:
             subprocess.run(go_command, shell=True)
