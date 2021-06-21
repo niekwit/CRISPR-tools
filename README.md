@@ -15,9 +15,8 @@ This bioinformatic pipeline will automate analysis of NGS data from CRISPR-Cas9 
 
 ## Software dependencies:
 
-- [git](https://git-scm.com/)
 - [pip3](https://stackoverflow.com/questions/6587507/how-to-install-pip-with-python-3)
-- [JRE](https://ubuntu.com/tutorials/install-jre#1-overview)
+- [Java Runtime Environment (JRE)](https://ubuntu.com/tutorials/install-jre#1-overview)
 - [Python 3](https://www.python.org/)
 	- [Pandas](https://pandas.pydata.org/)
 	- [Numpy](https://numpy.org/)
@@ -44,13 +43,13 @@ This bioinformatic pipeline will automate analysis of NGS data from CRISPR-Cas9 
 Installation from the command line:
 > `git clone https://github.com/niekwit/CRISPR-tools.git`
 
-The `CRISPR-tools` can be permamently added to $PATH by adding the following line to your `~/.bashrc`:
+The `CRISPR-tools` directory can be permanently added to $PATH by adding the following line to your `~/.bashrc`:
 > `export PATH=/home/path/to/CRISPR-tools:$PATH`
 
 OPTIONAL: to enable auto-completion of the command line options for the CRISPR library and analysis (`-l`/`--library` and `-a`/`--analysis`), add this line to your `~/.bashrc` file:
 > `source /path/to/CRISPR-tools/auto-complete.sh`
 
-Before the first analysis, install [pip3](https://stackoverflow.com/questions/6587507/how-to-install-pip-with-python-3) and a Java Runtime Environment ([Ubuntu](https://ubuntu.com/tutorials/install-jre)/[MacOS](https://docs.oracle.com/javase/10/install/installation-jdk-and-jre-macos.htm#JSJIG-GUID-2FE451B0-9572-4E38-A1A5-568B77B146DE)), and then run the `setup.py` file from the command line as follows:
+To install all software dependencies, make sure [pip3](https://stackoverflow.com/questions/6587507/how-to-install-pip-with-python-3) and a JRE ([Ubuntu](https://ubuntu.com/tutorials/install-jre)/[MacOS](https://docs.oracle.com/javase/10/install/installation-jdk-and-jre-macos.htm#JSJIG-GUID-2FE451B0-9572-4E38-A1A5-568B77B146DE)) are installed, and then run the `setup.py` file from the command line as follows:
 
 > `python3 setup.py`
 
@@ -79,6 +78,8 @@ Explanation of `library.yaml`:
 * If a CRISPR library has a fixed sgRNA length, then the length of the sgRNA must be set with the `sg_length` variable. Additionaly, set `read_mod` as "trim".
 * If a CRISPR library has variable sgRNA lengths, then `read_mod` should be set and "clip" and `clip_seq` should contain the vector sequence downstream of the sgRNA sequence.
 
+Note: before the first run with any CRISPR library only the fasta file has to be provided, as the index file will be created if it is missing, and will be added to the `library.yaml` file.
+
 Important: when a variable is not used (e.g. `clip_seq` for a fixed sgRNA length CRISPR library), it should be left empty, see example.
 
 ## Usage:
@@ -86,7 +87,7 @@ Important: when a variable is not used (e.g. `clip_seq` for a fixed sgRNA length
 1. Create a main folder (can be any name) for the analysis that contains the subfolder `raw-data`, which contains the fastq.gz files.
 
 2. If you want to rename your sequencing files (the files names will be used as sample names for the MAGeCK analsysis so it is recommended to abbreviate them), then this can be set with the `rename.config` file that should be located in the main analysis folder.
-On each line put the existing file name and the desired new file name, seperated by a semi-colon (do not include any white space), for example:
+On each line put the existing file name and the desired new file name, separated by a semi-colon (do not include any white space), for example:
 ```
 S25_S2_L001_R1_001.fastq.gz;S25.fastq.gz
 L8_S1_L001_R1_001.fastq.gz;L8.fastq.gz
@@ -154,3 +155,14 @@ Several folder/files will be generated:
 * `library analysis`: contains the analyses of the pre and post library amplification samples.
 * `mageck`: contains the MAGeCK output files. It will also contain plots of the results with the top 10 genes marked.
 * `bagel2`: contains the BAGEL2 output files. It will also contain plots of the results with the top 10 genes marked.
+
+### Output examples:
+
+#### Example 1: analysis of Yusa Mouse CRISPR library amplification
+If your experiment consists of just pre and post library amplification samples (e.g. the [Yusa Mouse library](https://www.addgene.org/pooled-library/yusa-crispr-knockout-mouse-v2/)), rename your fastq files to `pre.fq.gz` and `post.fq.gz`, and then start the analysis as follows:
+
+> `crispr.py -l yusa-mouse`
+
+This will run FastQC/MultiQC to check the quality of the fastq files, and because there are no experimental samples, only the CRISPR library analysis will be run.
+The count folder will contain the `alignment-rate.pdf` file that gives an overview of the alignment rates of all the fastq files:
+![Alignment rate](https://github.com/niekwit/CRISPR-tools/blob/master/img/alignment-rate.pdf)
