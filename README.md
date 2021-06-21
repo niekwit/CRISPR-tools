@@ -165,4 +165,4 @@ If your experiment consists of just pre and post library amplification samples (
 
 This will run FastQC/MultiQC to check the quality of the fastq files, and because there are no experimental samples, only the CRISPR library analysis will be run.
 The count folder will contain the `alignment-rate.pdf` file that gives an overview of the alignment rates of all the fastq files:
-![Alignment rate](https://github.com/niekwit/CRISPR-tools/blob/master/img/alignment-rate.pdf)
+![](https://github.com/niekwit/CRISPR-tools/blob/master/img/alignment-rate.pdf)
