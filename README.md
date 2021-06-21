@@ -164,5 +164,12 @@ If your experiment consists of just pre and post library amplification samples (
 > `crispr.py -l yusa-mouse`
 
 This will run FastQC/MultiQC to check the quality of the fastq files, and because there are no experimental samples, only the CRISPR library analysis will be run.
-The count folder will contain the `alignment-rate.pdf` file that gives an overview of the alignment rates of all the fastq files:
+The count directory will contain the `alignment-rate.pdf` file that gives an overview of the alignment rates of all the fastq files:
+
 ![](https://github.com/niekwit/CRISPR-tools/blob/master/img/alignment-rate-1.png)
+
+The library-analysis directory will contain four files:
+1. `lorenz-curve.pdf`: this will show the Lorenz curve and the Gini indices for each sample
+![](https://github.com/niekwit/CRISPR-tools/blob/master/img/lorenz-curve-1.png)
+
+2.

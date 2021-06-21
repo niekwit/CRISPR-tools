@@ -20,7 +20,7 @@ def main():
        help="Number of CPU threads to use (default is 1). Use max to apply all available CPU threads")
     ap.add_argument("-r", "--rename", required=False, action='store_true',
        help="Rename fastq files according to rename.config")
-    ap.add_argument("-m", "--mismatch", required=False,choices=[0,1], metavar="N",
+    ap.add_argument("-m", "--mismatch", required=False,choices=("0","1"), metavar="N",
        help="Number of mismatches (0 or 1) allowed during alignment", default=0)
     ap.add_argument("-a", "--analysis", required=False, default="mageck",
                     choices=["mageck","bagel2"],
@@ -31,6 +31,8 @@ def main():
        help="Activate CNV correction for MAGeCK/BAGEL2 with given cell line")
     ap.add_argument("--go", required=False, action='store_true', default=None,
        help="Gene set enrichment analysis with enrichR")
+    ap.add_argument("--skipfastqc", required=False, action='store_true', default=False,
+          help="Skip FastQC/MultiQC analysis")
 
     args = vars(ap.parse_args())
 
@@ -57,7 +59,11 @@ def main():
     file_extension=utils.get_extension(work_dir)
 
     ##Run FastQC/MultiQC
-    utils.fastqc(work_dir,threads,file_extension,exe_dict)
+    skip_fastqc=args["skipfastqc"]
+    if not skip_fastqc:
+        utils.fastqc(work_dir,threads,file_extension,exe_dict)
+    else:
+        print("Skipping FastQC/MultiQC analysis")
 
     ##count reads
     #get parsed arguments
@@ -78,14 +84,13 @@ def main():
     if not utils.file_exists(os.path.join(work_dir,"count","counts-aggregated-normalised.csv")):
         utils.normalise(work_dir)
     ##run library analysis
-    utils.lib_analysis(work_dir,library)
+    utils.lib_analysis(work_dir,library,crispr_library,script_dir)
 
     ##run stats on counts
     analysis=args["analysis"]
     go=args["go"]
 
     if analysis == "mageck":
-        print("Running MAGeCK")
         #set FDR
         fdr=float(args["fdr"])
         if fdr > 0.25:

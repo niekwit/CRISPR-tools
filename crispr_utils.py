@@ -340,6 +340,16 @@ def join_counts(work_dir,library,crispr_library):
     dfjoin2.to_csv(os.path.join(work_dir,"count",'counts-aggregated.tsv'), sep='\t',index=False)
 
 def mageck(work_dir,script_dir,cnv,fdr):
+
+    #determine number of samples in count table
+    header=subprocess.check_output(["head", "-1",os.path.join(work_dir,"count","counts-aggregated.tsv")])
+    header=header.decode("utf-8")
+    sample_count=header.count("\t") - 1
+    if sample_count == 2:
+        if "pre" and "post" in header:
+            print("Skipping MAGeCK (only CRISPR library samples present)")
+            return(None)
+
     #check for stats.config
     stats_config=os.path.join(work_dir,"stats.config")
     if not os.path.exists(stats_config):
@@ -378,16 +388,6 @@ def mageck(work_dir,script_dir,cnv,fdr):
         else:
             cnv_command=cnv_com(script_dir,config)
 
-
-    #determine number of samples in count table
-    header=subprocess.check_output(["head", "-1",os.path.join(work_dir,"count","counts-aggregated.tsv")])
-    header=header.decode("utf-8")
-    sample_count=header.count("\t") - 1
-    if sample_count == 3:
-        if "pre" and "post" in header:
-            print("Skipping MAGeCK (only CRISPR library samples present)")
-            return(None)
-
     #create MAGeCK dir
     os.makedirs(os.path.join(work_dir,"mageck"),exist_ok=True)
 
@@ -395,6 +395,8 @@ def mageck(work_dir,script_dir,cnv,fdr):
     df=pd.read_csv(os.path.join(work_dir,"stats.config"),sep=";")
     sample_number=len(df)
     sample_range=range(sample_number)
+
+    print("Running MAGeCK")
 
     for i in sample_range:
         test_sample=df.loc[i]["t"]
@@ -580,7 +582,7 @@ def bagel2(work_dir,script_dir,exe_dict):
             except:
                 sys.exit("ERROR: Calculation of precision-recall failed, check log")
 
-def lib_analysis(work_dir,library):
+def lib_analysis(work_dir,library,crispr_library,script_dir):
     #determine whether count file contains library samples pre and post
     header=subprocess.check_output(["head", "-1",os.path.join(work_dir,"count","counts-aggregated.tsv")])
     if "pre" and "post" in str(header):
@@ -687,6 +689,7 @@ def lib_analysis(work_dir,library):
         plt.savefig(os.path.join(work_dir,"library-analysis","lorenz-curve.pdf"))
         plt.close()
 
+        '''
         #Run GC bias analysis in R
         fasta=library[crispr_library]["fasta"]
 
@@ -697,6 +700,7 @@ def lib_analysis(work_dir,library):
         except:
             print("ERROR: GC bias analysis failed")
             return(None)
+        '''
     else:
         return None
 
