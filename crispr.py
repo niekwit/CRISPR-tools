@@ -78,7 +78,7 @@ def main():
     if not utils.file_exists(os.path.join(work_dir,"count","counts-aggregated-normalised.csv")):
         utils.normalise(work_dir)
     ##run library analysis
-    utils.lib_analysis(work_dir)
+    utils.lib_analysis(work_dir,library)
 
     ##run stats on counts
     analysis=args["analysis"]

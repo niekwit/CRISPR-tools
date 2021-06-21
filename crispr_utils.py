@@ -41,7 +41,7 @@ def rename(work_dir):
         os.rename(os.path.join(work_dir,"raw-data",old_name),os.path.join(work_dir,"raw-data",new_name))
 
 def get_extension(work_dir):
-    file_list=glob.glob(os.path.join(work_dir,"raw-data","*"))
+    file_list=glob.glob(os.path.join(work_dir,"raw-data","*.gz"))
     test_file=file_list[0]
     extension_index=test_file.index(".",0)
     file_extension=test_file[extension_index:]
@@ -346,16 +346,6 @@ def mageck(work_dir,script_dir,cnv,fdr):
         print("ERROR: stats.config not found (MAGeCK comparisons)")
         return(None)
 
-    #check for config.yml
-    #config_yml=os.path.join(work_dir,"config.yml")
-    #if not os.path.exists(config_yml):
-    #    print("ERROR: fdr (MAGeCK settings)")
-    #    return(None)
-
-    #open config.yml
-    #with open(os.path.join(work_dir,"config.yml")) as file:
-    #    config=yaml.full_load(file)
-
     def cnv_com(script_dir,cnv,ccle_ref): #generate MAGeCK command for CNV correction
         #check if specified cell line is in CCLE data list
         cell_line_list=subprocess.check_output(["head","-1",os.path.join(script_dir,"CCLE","CCLE_copynumber_byGene_2013-12-03.txt")])
@@ -393,7 +383,7 @@ def mageck(work_dir,script_dir,cnv,fdr):
     header=subprocess.check_output(["head", "-1",os.path.join(work_dir,"count","counts-aggregated.tsv")])
     header=header.decode("utf-8")
     sample_count=header.count("\t") - 1
-    if sample_count ==3:
+    if sample_count == 3:
         if "pre" and "post" in header:
             print("Skipping MAGeCK (only CRISPR library samples present)")
             return(None)
@@ -413,29 +403,31 @@ def mageck(work_dir,script_dir,cnv,fdr):
 
         if not file_exists(os.path.join(work_dir,"mageck",mageck_output)):
             os.makedirs(os.path.join(work_dir,"mageck",mageck_output),exist_ok=True)
-
-        prefix=os.path.join(work_dir,"mageck",mageck_output,mageck_output)
-        input=os.path.join(work_dir,"count","counts-aggregated.tsv")
-        log=" 2>> "+os.path.join(work_dir,"crispr.log")
-        mageck_command="mageck test -k "+input+" -t "+test_sample+" -c "+control_sample+" -n "+prefix+log
-        if cnv == True:
-            prefix=os.path.join(work_dir,"mageck-cnv",mageck_output,mageck_output)
-            mageck_command=os.path.join(mageck_dir,"mageck")+" test -k "+input+" -t "+test_sample+" -c "+control_sample+" -n "+prefix+log
-            mageck_command=mageck_command+cnv_command
-        write2log(work_dir,mageck_command,"MAGeCK: ")
-        subprocess.run(mageck_command, shell=True)
+            prefix=os.path.join(work_dir,"mageck",mageck_output,mageck_output)
+            input=os.path.join(work_dir,"count","counts-aggregated.tsv")
+            log=" 2>> "+os.path.join(work_dir,"crispr.log")
+            mageck_command="mageck test -k "+input+" -t "+test_sample+" -c "+control_sample+" -n "+prefix+log
+            if cnv == True:
+                prefix=os.path.join(work_dir,"mageck-cnv",mageck_output,mageck_output)
+                mageck_command=os.path.join(mageck_dir,"mageck")+" test -k "+input+" -t "+test_sample+" -c "+control_sample+" -n "+prefix+log
+                mageck_command=mageck_command+cnv_command
+            write2log(work_dir,mageck_command,"MAGeCK: ")
+            subprocess.run(mageck_command, shell=True)
 
     #plot MAGeCK hits
     file_list=glob.glob(os.path.join(work_dir,"mageck","*","*gene_summary.txt"))
 
     for file in file_list:
         save_path=os.path.dirname(file)
-        plot_command="Rscript "+os.path.join(script_dir,"R","plot-hits.R ")+work_dir+" "+file+" mageck "+save_path+" "+mageck_output+" "+script_dir+" "+str(fdr)
-        write2log(work_dir,plot_command,"Plot hits MAGeCK: ")
-        try:
-            subprocess.run(plot_command, shell=True)
-        except:
-            sys.exit("ERROR: plotting hits failed, check log")
+        out_put_file=os.path.join(save_path,"logFC-plot.pdf")
+
+        if not file_exists(out_put_file):
+            plot_command="Rscript "+os.path.join(script_dir,"R","plot-hits.R ")+work_dir+" "+file+" mageck "+save_path+" "+mageck_output+" "+script_dir+" "+str(fdr)
+            write2log(work_dir,plot_command,"Plot hits MAGeCK: ")
+            try:
+                subprocess.run(plot_command, shell=True)
+            except:
+                sys.exit("ERROR: plotting hits failed, check log")
 
 def remove_duplicates(work_dir):
     df=pd.read_table(os.path.join(work_dir,"count","counts-aggregated.tsv"))
@@ -515,6 +507,12 @@ def bagel2(work_dir,script_dir,exe_dict):
 
     #load stats.config for sample comparisons
     df=pd.read_csv(os.path.join(work_dir,"stats.config"),sep=";")
+
+    #remove rows with multiple samples (for MAGeCK) per condition (temp fix)
+    df=df[~df["t"].str.contains(",")]
+    df=df[~df["c"].str.contains(",")]
+    df=df.reset_index()
+
     sample_number=len(df)
     sample_range=range(sample_number)
 
@@ -582,7 +580,7 @@ def bagel2(work_dir,script_dir,exe_dict):
             except:
                 sys.exit("ERROR: Calculation of precision-recall failed, check log")
 
-def lib_analysis(work_dir):
+def lib_analysis(work_dir,library):
     #determine whether count file contains library samples pre and post
     header=subprocess.check_output(["head", "-1",os.path.join(work_dir,"count","counts-aggregated.tsv")])
     if "pre" and "post" in str(header):
@@ -688,6 +686,17 @@ def lib_analysis(work_dir):
         plt.tight_layout()
         plt.savefig(os.path.join(work_dir,"library-analysis","lorenz-curve.pdf"))
         plt.close()
+
+        #Run GC bias analysis in R
+        fasta=library[crispr_library]["fasta"]
+
+        gc_command="Rscript "+os.path.join(script_dir,"R","gc-bias.R ")+work_dir+" "+fasta
+
+        try:
+            subprocess.run(gc_command, shell=True)
+        except:
+            print("ERROR: GC bias analysis failed")
+            return(None)
     else:
         return None
 

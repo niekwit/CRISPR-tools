@@ -32,35 +32,37 @@ if(analysis == "mageck"){
     #get genes below FDR cut off
     df.fdr <- df[df[fdr.column] < fdr, ]
     
-    enriched <- enrichr(df.fdr$id, dbs)
-    
-    for (j in dbs){
-      df <- enriched[[j]]
-      df.plot <- df[1:10,]
-      df.plot$log.pvalue <- -log10(df.plot$Adjusted.P.value)
-      
-      #calculate genes:group size ratio
-      df.plot$count <- str_split_fixed(df.plot$Overlap,"/", n=2)[,1]
-      df.plot$count <- as.numeric(df.plot$count)
-      df.plot$group.size <- str_split_fixed(df.plot$Overlap,"/", n=2)[,2]
-      df.plot$group.size <- as.numeric(df.plot$group.size)
-      df.plot$ratio <- df.plot$count / df.plot$group.size
-      
-      #plot results
-      p <- ggplot(df.plot, aes(x=reorder(`Term`,`log.pvalue`),y=`log.pvalue`, fill=`ratio`)) +
-        geom_bar(stat='identity') + 
-        coord_flip() + 
-        labs(x='',y='-log(adj. p value)') +
-        theme_bw(base_size = 16)+
-        theme(legend.key.size= unit(1.5, "cm"))+
-        scale_fill_viridis(name = "genes:group size") +
-        ggtitle(paste0("Enriched in ",dbs[3]))
-      
-      ggsave(filename=file.path(savepath,paste0("enrichR-",title,j,".pdf")),
-             p,
-             width = 20,
-             height= 5)
-      
+    if(nrow(df.fdr) != 0){
+      enriched <- enrichr(df.fdr$id, dbs)
+      for (j in dbs){
+        df <- enriched[[j]]
+        df.plot <- df[1:10,]
+        df.plot$log.pvalue <- -log10(df.plot$Adjusted.P.value)
+        
+        #calculate genes:group size ratio
+        df.plot$count <- str_split_fixed(df.plot$Overlap,"/", n=2)[,1]
+        df.plot$count <- as.numeric(df.plot$count)
+        df.plot$group.size <- str_split_fixed(df.plot$Overlap,"/", n=2)[,2]
+        df.plot$group.size <- as.numeric(df.plot$group.size)
+        df.plot$ratio <- df.plot$count / df.plot$group.size
+        
+        #plot results
+        p <- ggplot(df.plot, aes(x=reorder(`Term`,`log.pvalue`),y=`log.pvalue`, fill=`ratio`)) +
+          geom_bar(stat='identity') + 
+          coord_flip() + 
+          labs(x='',y='-log(adj. p value)') +
+          theme_bw(base_size = 16)+
+          theme(legend.key.size= unit(1.5, "cm"))+
+          scale_fill_viridis(name = "genes:group size") +
+          ggtitle(paste0("Enriched in ",dbs[3]))
+        
+        ggsave(filename=file.path(savepath,paste0("enrichR-",title,j,".pdf")),
+               p,
+               width = 20,
+               height= 5)
+      } 
+    } else {
+      next
     }
   }
   
