@@ -27,12 +27,14 @@ def main():
                     help="Statistical analysis with MAGeCK or BAGEL2. Default is MAGeCK")
     ap.add_argument("-f","--fdr", required=False, metavar="<FDR value>", default=0.25,
        help="Set FDR cut off for MAGeCK hits (default is 0.25)")
-    ap.add_argument("-c","--cnv", required=False, metavar="<CCLE cell line>",default=None,
+    ap.add_argument("--cnv", required=False, metavar="<CCLE cell line>",default=None,
        help="Activate CNV correction for MAGeCK/BAGEL2 with given cell line")
     ap.add_argument("--go", required=False, action='store_true', default=None,
        help="Gene set enrichment analysis with enrichR")
-    ap.add_argument("--skipfastqc", required=False, action='store_true', default=False,
+    ap.add_argument("--skip-fastqc", required=False, action='store_true', default=False,
           help="Skip FastQC/MultiQC analysis")
+    ap.add_argument("--skip-stats", required=False, action='store_true', default=False,
+          help="Skip MAGeCK/BAGEL2")
 
     args = vars(ap.parse_args())
 
@@ -59,7 +61,7 @@ def main():
     file_extension=utils.get_extension(work_dir)
 
     ##Run FastQC/MultiQC
-    skip_fastqc=args["skipfastqc"]
+    skip_fastqc=args["skip_fastqc"]
     if not skip_fastqc:
         utils.fastqc(work_dir,threads,file_extension,exe_dict)
     else:
@@ -77,6 +79,8 @@ def main():
     utils.count(library,crispr_library,mismatch,threads,script_dir,work_dir,exe_dict)
     #plot alignment rates
     utils.plot_alignment_rate(work_dir)
+    #plot sample coverage (read count / library size)
+    utils.plot_coverage(work_dir,library,crispr_library)
     #join count files
     if not utils.file_exists(os.path.join(work_dir,"count",'counts-aggregated.tsv')):
         utils.join_counts(work_dir,library,crispr_library)
@@ -89,22 +93,19 @@ def main():
     ##run stats on counts
     analysis=args["analysis"]
     go=args["go"]
+    fdr=float(args["fdr"])
+    cnv=args["cnv"]
 
-    if analysis == "mageck":
-        #set FDR
-        fdr=float(args["fdr"])
-        if fdr > 0.25:
-            print("WARNING: MAGeCK FDR cut off set higher than default 0.25")
-
-        cnv=args["cnv"]
-        if not cnv:
+    skip_stats=args["skip_stats"]
+    if not skip_stats:
+        if analysis == "mageck":
             utils.mageck(work_dir,script_dir,cnv,fdr)
 
-    elif analysis == "bagel2":
-        print("Running BAGEL2")
-        utils.remove_duplicates(work_dir)
-        utils.convert4bagel(work_dir,library,crispr_library)
-        utils.bagel2(work_dir,script_dir,exe_dict)
+        elif analysis == "bagel2":
+            print("Running BAGEL2")
+            utils.remove_duplicates(work_dir)
+            utils.convert4bagel(work_dir,library,crispr_library)
+            utils.bagel2(work_dir,script_dir,exe_dict,fdr)
 
 
     if go == True:

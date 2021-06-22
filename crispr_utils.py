@@ -229,6 +229,49 @@ def plot_alignment_rate(work_dir):
         plt.tight_layout()
         plt.savefig(os.path.join(work_dir,"count","alignment-rate.pdf"))
 
+def plot_coverage(work_dir,library,crispr_library): #plots coverage per sample after alignment
+    if not file_exists(os.path.join(work_dir,"count","coverage.pdf")):
+        #get number of sgRNAs in CRISPR library
+        fasta=library[crispr_library]["fasta"]
+        fasta=pd.read_table(fasta, header=None)
+        lib_size=len(fasta) / 2
+
+        #extract number of single mapped aligned reads from crispr.log
+        open(os.path.join(work_dir,"files.txt"),"w").writelines([ line for line in open(os.path.join(work_dir,"crispr.log")) if ".gz:" in line ])
+        open(os.path.join(work_dir,"read-count.txt"),"w").writelines([ line for line in open(os.path.join(work_dir,"crispr.log")) if "aligned exactly 1 time" in line ])
+
+        line_number=len(open(os.path.join(work_dir,"files.txt")).readlines())
+        df=pd.DataFrame(columns=["sample","coverage"],index=np.arange(line_number))
+
+        counter=0
+        for line in open(os.path.join(work_dir,"files.txt")):
+            line=line.replace(":","")
+            line=line.replace("\n","")
+            df.iloc[counter,0]=line
+            counter+=1
+
+        counter=0
+        for line in open(os.path.join(work_dir,"read-count.txt")):
+            line=line.split("(")[0]
+            line=line.replace(" ","")
+            line=int(line)
+            df.iloc[counter,1]=line
+            counter+=1
+
+        #calculate coverage per sample
+        df["coverage"]=df["coverage"] / lib_size
+
+        os.remove(os.path.join(work_dir,"files.txt"))
+        os.remove(os.path.join(work_dir,"read-count.txt"))
+
+        #plot coverage per sample
+        #df["alignment_rate"]=pd.to_numeric(df["alignment_rate"])
+        df.plot.bar(x="sample",y="coverage", legend=None, rot=45)
+        plt.ylabel("Fold coverage")
+        plt.xlabel("")
+        plt.tight_layout()
+        plt.savefig(os.path.join(work_dir,"count","coverage.pdf"))
+
 def normalise(work_dir):
     df=pd.read_table(os.path.join(work_dir,"count","counts-aggregated.tsv"))
     column_range=range(2,len(df.columns))
@@ -339,6 +382,12 @@ def join_counts(work_dir,library,crispr_library):
     #Writes all data to a single .tsv file, ready for MAGeCK
     dfjoin2.to_csv(os.path.join(work_dir,"count",'counts-aggregated.tsv'), sep='\t',index=False)
 
+def check_fdr(fdr):
+    #set FDR
+    fdr=float(args["fdr"])
+    if fdr > 0.25:
+        print("WARNING: MAGeCK FDR cut off set higher than default 0.25")
+
 def mageck(work_dir,script_dir,cnv,fdr):
 
     #determine number of samples in count table
@@ -356,38 +405,6 @@ def mageck(work_dir,script_dir,cnv,fdr):
         print("ERROR: stats.config not found (MAGeCK comparisons)")
         return(None)
 
-    def cnv_com(script_dir,cnv,ccle_ref): #generate MAGeCK command for CNV correction
-        #check if specified cell line is in CCLE data list
-        cell_line_list=subprocess.check_output(["head","-1",os.path.join(script_dir,"CCLE","CCLE_copynumber_byGene_2013-12-03.txt")])
-        cell_line=cnv
-        cnv_command=" --cnv-norm "+ccle_ref+" --cell-line "+cell_line
-        return(cnv_command)
-
-    #check if CNV correction is requested and perform checks
-    if cnv != None:
-        ccle_ref=os.path.join(script_dir,"CCLE","CCLE_copynumber_byGene_2013-12-03.txt")
-        if not os.path.exists(ccle_ref):
-            print("WARNING: no CCLE copy number file found")
-            url=" https://data.broadinstitute.org/ccle_legacy_data/dna_copy_number/CCLE_copynumber_byGene_2013-12-03.txt"
-            download_command="wget --directory-prefix="+os.path.join(script_dir,"CCLE")+url
-            download=input("Download CCLE copy numer file from "+url+" ? y/n")
-            if download in ["yes","Yes","y","Y"]:
-                write2log(work_dir,download_command,"Download CCLE file: ")
-                try:
-                    subprocess.run(download_command, shell=True)
-                except:
-                    sys.exit("ERROR: download failed, check log and url")
-                cnv_command=cnv_com(script_dir,cnv)
-                if not cell_line in cell_line_list:
-                    print("ERROR: specified cell line not found in CCLE reference file")
-                    print("Skipping CNV correction for MAGeCK")
-                    cnv=False
-            else:
-                    print("Skipping CNV correction for MAGeCK")
-                    cnv=False
-        else:
-            cnv_command=cnv_com(script_dir,config)
-
     #create MAGeCK dir
     os.makedirs(os.path.join(work_dir,"mageck"),exist_ok=True)
 
@@ -396,7 +413,23 @@ def mageck(work_dir,script_dir,cnv,fdr):
     sample_number=len(df)
     sample_range=range(sample_number)
 
-    print("Running MAGeCK")
+    def cnv_com(script_dir,cnv,ccle_ref): #generate MAGeCK command for CNV correction
+        #check if specified cell line is in CCLE data list
+        cell_line_list=subprocess.check_output(["head","-1",os.path.join(script_dir,"CCLE","CCLE_copynumber_byGene_2013-12-03.txt")])
+        cell_line=cnv
+        cnv_command=" --cnv-norm "+ccle_ref+" --cell-line "+cell_line
+        return(cnv_command,cell_line_list)
+
+    def CCLE_cell_line_exists(script_dir,cnv,ccle_ref):
+        cell_line_list=cnv_com(script_dir,cnv,ccle_ref)[1]
+        cell_line_list=cell_line_list.decode("utf-8")
+        cell_line=cnv
+        if not cell_line in cell_line_list:
+            print("ERROR: specified cell line not found in CCLE reference file")
+            print("Skipping CNV correction for MAGeCK")
+            return(False)
+        else:
+            return(True)
 
     for i in sample_range:
         test_sample=df.loc[i]["t"]
@@ -409,12 +442,49 @@ def mageck(work_dir,script_dir,cnv,fdr):
             input=os.path.join(work_dir,"count","counts-aggregated.tsv")
             log=" 2>> "+os.path.join(work_dir,"crispr.log")
             mageck_command="mageck test -k "+input+" -t "+test_sample+" -c "+control_sample+" -n "+prefix+log
-            if cnv == True:
-                prefix=os.path.join(work_dir,"mageck-cnv",mageck_output,mageck_output)
-                mageck_command=os.path.join(mageck_dir,"mageck")+" test -k "+input+" -t "+test_sample+" -c "+control_sample+" -n "+prefix+log
-                mageck_command=mageck_command+cnv_command
             write2log(work_dir,mageck_command,"MAGeCK: ")
-            subprocess.run(mageck_command, shell=True)
+            try:
+                print("Running MAGeCK without CNV correction")
+                subprocess.run(mageck_command, shell=True)
+            except:
+                print("MAGeCK failed. Check log")
+                return(None)
+
+        #check if CNV correction is requested and perform checks
+        if cnv != None:
+            ccle_ref=os.path.join(script_dir,"CCLE","CCLE_copynumber_byGene_2013-12-03.txt")
+            if not os.path.exists(ccle_ref):
+                print("WARNING: no CCLE copy number file found")
+                print("Downloading CCLE copy number file from https://data.broadinstitute.org")
+                url=" https://data.broadinstitute.org/ccle_legacy_data/dna_copy_number/CCLE_copynumber_byGene_2013-12-03.txt"
+                download_command="wget --directory-prefix="+os.path.join(script_dir,"CCLE")+url
+                write2log(work_dir,download_command,"Download CCLE file: ")
+                try:
+                    subprocess.run(download_command, shell=True)
+                except:
+                    sys.exit("ERROR: download failed, check log and url")
+
+                if not CCLE_cell_line_exists(script_dir,cnv,ccle_ref):
+                    return
+                else:
+                    cnv_command=cnv_com(script_dir,cnv,ccle_ref)[0]
+            else:
+                if not CCLE_cell_line_exists(script_dir,cnv,ccle_ref):
+                    return
+                else:
+                    cnv_command=cnv_com(script_dir,cnv,ccle_ref)[0]
+
+        if cnv != None:
+            cnv_dir=os.path.join(work_dir,"mageck-cnv",mageck_output)
+            if not file_exists(cnv_dir):
+                os.makedirs(cnv_dir, exist_ok=True)
+                prefix=os.path.join(work_dir,"mageck-cnv",mageck_output,mageck_output)
+                input=os.path.join(work_dir,"count","counts-aggregated.tsv")
+                log=" 2>> "+os.path.join(work_dir,"crispr.log")
+                mageck_command="mageck test -k "+input+" -t "+test_sample+" -c "+control_sample+" -n "+prefix+log
+                mageck_command=mageck_command+cnv_command
+                write2log(work_dir,mageck_command,"MAGeCK: ")
+                subprocess.run(mageck_command, shell=True)
 
     #plot MAGeCK hits
     file_list=glob.glob(os.path.join(work_dir,"mageck","*","*gene_summary.txt"))
@@ -487,7 +557,7 @@ def convert4bagel(work_dir,library,crispr_library): #convert MAGeCK formatted co
         os.makedirs(os.path.join(work_dir,"bagel"),exist_ok=True)
         df_merge.to_csv(count_table_bagel2, sep='\t',index=False)
 
-def bagel2(work_dir,script_dir,exe_dict):
+def bagel2(work_dir,script_dir,exe_dict,fdr):
     bagel2_dir=exe_dict["bagel2"]
     bagel2_exe=os.path.join(bagel2_dir,"BAGEL.py")
 
