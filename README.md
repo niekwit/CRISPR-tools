@@ -111,23 +111,30 @@ The `stats.config` file should be placed in the main analysis folder.
 
 4. To get an overview of all the options for the CRISPR analysis, type `path/to/crispr.py -h, --help` in the command line:
 ```
-usage: crispr.py [-h] -l {CRISPR library} [-t <int>] [-r] [-m N] [-a {mageck,bagel2}] [-f <FDR value>] [-c <CCLE cell line>] [--go]
+usage: crispr.py [-h] -l {CRISPR library}
+                 [-t <int>] [-r] [-m N] [-a {mageck,bagel2}] [-f <FDR value>]
+                 [-c <CCLE cell line>] [--go] [--skipfastqc]
 
 optional arguments:
   -h, --help            show this help message and exit
   -l {CRISPR library}, --library {CRISPR library}
                         CRISPR library
   -t <int>, --threads <int>
-                        Number of CPU threads to use (default is 1). Use max to apply all available CPU threads
+                        Number of CPU threads to use (default is 1). Use max
+                        to apply all available CPU threads
   -r, --rename          Rename fastq files according to rename.config
   -m N, --mismatch N    Number of mismatches (0 or 1) allowed during alignment
   -a {mageck,bagel2}, --analysis {mageck,bagel2}
-                        Statistical analysis with MAGeCK or BAGEL2. Default is MAGeCK
+                        Statistical analysis with MAGeCK or BAGEL2. Default is
+                        MAGeCK
   -f <FDR value>, --fdr <FDR value>
                         Set FDR cut off for MAGeCK hits (default is 0.25)
   -c <CCLE cell line>, --cnv <CCLE cell line>
-                        Activate CNV correction for MAGeCK/BAGEL2 with given cell line
+                        Activate CNV correction for MAGeCK/BAGEL2 with given
+                        cell line
   --go                  Gene set enrichment analysis with enrichR
+  --skip-fastqc          Skip FastQC/MultiQC analysis
+
 
 ```
 To start an analysis, for example with the Bassik whole-genome CRISPR library, navigate to main analysis folder in the command line and run:
