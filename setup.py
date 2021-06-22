@@ -135,7 +135,7 @@ def install_GSEA(script_dir):
     pass
 
 def install_R_packages():
-    install_command="Rscript "+os.path.join("R","install_R_packages.R")
+    install_command="Rscript "+os.path.join(script_dir,"R","install_R_packages.R")
     subprocess.run(install_command,shell=True)
 
 def check_env(script_dir,work_dir):
