@@ -14,6 +14,8 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 sns.set(style="whitegrid")
+from tqdm.auto import tqdm
+import gseapy as gp
 
 def write2log(work_dir,command,name):
     with open(os.path.join(work_dir,"commands.log"), "a") as file:
@@ -54,6 +56,15 @@ def file_exists(file): #check if file exists/is not size zero
                 return(True)
     else:
         return(False)
+
+def csv2fasta(library,crispr_library):
+    fasta=library[crispr_library]["fasta"]
+    csv=library[crispr_library]["csv"]
+    if not os.path.isfile(fasta):
+            if os.path.isfile(fasta):
+                pd.read_csv(csv, header=None)
+            else:
+                pass
 
 def fastqc(work_dir,threads,file_extension,exe_dict):
     fastqc_exe=os.path.join(exe_dict["fastqc"],"fastqc")
@@ -153,11 +164,11 @@ def count(library,crispr_library,mismatch,threads,script_dir,work_dir,exe_dict):
     #trim, align and count
     if read_mod == "trim":
         file_list=glob.glob(os.path.join(work_dir,"raw-data","*"+file_extension))
-        for file in file_list:
+        for file in tqdm(file_list, position=0, leave=True):
             base_file=os.path.basename(file)
             out_file=os.path.join(work_dir,"count",base_file.replace(file_extension,".guidecounts.txt"))
             if not file_exists(out_file):
-                print("Aligning "+base_file)
+                tqdm.write("Aligning "+base_file)
                 print(base_file+":", file=open("crispr.log", "a"))
                 cutadapt="cutadapt -j "+threads+" --quality-base 33 -l "+sg_length+" -o - "+file+" 2>> crispr.log | "
                 cutadapt=str(cutadapt)
@@ -196,8 +207,17 @@ def count(library,crispr_library,mismatch,threads,script_dir,work_dir,exe_dict):
         except:
             sys.exit("ERROR: removal of first line of count file failed")
 
+def plot(df,y_label,save_file):
+    #plotting function for alignment rates and sequencing coverage
+    df.plot.bar(x=list(df.keys())[0],y=list(df.keys())[1], legend=None, rot=45)
+    plt.ylabel(y_label)
+    plt.xlabel("")
+    plt.tight_layout()
+    plt.savefig(save_file)
+
 def plot_alignment_rate(work_dir):
-    if not file_exists(os.path.join(work_dir,"count","alignment-rate.pdf")):
+    plot_file=os.path.join(work_dir,"count","alignment-rate.pdf")
+    if not file_exists(plot_file):
         open(os.path.join(work_dir,"files.txt"),"w").writelines([ line for line in open(os.path.join(work_dir,"crispr.log")) if ".gz:" in line ])
         open(os.path.join(work_dir,"alignment-rate.txt"),"w").writelines([ line for line in open(os.path.join(work_dir,"crispr.log")) if "overall alignment rate" in line ])
 
@@ -218,19 +238,17 @@ def plot_alignment_rate(work_dir):
             df.iloc[counter,1]=line
             counter+=1
 
+        df["alignment_rate"]=pd.to_numeric(df["alignment_rate"])
+
         os.remove(os.path.join(work_dir,"files.txt"))
         os.remove(os.path.join(work_dir,"alignment-rate.txt"))
 
         #plot alignment rate
-        df["alignment_rate"]=pd.to_numeric(df["alignment_rate"])
-        df.plot.bar(x="file",y="alignment_rate", legend=None, rot=45)
-        plt.ylabel("Alignment rate (%)")
-        plt.xlabel("")
-        plt.tight_layout()
-        plt.savefig(os.path.join(work_dir,"count","alignment-rate.pdf"))
+        plot(df,"Alignment rate (%)",plot_file)
 
 def plot_coverage(work_dir,library,crispr_library): #plots coverage per sample after alignment
-    if not file_exists(os.path.join(work_dir,"count","coverage.pdf")):
+    plot_file=os.path.join(work_dir,"count","coverage.pdf")
+    if not file_exists(plot_file):
         #get number of sgRNAs in CRISPR library
         fasta=library[crispr_library]["fasta"]
         fasta=pd.read_table(fasta, header=None)
@@ -265,12 +283,7 @@ def plot_coverage(work_dir,library,crispr_library): #plots coverage per sample a
         os.remove(os.path.join(work_dir,"read-count.txt"))
 
         #plot coverage per sample
-        #df["alignment_rate"]=pd.to_numeric(df["alignment_rate"])
-        df.plot.bar(x="sample",y="coverage", legend=None, rot=45)
-        plt.ylabel("Fold coverage")
-        plt.xlabel("")
-        plt.tight_layout()
-        plt.savefig(os.path.join(work_dir,"count","coverage.pdf"))
+        plot(df,"Fold sequence coverage per sample",plot_file)
 
 def normalise(work_dir):
     df=pd.read_table(os.path.join(work_dir,"count","counts-aggregated.tsv"))
@@ -774,14 +787,20 @@ def lib_analysis(work_dir,library,crispr_library,script_dir):
     else:
         return None
 
-def go(work_dir,script_dir,analysis,fdr):
-    #load GO analysis settings
-    #with open(os.path.join(work_dir,"config.yml")) as file:
-    #    config=yaml.full_load(file)
-
-
+def goPython(work_dir,fdr):
     #get list og MAGeCK gene summary file_exists
-    file_list=glob.glob(os.path.join(work_dir,"mageck","*","*gene_summary.txt"))
+    file_list=glob.glob(os.path.join(work_dir,"mageck*","*","*gene_summary.txt"))
+
+    for file in file_list:
+        print("Performing gene set enrichment analysis with enrichR")
+        save_path=os.path.dirname(file)
+        df=pd.read_table(file)
+        df_negfdr=df[(df["neg|fdr"] < 0.25)]
+        gene_list=df_negfdr["id"].to_list()
+
+def go(work_dir,script_dir,analysis,fdr):
+    #get list og MAGeCK gene summary file_exists
+    file_list=glob.glob(os.path.join(work_dir,"mageck*","*","*gene_summary.txt"))
 
     for file in file_list:
         print("Performing gene set enrichment analysis with enrichR")
