@@ -787,27 +787,35 @@ def lib_analysis(work_dir,library,crispr_library,script_dir):
     else:
         return None
 
-def goPython(work_dir,fdr):
-    #get list og MAGeCK gene summary file_exists
-    file_list=glob.glob(os.path.join(work_dir,"mageck*","*","*gene_summary.txt"))
+def goPython(work_dir,fdr,library,crispr_library,analysis):
+    #set variables
+    species=library[crispr_library]["species"]
+    gene_sets=["GO_Molecular_Function_2021","GO_Cellular_Component_2021","GO_Biological_Process_2021"]
 
-    for file in file_list:
-        print("Performing gene set enrichment analysis with enrichR")
-        save_path=os.path.dirname(file)
-        df=pd.read_table(file)
-        df_negfdr=df[(df["neg|fdr"] < 0.25)]
-        gene_list=df_negfdr["id"].to_list()
+    def goMAGeCK(work_dir,gene_sets,species):
+        #get list og MAGeCK gene summary file_exists
+        file_list=glob.glob(os.path.join(work_dir,"mageck*","*","*gene_summary.txt"))
+        if len(file_list) == 0:
+            print("ERROR: no MAGeCK output files found")
+            return(None)
 
-def go(work_dir,script_dir,analysis,fdr):
-    #get list og MAGeCK gene summary file_exists
-    file_list=glob.glob(os.path.join(work_dir,"mageck*","*","*gene_summary.txt"))
+        for file in file_list:
+            print("Performing gene set enrichment analysis with enrichR")
+            for set in gene_sets:
+                save_path=os.path.dirname(file)
+                df=pd.read_table(file)
+                df_negfdr=df[(df["neg|fdr"] < fdr)]
+                gene_list=df_negfdr["id"].to_list()
+                enrichr_results=gp.enrichr(gene_list=gene_list,
+                    description="test",
+                    gene_sets=set,
+                    organism=species,
+                    outdir=os.path.join(save_path,"enrichR"))
 
-    for file in file_list:
-        print("Performing gene set enrichment analysis with enrichR")
-        save_path=os.path.dirname(file)
-        go_command="Rscript "+os.path.join(script_dir,"R","go.R ")+file+" "+save_path+" "+analysis+" "+str(fdr)
-        write2log(work_dir,go_command,"Gene set enrichment analysis: ")
-        try:
-            subprocess.run(go_command, shell=True)
-        except:
-            sys.exit("ERROR: GO analysis failed, check log")
+    def goBAGEL2(work_dir,gene_sets):
+        pass
+
+    if analysis == "mageck":
+        goMAGeCK(work_dir,gene_sets)
+    elif analysis == "bagel2":
+        goBAGEL2(work_dir,gene_sets)

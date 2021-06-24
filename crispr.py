@@ -109,7 +109,7 @@ def main():
 
 
     if go == True:
-        utils.go(work_dir,script_dir,analysis,fdr)
+        utils.goPython(work_dir,fdr,library,crispr_library,analysis)
 
 if __name__ == "__main__":
     #start run timer
