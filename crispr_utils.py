@@ -40,7 +40,11 @@ def rename(work_dir):
 
     for line in lines:#rename files
         old_name,new_name=line.split(";")
-        os.rename(os.path.join(work_dir,"raw-data",old_name),os.path.join(work_dir,"raw-data",new_name))
+        os.rename(os.path.join(work_dir,
+                    "raw-data",
+                    old_name),os.path.join(work_dir,
+                                "raw-data",
+                                new_name))
 
 def get_extension(work_dir):
     file_list=glob.glob(os.path.join(work_dir,"raw-data","*.gz"))
@@ -70,7 +74,8 @@ def fastqc(work_dir,threads,file_extension,exe_dict):
     fastqc_exe=os.path.join(exe_dict["fastqc"],"fastqc")
     if not os.path.isdir(os.path.join(work_dir,"fastqc")) or len(os.listdir(os.path.join(work_dir,"fastqc"))) == 0:
         os.makedirs(work_dir+"/fastqc",exist_ok=True)
-        fastqc_command=fastqc_exe+" --threads "+str(threads)+" --quiet -o fastqc/ raw-data/*"+file_extension
+        fastqc_command=fastqc_exe+" --threads "+str(threads)+
+                        " --quiet -o fastqc/ raw-data/*"+file_extension
         multiqc_command=["multiqc","-o","fastqc/","fastqc/"]
         #log commands
         with open(os.path.join(work_dir,"commands.log"),"w") as file:
@@ -100,10 +105,14 @@ def check_index(library,crispr_library,script_dir,exe_dict,work_dir):
             if fasta == "":
                 sys.exit("ERROR:No fasta file found for "+crispr_library)
             else:
-                index_base=os.path.join(script_dir,"index",crispr_library,crispr_library+"-index")
+                index_base=os.path.join(script_dir,
+                                "index",
+                                crispr_library,
+                                crispr_library+"-index")
                 index_dir=os.path.join(script_dir,"index",crispr_library)
                 os.makedirs(index_dir,exist_ok=True)
-                bowtie2_build_command=os.path.join(bowtie2_dir,"bowtie2-build ")+fasta+" "+index_base
+                bowtie2_build_command=os.path.join(bowtie2_dir,
+                                        "bowtie2-build ")+fasta+" "+index_base
                 write2log(work_dir,bowtie2_build_command,"Bowtie2-build: ")
                 print("Building Bowtie2 index for "+crispr_library+" library")
                 try:
@@ -158,7 +167,9 @@ def count(library,crispr_library,mismatch,threads,script_dir,work_dir,exe_dict):
 
     #bowtie2 and bash commands (common to both trim and clip)
     bowtie2_dir=exe_dict["bowtie2"]
-    bowtie2= os.path.join(bowtie2_dir,"bowtie2")+" --no-hd -p "+threads+" -t -N "+mismatch+" -x "+index_path+" - 2>> crispr.log | "
+    bowtie2= os.path.join(bowtie2_dir,
+                "bowtie2")+" --no-hd -p "+threads+" -t -N "+mismatch+" -x "+
+                index_path+" - 2>> crispr.log | "
     bash="sed '/XS:/d' | cut -f3 | sort | uniq -c > "
 
     #trim, align and count
@@ -166,11 +177,13 @@ def count(library,crispr_library,mismatch,threads,script_dir,work_dir,exe_dict):
         file_list=glob.glob(os.path.join(work_dir,"raw-data","*"+file_extension))
         for file in tqdm(file_list, position=0, leave=True):
             base_file=os.path.basename(file)
-            out_file=os.path.join(work_dir,"count",base_file.replace(file_extension,".guidecounts.txt"))
+            out_file=os.path.join(work_dir,"count",base_file.replace(file_extension,
+                                                                ".guidecounts.txt"))
             if not file_exists(out_file):
                 tqdm.write("Aligning "+base_file)
                 print(base_file+":", file=open("crispr.log", "a"))
-                cutadapt="cutadapt -j "+threads+" --quality-base 33 -l "+sg_length+" -o - "+file+" 2>> crispr.log | "
+                cutadapt="cutadapt -j "+threads+" --quality-base 33 -l "+
+                            sg_length+" -o - "+file+" 2>> crispr.log | "
                 cutadapt=str(cutadapt)
                 bowtie2=str(bowtie2)
                 count_command=cutadapt+bowtie2+bash+out_file
@@ -188,7 +201,8 @@ def count(library,crispr_library,mismatch,threads,script_dir,work_dir,exe_dict):
             if not file_exists(out_file):
                 print("Aligning "+base_file)
                 print(base_file+":", file=open("crispr.log", "a"))
-                cutadapt="cutadapt -j "+threads+" --quality-base 33 -a "+clip_seq+" -o - "+file+" 2>> crispr.log | "
+                cutadapt="cutadapt -j "+threads+" --quality-base 33 -a "+
+                            clip_seq+" -o - "+file+" 2>> crispr.log | "
                 cutadapt=str(cutadapt)
                 bowtie2=str(bowtie2)
                 count_command=cutadapt+bowtie2+bash+out_file
@@ -790,32 +804,48 @@ def lib_analysis(work_dir,library,crispr_library,script_dir):
 def goPython(work_dir,fdr,library,crispr_library,analysis):
     #set variables
     species=library[crispr_library]["species"]
-    gene_sets=["GO_Molecular_Function_2021","GO_Cellular_Component_2021","GO_Biological_Process_2021"]
+    gene_sets=["GO_Molecular_Function_2021",
+                "GO_Cellular_Component_2021",
+                "GO_Biological_Process_2021"]
 
-    def goMAGeCK(work_dir,gene_sets,species):
+    if analysis == "mageck":
         #get list og MAGeCK gene summary file_exists
-        file_list=glob.glob(os.path.join(work_dir,"mageck*","*","*gene_summary.txt"))
+        file_list=glob.glob(os.path.join(work_dir,
+                                "mageck*",
+                                "*",
+                                "*gene_summary.txt"))
         if len(file_list) == 0:
             print("ERROR: no MAGeCK output files found")
             return(None)
 
-        for file in file_list:
-            print("Performing gene set enrichment analysis with enrichR")
-            for set in gene_sets:
-                save_path=os.path.dirname(file)
-                df=pd.read_table(file)
-                df_negfdr=df[(df["neg|fdr"] < fdr)]
-                gene_list=df_negfdr["id"].to_list()
-                enrichr_results=gp.enrichr(gene_list=gene_list,
-                    description="test",
-                    gene_sets=set,
-                    organism=species,
-                    outdir=os.path.join(save_path,"enrichR"))
+        input_list=[["neg|fdr","depletion"],["pos|fdr","enrichment"]]
+        def enrichrMAGeCK(file_list,fdr,i):
+            for file in file_list:
+                print("Performing gene set enrichment analysis with enrichR")
+                prefix=os.path.basename(os.path.normpath(file))
+                for set in gene_sets:
+                    save_path=os.path.dirname(file)
+                    df=pd.read_table(file)
+                    df_negfdr=df[(df[i[0]] < fdr)]
+                    gene_list=df_negfdr["id"].to_list()
+                    enrichr_results=gp.enrichr(gene_list=gene_list,
+                        title=prefix+" "+i[1]+" "+set,
+                        gene_sets=set,
+                        organism=species,
+                        outdir=os.path.join(save_path,"enrichR"))
 
-    def goBAGEL2(work_dir,gene_sets):
-        pass
+        for i in input_list:
+            enrichrMAGeCK(file_list,fdr,i)
 
-    if analysis == "mageck":
-        goMAGeCK(work_dir,gene_sets)
     elif analysis == "bagel2":
-        goBAGEL2(work_dir,gene_sets)
+        file_list=glob.glob(os.path.join(work_dir,
+                                "bagel*",
+                                "*",
+                                "*.pr"))
+
+        if len(file_list) == 0:
+            print("ERROR: no BAGEL2 output files found")
+            return(None)
+
+        def goBAGEL2(work_dir,gene_sets):
+            pass

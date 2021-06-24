@@ -15,26 +15,26 @@ def main():
     ###command line argument parser
     ap = argparse.ArgumentParser()
     ap.add_argument("-l", "--library", required=True, choices=library_list,
-       help="CRISPR library")
+        help="CRISPR library")
     ap.add_argument("-t", "--threads", required=False, default=1, metavar="<int>",
-       help="Number of CPU threads to use (default is 1). Use max to apply all available CPU threads")
+        help="Number of CPU threads to use (default is 1). Use max to apply all available CPU threads")
     ap.add_argument("-r", "--rename", required=False, action='store_true',
-       help="Rename fastq files according to rename.config")
+        help="Rename fastq files according to rename.config")
     ap.add_argument("-m", "--mismatch", required=False,choices=("0","1"), metavar="N",
-       help="Number of mismatches (0 or 1) allowed during alignment", default=0)
+        help="Number of mismatches (0 or 1) allowed during alignment", default=0)
     ap.add_argument("-a", "--analysis", required=False, default="mageck",
-                    choices=["mageck","bagel2"],
-                    help="Statistical analysis with MAGeCK or BAGEL2. Default is MAGeCK")
+        choices=["mageck","bagel2"],
+        help="Statistical analysis with MAGeCK or BAGEL2. Default is MAGeCK")
     ap.add_argument("-f","--fdr", required=False, metavar="<FDR value>", default=0.25,
-       help="Set FDR cut off for MAGeCK hits (default is 0.25)")
-    ap.add_argument("--cnv", required=False, metavar="<CCLE cell line>",default=None,
-       help="Activate CNV correction for MAGeCK/BAGEL2 with given cell line")
+        help="Set FDR cut off for MAGeCK hits (default is 0.25)")
+    ap.add_argument("--cnv", required=False, metavar="<CCLE cell line>", default=None,
+        help="Activate CNV correction for MAGeCK/BAGEL2 with given cell line")
     ap.add_argument("--go", required=False, action='store_true', default=None,
-       help="Gene set enrichment analysis with enrichR")
-    ap.add_argument("--skip-fastqc", required=False, action='store_true', default=False,
-          help="Skip FastQC/MultiQC analysis")
-    ap.add_argument("--skip-stats", required=False, action='store_true', default=False,
-          help="Skip MAGeCK/BAGEL2")
+        help="Gene set enrichment analysis with enrichR")
+    ap.add_argument("--skip-fastqc", required=False, action='store_true',
+        default=False, help="Skip FastQC/MultiQC")
+    ap.add_argument("--skip-stats", required=False, action='store_true',
+        default=False,help="Skip MAGeCK/BAGEL2")
 
     args = vars(ap.parse_args())
 
@@ -70,23 +70,34 @@ def main():
     ##count reads
     #get parsed arguments
     crispr_library=args["library"]
+
     #check if bowtie2 index is build for CRISPR library
     utils.check_index(library,crispr_library,script_dir,exe_dict,work_dir)
+
     #check if file with just guide names exists
     utils.guide_names(library,crispr_library)
+
     #count sgRNAs
     mismatch=args["mismatch"]
     utils.count(library,crispr_library,mismatch,threads,script_dir,work_dir,exe_dict)
+
     #plot alignment rates
     utils.plot_alignment_rate(work_dir)
+
     #plot sample coverage (read count / library size)
     utils.plot_coverage(work_dir,library,crispr_library)
+
     #join count files
-    if not utils.file_exists(os.path.join(work_dir,"count",'counts-aggregated.tsv')):
+    if not utils.file_exists(os.path.join(work_dir,
+                                "count",
+                                'counts-aggregated.tsv')):
         utils.join_counts(work_dir,library,crispr_library)
     #normalise read count table
-    if not utils.file_exists(os.path.join(work_dir,"count","counts-aggregated-normalised.csv")):
+    if not utils.file_exists(os.path.join(work_dir,
+                                "count",
+                                "counts-aggregated-normalised.csv")):
         utils.normalise(work_dir)
+
     ##run library analysis
     utils.lib_analysis(work_dir,library,crispr_library,script_dir)
 
