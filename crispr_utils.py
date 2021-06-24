@@ -834,8 +834,7 @@ def goPython(work_dir,fdr,library,crispr_library,analysis):
                         organism=species,
                         outdir=os.path.join(save_path,"enrichR"))
 
-        for i in input_list:
-            enrichrMAGeCK(file_list,fdr,i)
+        enrichrMAGeCK(file_list,fdr,i) for i in input_list
 
     elif analysis == "bagel2":
         file_list=glob.glob(os.path.join(work_dir,
