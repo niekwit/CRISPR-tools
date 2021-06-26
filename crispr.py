@@ -14,8 +14,8 @@ import pickle
 def main():
     ###command line argument parser
     ap = argparse.ArgumentParser()
-    ap.add_argument("-l", "--library", required=True, choices=library_list,
-        help="CRISPR library")
+    ap.add_argument("-l", "--library", required="--csv2fasta" not in sys.argv,
+        choices=library_list, help="CRISPR library")
     ap.add_argument("-t", "--threads", required=False, default=1, metavar="<int>",
         help="Number of CPU threads to use (default is 1). Use max to apply all available CPU threads")
     ap.add_argument("-r", "--rename", required=False, action='store_true',
@@ -24,9 +24,9 @@ def main():
         help="Number of mismatches (0 or 1) allowed during alignment", default=0)
     ap.add_argument("-a", "--analysis", required=False, default="mageck",
         choices=["mageck","bagel2"],
-        help="Statistical analysis with MAGeCK or BAGEL2. Default is MAGeCK")
-    ap.add_argument("-f","--fdr", required=False, metavar="<FDR value>", default=0.25,
-        help="Set FDR cut off for MAGeCK hits (default is 0.25)")
+        help="Statistical analysis with MAGeCK or BAGEL2 (default is MAGeCK)")
+    ap.add_argument("-f","--fdr", required=False, metavar="<FDR value>",
+        default=0.25, help="Set FDR cut off for MAGeCK hits (default is 0.25)")
     ap.add_argument("--cnv", required=False, metavar="<CCLE cell line>", default=None,
         help="Activate CNV correction for MAGeCK/BAGEL2 with given cell line")
     ap.add_argument("--go", required=False, action='store_true', default=None,
@@ -35,8 +35,17 @@ def main():
         default=False, help="Skip FastQC/MultiQC")
     ap.add_argument("--skip-stats", required=False, action='store_true',
         default=False,help="Skip MAGeCK/BAGEL2")
+    ap.add_argument("--csv2fasta", required=False, metavar="<CSV file>",
+        help="Convert CSV file with sgRNA names and sequences to fasta format. The first column should contain sgRNA names and the second sgRNA sequences (headers can be anything).")
 
     args = vars(ap.parse_args())
+
+    #csv to fasta conversion
+    csv=args["csv2fasta"]
+    if not os.path.isfile(csv):
+        sys.exit("ERROR: invalid file path given")
+
+    utils.csv2fasta(csv,script_dir)
 
     ###check if software requirements are met
     try:
@@ -68,10 +77,8 @@ def main():
         print("Skipping FastQC/MultiQC analysis")
 
     ##count reads
-    #get parsed arguments
-    crispr_library=args["library"]
-
     #check if bowtie2 index is build for CRISPR library
+    crispr_library=args["library"]
     utils.check_index(library,crispr_library,script_dir,exe_dict,work_dir)
 
     #check if file with just guide names exists

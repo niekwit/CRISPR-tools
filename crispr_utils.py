@@ -61,19 +61,43 @@ def file_exists(file): #check if file exists/is not size zero
     else:
         return(False)
 
-def csv2fasta(library,crispr_library):
-    fasta=library[crispr_library]["fasta"]
-    csv=library[crispr_library]["csv"]
-    if not os.path.isfile(fasta):
-            if os.path.isfile(fasta):
-                pd.read_csv(csv, header=None)
-            else:
-                pass
+def csv2fasta(csv,script_dir): #not finished yet
+    df_CSV=pd.read_csv(csv)
+    line_number_fasta=len(df_CSV) * 2
+
+    df=pd.DataFrame(columns=["column"],
+                    index=np.arange(line_number_fasta))
+
+    #create fasta df
+    df["column"]=df_CSV.stack().reset_index(drop=True)
+    df.iloc[0::2, :]=">"+df.iloc[0::2, :]
+
+    library_name=os.path.basename(csv)
+    library_name=library_name.replace(".csv","")
+    fasta_base=library_name + ".fasta"
+    fasta_file=os.path.join(script_dir,"index",library_name,fasta_base)
+    os.makedirs(os.path.join(script_dir,"index",library_name),
+                exist_ok=True)
+    df.to_csv(fasta_file,index=False, header=False)
+
+    #add new CRISPR library and fasta file location to library.yaml
+    yaml_list=["clip_seq","fasta","index_path","read_mod","sg_length","species"]
+    with open(os.path.join(script_dir,"library.yaml")) as f:
+        doc=yaml.safe_load(f)
+        doc[library_name]={}
+        for i in yaml_list:
+            doc[library_name][i]=""
+        doc[library_name]["fasta"]=fasta_file
+        with open(os.path.join(script_dir,"library.yaml"), "w") as f:
+            yaml.dump(doc,f)
+
+    #exit message
+    sys.exit("Fasta file created and added to library.yaml\nPlease provid more CRISPR library information in this file before first run.")
 
 def fastqc(work_dir,threads,file_extension,exe_dict):
     fastqc_exe=os.path.join(exe_dict["fastqc"],"fastqc")
     if not os.path.isdir(os.path.join(work_dir,"fastqc")) or len(os.listdir(os.path.join(work_dir,"fastqc"))) == 0:
-        os.makedirs(work_dir+"/fastqc",exist_ok=True)
+        os.makedirs(os.path.join(work_dir,"fastqc"),exist_ok=True)
         fastqc_command=fastqc_exe+" --threads "+str(threads)+" --quiet -o fastqc/ raw-data/*"+file_extension
         multiqc_command=["multiqc","-o","fastqc/","fastqc/"]
         #log commands
@@ -704,7 +728,9 @@ def lib_analysis(work_dir,library,crispr_library,script_dir):
         os.makedirs(os.path.join(work_dir,"library-analysis"),exist_ok=True)
         warnings.filterwarnings("ignore")
 
-        df = pd.read_csv(os.path.join(work_dir,"count",'counts-aggregated.tsv'),sep='\t')
+        df = pd.read_csv(os.path.join(work_dir,
+                                        "count",
+                                        'counts-aggregated.tsv'),sep='\t')
 
         #determines total read count per column
         pre_lib_sum = df['pre'].sum()
@@ -804,20 +830,20 @@ def lib_analysis(work_dir,library,crispr_library,script_dir):
         plt.savefig(os.path.join(work_dir,"library-analysis","lorenz-curve.pdf"))
         plt.close()
 
-        '''
-        #Run GC bias analysis in R
-        fasta=library[crispr_library]["fasta"]
-
-        gc_command="Rscript "+os.path.join(script_dir,"R","gc-bias.R ")+work_dir+" "+fasta
-
-        try:
-            subprocess.run(gc_command, shell=True)
-        except:
-            print("ERROR: GC bias analysis failed")
-            return(None)
-        '''
     else:
         return None
+
+def gcBias(work_dir,library,crispr_library):
+    fasta=library[crispr_library]["fasta"]
+
+    #get sgRNA counts
+    df=pd.read_csv(os.path.join(work_dir,
+                            "count",
+                            "counts-aggregated.tsv"),sep='\t')
+
+    df=df[["sgRNA","gene","pre","post"]]
+
+    #get sgRNA sequences from fasta file
 
 def goPython(work_dir,fdr,library,crispr_library,analysis):
     #set variables
@@ -872,7 +898,7 @@ def goPython(work_dir,fdr,library,crispr_library,analysis):
         for set in gene_sets:
             save_path=os.path.dirname(file)
             df=pd.read_table(file)
-            df_negfdr=df[(df["FDR"] < fdr)]
+            df_negfdr=df[(df["BF"] > 0)]
             geneList=df_negfdr["Gene"].to_list()
             enrichr_results=gp.enrichr(gene_list=geneList,
                 gene_sets=set,
