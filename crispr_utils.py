@@ -846,8 +846,17 @@ def gcBias(work_dir,library,crispr_library):
     #get sgRNA sequences from fasta file
 
 def goPython(work_dir,fdr,library,crispr_library,analysis,gene_sets):
-    #set variables
     species=library[crispr_library]["species"]
+
+    #check if chosen gene sets are valid
+    gene_sets=list(gene_sets.split(","))
+    all_enrichr_gene_sets=gseapy.get_library_name()
+    for i in gene_sets:
+        if i not in all_enrichr_gene_sets:
+            print("ERROR: invalid enrichR gene set chosen")
+            print("List of valid gene sets:")
+            print(all_enrichr_gene_sets)
+            return(None)
 
     if analysis == "mageck":
         #get list og MAGeCK gene summary file_exists
