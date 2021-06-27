@@ -61,7 +61,7 @@ def file_exists(file): #check if file exists/is not size zero
     else:
         return(False)
 
-def csv2fasta(csv,script_dir): #not finished yet
+def csv2fasta(csv,script_dir):
     df_CSV=pd.read_csv(csv)
     line_number_fasta=len(df_CSV) * 2
 
@@ -845,12 +845,9 @@ def gcBias(work_dir,library,crispr_library):
 
     #get sgRNA sequences from fasta file
 
-def goPython(work_dir,fdr,library,crispr_library,analysis):
+def goPython(work_dir,fdr,library,crispr_library,analysis,gene_sets):
     #set variables
     species=library[crispr_library]["species"]
-    gene_sets=["GO_Molecular_Function_2021",
-                "GO_Cellular_Component_2021",
-                "GO_Biological_Process_2021"]
 
     if analysis == "mageck":
         #get list og MAGeCK gene summary file_exists
@@ -871,8 +868,8 @@ def goPython(work_dir,fdr,library,crispr_library,analysis):
                 for set in gene_sets:
                     save_path=os.path.dirname(file)
                     df=pd.read_table(file)
-                    df_negfdr=df[(df[i[0]] < fdr)]
-                    geneList=df_negfdr["id"].to_list()
+                    df_fdr=df[(df[i[0]] < fdr)]
+                    geneList=df_fdr["id"].to_list()
                     enrichr_results=gp.enrichr(gene_list=geneList,
                         gene_sets=set,
                         organism=species,
@@ -898,8 +895,8 @@ def goPython(work_dir,fdr,library,crispr_library,analysis):
         for set in gene_sets:
             save_path=os.path.dirname(file)
             df=pd.read_table(file)
-            df_negfdr=df[(df["BF"] > 0)]
-            geneList=df_negfdr["Gene"].to_list()
+            df_bf=df[(df["BF"] > 0)]
+            geneList=df_bf["Gene"].to_list()
             enrichr_results=gp.enrichr(gene_list=geneList,
                 gene_sets=set,
                 organism=species,

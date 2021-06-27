@@ -31,21 +31,26 @@ def main():
         help="Activate CNV correction for MAGeCK/BAGEL2 with given cell line")
     ap.add_argument("--go", required=False, action='store_true', default=None,
         help="Gene set enrichment analysis with enrichR")
+    ap.add_argument("--gene-sets", required=False, metavar="<GO gene set>",                         default=["GO_Molecular_Function_2021",
+                "GO_Cellular_Component_2021",
+                "GO_Biological_Process_2021"],
+        help="Gene sets used for GO analysis (default is GO_Molecular_Function_2021, GO_Cellular_Component_2021, and GO_Biological_Process_2021). Gene sets can be found on https://maayanlab.cloud/Enrichr/#stats")
+    ap.add_argument("--csv2fasta", required=False, metavar="<CSV file>", default=None,
+        help="Convert CSV file with sgRNA names and sequences to fasta format. The first column should contain sgRNA names and the second sgRNA sequences (headers can be anything).")
     ap.add_argument("--skip-fastqc", required=False, action='store_true',
         default=False, help="Skip FastQC/MultiQC")
     ap.add_argument("--skip-stats", required=False, action='store_true',
         default=False,help="Skip MAGeCK/BAGEL2")
-    ap.add_argument("--csv2fasta", required=False, metavar="<CSV file>",
-        help="Convert CSV file with sgRNA names and sequences to fasta format. The first column should contain sgRNA names and the second sgRNA sequences (headers can be anything).")
 
     args = vars(ap.parse_args())
 
     #csv to fasta conversion
     csv=args["csv2fasta"]
-    if not os.path.isfile(csv):
-        sys.exit("ERROR: invalid file path given")
-
-    utils.csv2fasta(csv,script_dir)
+    if csv is not None:
+        if not os.path.isfile(csv):
+            sys.exit("ERROR: invalid file path given")
+        else:
+            utils.csv2fasta(csv,script_dir)
 
     ###check if software requirements are met
     try:
@@ -127,7 +132,8 @@ def main():
 
 
     if go == True:
-        utils.goPython(work_dir,fdr,library,crispr_library,analysis)
+        gene_sets=args["gene_sets"]
+        utils.goPython(work_dir,fdr,library,crispr_library,analysis,gene_sets)
 
 if __name__ == "__main__":
     #start run timer
