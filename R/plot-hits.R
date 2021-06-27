@@ -43,7 +43,7 @@ plot.bagel2 <- function(work.dir,df.file,save.path,title){
                        guide = guide_colorbar(frame.colour = "black", 
                                               ticks.colour = "black"), 
                        limits=c(0,1))+
-    geom_hline(yintercept= 5, 
+    geom_hline(yintercept= 0, 
                linetype="dashed", 
                color = "red") +
     geom_label_repel(data = df.top.ten, 
