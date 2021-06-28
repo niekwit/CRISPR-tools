@@ -242,8 +242,10 @@ def count(library,crispr_library,mismatch,threads,script_dir,work_dir,exe_dict):
             sys.exit("ERROR: removal of first line of count file failed")
 
 def plot(df,y_label,save_file):
-    #plotting function for alignment rates and sequencing coverage
-    df.plot.bar(x=list(df.keys())[0],y=list(df.keys())[1], legend=None, rot=45)
+    sns.set_theme(style="whitegrid")
+    sns.barplot(x=list(df.keys())[0],
+                    y=list(df.keys())[1],
+                    data=df)
     plt.ylabel(y_label)
     plt.xlabel("")
     plt.tight_layout()
