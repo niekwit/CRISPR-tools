@@ -215,7 +215,7 @@ def count(library,crispr_library,mismatch,threads,script_dir,work_dir,exe_dict):
                     sys.exit("ERROR: read count failed, check logs")
     elif read_mod == "clip":
         file_list=glob.glob(os.path.join(work_dir,"raw-data","*"+file_extension))
-        for file in file_list:
+        for file in tqdm(file_list, position=0, leave=True):
             base_file=os.path.basename(file)
             out_file=os.path.join(work_dir,"count",base_file.replace(file_extension,".guidecounts.txt"))
 
@@ -247,6 +247,7 @@ def plot(df,y_label,save_file):
                     y=list(df.keys())[1],
                     data=df)
     plt.ylabel(y_label)
+    plt.xticks(rotation = 'vertical')
     plt.xlabel("")
     plt.tight_layout()
     plt.savefig(save_file)
@@ -849,16 +850,21 @@ def gcBias(work_dir,library,crispr_library):
 
 def goPython(work_dir,fdr,library,crispr_library,analysis,gene_sets):
     species=library[crispr_library]["species"]
-
+    print(gene_sets)
     #check if chosen gene sets are valid
-    gene_sets=list(gene_sets.split(","))
-    all_enrichr_gene_sets=gseapy.get_library_name()
-    for i in gene_sets:
-        if i not in all_enrichr_gene_sets:
-            print("ERROR: invalid enrichR gene set chosen")
-            print("List of valid gene sets:")
-            print(all_enrichr_gene_sets)
-            return(None)
+    default=["GO_Molecular_Function_2021",
+            "GO_Cellular_Component_2021",
+            "GO_Biological_Process_2021"]
+
+    if not gene_sets == default:
+        gene_sets=list(gene_sets.split(","))
+        all_enrichr_gene_sets=gseapy.get_library_name()
+        for i in gene_sets:
+            if i not in all_enrichr_gene_sets:
+                print("ERROR: invalid enrichR gene set chosen")
+                print("List of valid gene sets:")
+                print(all_enrichr_gene_sets)
+                return(None)
 
     if analysis == "mageck":
         #get list og MAGeCK gene summary file_exists
@@ -873,9 +879,9 @@ def goPython(work_dir,fdr,library,crispr_library,analysis,gene_sets):
         input_list=[["neg|fdr","depletion"],["pos|fdr","enrichment"]]
         def enrichrMAGeCK(file_list,fdr,i):
             for file in file_list:
-                print("Performing gene set enrichment analysis with enrichR for: "+i[1])
                 prefix=os.path.basename(os.path.normpath(file))
                 prefix=prefix.replace(".gene_summary.txt","")
+                print("Performing gene set enrichment analysis with enrichR for "prefix+": "+i[1])
                 for set in gene_sets:
                     save_path=os.path.dirname(file)
                     df=pd.read_table(file)
@@ -900,9 +906,10 @@ def goPython(work_dir,fdr,library,crispr_library,analysis,gene_sets):
             print("ERROR: no BAGEL2 output files found")
             return(None)
 
-        print("Performing gene set enrichment analysis with enrichR for: "+i[1])
         prefix=os.path.basename(os.path.normpath(file))
         prefix=prefix.replace(".pr","")
+        print("Performing gene set enrichment analysis with enrichR for: "+prefix+"(depletion)")
+
         for set in gene_sets:
             save_path=os.path.dirname(file)
             df=pd.read_table(file)

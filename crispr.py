@@ -31,7 +31,8 @@ def main():
         help="Activate CNV correction for MAGeCK/BAGEL2 with given cell line")
     ap.add_argument("--go", required=False, action='store_true', default=None,
         help="Gene set enrichment analysis with enrichR")
-    ap.add_argument("--gene-sets", required=False, metavar="<GO gene set>",                         default=["GO_Molecular_Function_2021",
+    ap.add_argument("--gene-sets", required=False, metavar="<GO gene set>",
+        default=["GO_Molecular_Function_2021",
                 "GO_Cellular_Component_2021",
                 "GO_Biological_Process_2021"],
         help="Gene sets used for GO analysis (default is GO_Molecular_Function_2021, GO_Cellular_Component_2021, and GO_Biological_Process_2021). Gene sets can be found on https://maayanlab.cloud/Enrichr/#stats")
