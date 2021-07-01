@@ -16,6 +16,7 @@ import seaborn as sns
 sns.set(style="whitegrid")
 from tqdm.auto import tqdm
 import gseapy as gp
+import BioVenn
 
 def write2log(work_dir,command,name):
     with open(os.path.join(work_dir,"commands.log"), "a") as file:
@@ -847,6 +848,9 @@ def gcBias(work_dir,library,crispr_library):
     df=df[["sgRNA","gene","pre","post"]]
 
     #get sgRNA sequences from fasta file
+
+def essentialGenes():
+    pass
 
 def goPython(work_dir,fdr,library,crispr_library,analysis,gene_sets):
     species=library[crispr_library]["species"]
