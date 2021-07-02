@@ -12,7 +12,10 @@ import urllib.request
 import shutil
 
 def install_python_packages(): #check for required python packages; installs if absent
-    required = {"shyaml","pyyaml","pandas","numpy","matplotlib","seaborn","multiqc","cutadapt","scipy","scikit-learn","tqdm","gseapy"}
+    required = {"shyaml","pyyaml","pandas","numpy",
+                "matplotlib","seaborn","multiqc",
+                "cutadapt","scipy","scikit-learn",
+                "tqdm","gseapy","BioVenn"}
     installed = {pkg.key for pkg in pkg_resources.working_set}
     missing = required - installed
     if missing:

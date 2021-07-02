@@ -848,6 +848,70 @@ def gcBias(work_dir,library,crispr_library):
     df=df[["sgRNA","gene","pre","post"]]
 
     #get sgRNA sequences from fasta file
+    df_fasta=pd.read_csv(fasta, header=None)
+    df_fasta=df_fasta.rename(columns={0:"sgRNA"})
+    df_seq=df_fasta[df_fasta["sgRNA"].str.contains(">")].reset_index(drop=True)
+    df_seq["sequence"]=df_fasta[~df_fasta["sgRNA"].str.contains(">")].reset_index(drop=True)
+
+    #get sgRNA sequence in sgRNA count df
+    df["pre"]=df["pre"].astype(str)
+    df["post"]=df["post"].astype(str)
+    df_seq["sequence"]=df_seq["sequence"].astype(str)
+    df_seq["sgRNA"]=df_seq["sgRNA"].astype(str)
+    df_seq["sgRNA"]=df_seq["sgRNA"].str.replace(">","")
+    df_seq["sgRNA"]=df_seq["sgRNA"].str.split("_",
+                                                n=1,
+                                                expand=True)[1]
+    df = pd.merge(df, df_seq, on='sgRNA', how='left')
+    #df = df.drop(columns="sequence_x")
+    #df=df.rename(columns={"sequence_y":"sequence"})
+
+    df["pre"]=df["pre"].astype(int)
+    df["post"]=df["post"].astype(int)
+
+    #calculate %GC for each sgRNA
+    def calculateGC(x):
+        total_N=len(x)
+        total_G=x.count("G")
+        total_C=x.count("C")
+        GC_content=(total_G + total_C) / total_N
+        return(GC_content)
+
+    df["GC_content"]=df["sequence"].apply(calculateGC)
+
+    #select sgRNAs with 10% highest and 10% lowest abundances
+    df_pre_low=df.sort_values(by=["pre"],
+                            ascending=True,
+                            inplace=False).reset_index(drop=True)
+    index_range=list(range(int(len(df)*0.1)))
+    df_pre_low=df_pre_low.iloc[index_range]
+
+    df_post_low=df.sort_values(by=["post"],
+                            ascending=True,
+                            inplace=False).reset_index(drop=True)
+    df_post_low=df_post_low.iloc[index_range]
+
+    df_low=df_pre_low["GC_content"]
+    df_low=df_low.to_frame()
+    df_low=df_low.rename(columns={df_low.columns[0]:"pre"})
+    df_low["post"]=df_post_low["GC_content"]
+    df_low=df_low.rename(columns={df_low.columns["GC_content"]:"pre"})
+
+    #plot data
+    df=pd.melt(df_low,id_vars=["id_var"],value_vars=["pre","post"])
+    df=df.rename(columns={"value":"GC_content"})
+    df=df.rename(columns={"variable":"sample"})
+
+    sns.displot(df,x="GC_content",
+                    hue="sample",
+                    kind="kde",
+                    fill=True,
+                    bw_adjust=2)
+    plt.xlabel("%GC")
+    plt.legend(loc="upper left")
+    plt.savefig(os.path.join(work_dir,"gc-bias.pdf"))
+
+
 
 def essentialGenes():
     pass
@@ -885,7 +949,7 @@ def goPython(work_dir,fdr,library,crispr_library,analysis,gene_sets):
             for file in file_list:
                 prefix=os.path.basename(os.path.normpath(file))
                 prefix=prefix.replace(".gene_summary.txt","")
-                print("Performing gene set enrichment analysis with enrichR for "prefix+": "+i[1])
+                print("Performing gene set enrichment analysis with enrichR for "+prefix+": "+i[1])
                 for set in gene_sets:
                     save_path=os.path.dirname(file)
                     df=pd.read_table(file)
