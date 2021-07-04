@@ -719,10 +719,15 @@ def bagel2(work_dir,script_dir,exe_dict,fdr):
 
 def lib_analysis(work_dir,library,crispr_library,script_dir):
     #determine whether count file contains library samples pre and post
-    header=subprocess.check_output(["head", "-1",os.path.join(work_dir,"count","counts-aggregated.tsv")])
+    header=subprocess.check_output(["head", "-1",
+                                    os.path.join(work_dir,
+                                                "count",
+                                                "counts-aggregated.tsv")])
     if "pre" and "post" in str(header):
         #check if analysis has been performed already
-        out_file=os.path.join(work_dir,"library-analysis","normalised-guides-frequency.pdf")
+        out_file=os.path.join(work_dir,
+                                "library-analysis",
+                                "normalised-guides-frequency.pdf")
         if not os.path.exists(out_file):
             print("Analysing CRISPR library quality")
         else:
@@ -838,83 +843,131 @@ def lib_analysis(work_dir,library,crispr_library,script_dir):
         return None
 
 def gcBias(work_dir,library,crispr_library):
-    fasta=library[crispr_library]["fasta"]
+    out_file=os.path.join(work_dir,
+                            "library-analysis",
+                            "gc-bias.pdf")
 
-    #get sgRNA counts
-    df=pd.read_csv(os.path.join(work_dir,
-                            "count",
-                            "counts-aggregated.tsv"),sep='\t')
+    if not file_exists(out_file):
+        fasta=library[crispr_library]["fasta"]
 
-    df=df[["sgRNA","gene","pre","post"]]
+        #get sgRNA counts
+        df=pd.read_csv(os.path.join(work_dir,
+                                "count",
+                                "counts-aggregated.tsv"),sep='\t')
 
-    #get sgRNA sequences from fasta file
-    df_fasta=pd.read_csv(fasta, header=None)
-    df_fasta=df_fasta.rename(columns={0:"sgRNA"})
-    df_seq=df_fasta[df_fasta["sgRNA"].str.contains(">")].reset_index(drop=True)
-    df_seq["sequence"]=df_fasta[~df_fasta["sgRNA"].str.contains(">")].reset_index(drop=True)
+        df=df[["sgRNA","gene","pre","post"]]
 
-    #get sgRNA sequence in sgRNA count df
-    df["pre"]=df["pre"].astype(str)
-    df["post"]=df["post"].astype(str)
-    df_seq["sequence"]=df_seq["sequence"].astype(str)
-    df_seq["sgRNA"]=df_seq["sgRNA"].astype(str)
-    df_seq["sgRNA"]=df_seq["sgRNA"].str.replace(">","")
-    df_seq["sgRNA"]=df_seq["sgRNA"].str.split("_",
-                                                n=1,
-                                                expand=True)[1]
-    df = pd.merge(df, df_seq, on='sgRNA', how='left')
-    #df = df.drop(columns="sequence_x")
-    #df=df.rename(columns={"sequence_y":"sequence"})
+        #get sgRNA sequences from fasta file
+        df_fasta=pd.read_csv(fasta, header=None)
+        df_fasta=df_fasta.rename(columns={0:"sgRNA"})
+        df_seq=df_fasta[df_fasta["sgRNA"].str.contains(">")].reset_index(drop=True)
+        df_seq["sequence"]=df_fasta[~df_fasta["sgRNA"].str.contains(">")].reset_index(drop=True)
 
-    df["pre"]=df["pre"].astype(int)
-    df["post"]=df["post"].astype(int)
+        #get sgRNA sequence in sgRNA count df
+        df["pre"]=df["pre"].astype(str)
+        df["post"]=df["post"].astype(str)
+        df_seq["sequence"]=df_seq["sequence"].astype(str)
+        df_seq["sgRNA"]=df_seq["sgRNA"].astype(str)
+        df_seq["sgRNA"]=df_seq["sgRNA"].str.replace(">","")
+        df_seq["sgRNA"]=df_seq["sgRNA"].str.split("_",
+                                                    n=1,
+                                                    expand=True)[1]
+        df = pd.merge(df, df_seq, on='sgRNA', how='left')
+        #df = df.drop(columns="sequence_x")
+        #df=df.rename(columns={"sequence_y":"sequence"})
 
-    #calculate %GC for each sgRNA
-    def calculateGC(x):
-        total_N=len(x)
-        total_G=x.count("G")
-        total_C=x.count("C")
-        GC_content=(total_G + total_C) / total_N
-        return(GC_content)
+        df["pre"]=df["pre"].astype(int)
+        df["post"]=df["post"].astype(int)
 
-    df["GC_content"]=df["sequence"].apply(calculateGC)
+        #calculate %GC for each sgRNA
+        def calculateGC(x):
+            total_N=len(x)
+            total_G=x.count("G")
+            total_C=x.count("C")
+            GC_content=(total_G + total_C) / total_N
+            return(GC_content)
 
-    #select sgRNAs with 10% highest and 10% lowest abundances
-    df_pre_low=df.sort_values(by=["pre"],
-                            ascending=True,
-                            inplace=False).reset_index(drop=True)
-    index_range=list(range(int(len(df)*0.1)))
-    df_pre_low=df_pre_low.iloc[index_range]
+        df["GC_content"]=df["sequence"].apply(calculateGC)
 
-    df_post_low=df.sort_values(by=["post"],
-                            ascending=True,
-                            inplace=False).reset_index(drop=True)
-    df_post_low=df_post_low.iloc[index_range]
+        #select sgRNAs with 10% highest and 10% lowest abundances
+        index_range=list(range(int(len(df)*0.1)))
+        df_pre_low=df.sort_values(by=["pre"],
+                                ascending=True,
+                                inplace=False).reset_index(drop=True)
+        df_pre_low=df_pre_low.iloc[index_range]
 
-    df_low=df_pre_low["GC_content"]
-    df_low=df_low.to_frame()
-    df_low=df_low.rename(columns={df_low.columns[0]:"pre"})
-    df_low["post"]=df_post_low["GC_content"]
-    df_low=df_low.rename(columns={df_low.columns["GC_content"]:"pre"})
+        df_post_low=df.sort_values(by=["post"],
+                                ascending=True,
+                                inplace=False).reset_index(drop=True)
+        df_post_low=df_post_low.iloc[index_range]
 
-    #plot data
-    df=pd.melt(df_low,id_vars=["id_var"],value_vars=["pre","post"])
-    df=df.rename(columns={"value":"GC_content"})
-    df=df.rename(columns={"variable":"sample"})
-
-    sns.displot(df,x="GC_content",
-                    hue="sample",
-                    kind="kde",
-                    fill=True,
-                    bw_adjust=2)
-    plt.xlabel("%GC")
-    plt.legend(loc="upper left")
-    plt.savefig(os.path.join(work_dir,"gc-bias.pdf"))
+        df_bottom=df_pre_low["GC_content"]
+        df_bottom=df_bottom.to_frame()
+        df_bottom=df_bottom.rename(columns={df_bottom.columns[0]:"pre"})
+        df_bottom["post"]=df_post_low["GC_content"]
+        #df_bottom=df_bottom.rename(columns={df_bottom.columns["GC_content"]:"pre"})
+        df_bottom["sample"]="bottom_10pc"
 
 
+        index_range=list(range(int(len(df)*0.1)))
+        df_pre_high=df.sort_values(by=["pre"],
+                                ascending=False,
+                                inplace=False).reset_index(drop=True)
+        df_pre_high=df_pre_high.iloc[index_range]
 
-def essentialGenes():
-    pass
+        df_post_high=df.sort_values(by=["post"],
+                                ascending=False,
+                                inplace=False).reset_index(drop=True)
+        df_post_high=df_post_high.iloc[index_range]
+
+        df_top=df_pre_high["GC_content"]
+        df_top=df_top.to_frame()
+        df_top=df_top.rename(columns={df_top.columns[0]:"pre"})
+        df_top["post"]=df_post_high["GC_content"]
+        df_top["group"]="top_10pc"
+
+        df_all=df
+        df_top["group"]="all"
+
+        def meltDf(df):
+            df_melt=pd.melt(df,id_vars=["id_var"],value_vars=["pre","post"])
+            df_melt=df_melt.rename(columns={"value":"GC_content"})
+            df_melt=df_melt.rename(columns={"variable":"sample"})
+            return(df_melt)
+
+        df_melt_top=meltDf(df_top)
+        df_melt_bottom=meltDf(df_bottom)
+        df_melt_all=meltDf(df_all)
+
+        df_melt=df_melt_bottom.append([df_melt_top,df_melt_all],
+                                    ignore_index=True)
+
+        #plot data
+        sns.displot(df_melt,x="GC_content",
+                        hue="sample",
+                        kind="kde",
+                        fill=True,
+                        col="group",
+                        bw_adjust=2)
+        plt.xlabel("%GC")
+        plt.legend(loc="upper left")
+        plt.savefig(out_file)
+
+def essentialGenes(work_dir,analysis,essential_genes):
+    '''
+    Determines overlap with core essential genes from MAGeCK/BAGEL2gene lists,
+    plots a Venn diagram and returns a list of genes that contains overlapping
+    and non-overlapping genes.
+    '''
+    if analysis == "mageck":
+        #get list og MAGeCK gene summary file_exists
+        file_list=glob.glob(os.path.join(work_dir,
+                                "mageck*",
+                                "*",
+                                "*gene_summary.txt"))
+        if len(file_list) == 0:
+            print("ERROR: no MAGeCK output files found")
+            return(None)
 
 def goPython(work_dir,fdr,library,crispr_library,analysis,gene_sets):
     species=library[crispr_library]["species"]

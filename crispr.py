@@ -57,6 +57,11 @@ def main():
                 "GO_Cellular_Component_2021",
                 "GO_Biological_Process_2021"],
         help="Gene sets used for GO analysis (default is GO_Molecular_Function_2021, GO_Cellular_Component_2021, and GO_Biological_Process_2021). Gene sets can be found on https://maayanlab.cloud/Enrichr/#stats")
+    ap.add_argument("--essential-genes",
+        required=False,
+        metavar="<Custom essential gene list>",
+        default=os.path.join(script_dir,""), #"path to Hart list",
+        help="Essential gene list (default is Hart et al 2015 Cell)")
     ap.add_argument("--csv2fasta",
         required=False,
         metavar="<CSV file>",
@@ -143,6 +148,7 @@ def main():
 
     ##run library analysis
     utils.lib_analysis(work_dir,library,crispr_library,script_dir)
+    utils.gcBias(work_dir,library,crispr_library)
 
     ##run stats on counts
     analysis=args["analysis"]
@@ -154,7 +160,8 @@ def main():
     if not skip_stats:
         if analysis == "mageck":
             utils.mageck(work_dir,script_dir,cnv,fdr)
-
+            essential_genes=args["essential_genes"]
+            #utils.essentialGenes(work_dir,analysis,essential_genes)
         elif analysis == "bagel2":
             print("Running BAGEL2")
             utils.remove_duplicates(work_dir)
