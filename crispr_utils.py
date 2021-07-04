@@ -884,7 +884,7 @@ def gcBias(work_dir,library,crispr_library):
             total_N=len(x)
             total_G=x.count("G")
             total_C=x.count("C")
-            GC_content=(total_G + total_C) / total_N
+            GC_content=(total_G + total_C) / total_N *100
             return(GC_content)
 
         df["GC_content"]=df["sequence"].apply(calculateGC)
@@ -905,11 +905,8 @@ def gcBias(work_dir,library,crispr_library):
         df_bottom=df_bottom.to_frame()
         df_bottom=df_bottom.rename(columns={df_bottom.columns[0]:"pre"})
         df_bottom["post"]=df_post_low["GC_content"]
-        #df_bottom=df_bottom.rename(columns={df_bottom.columns["GC_content"]:"pre"})
-        df_bottom["sample"]="bottom_10pc"
-
-
-        index_range=list(range(int(len(df)*0.1)))
+        
+       
         df_pre_high=df.sort_values(by=["pre"],
                                 ascending=False,
                                 inplace=False).reset_index(drop=True)
@@ -924,25 +921,28 @@ def gcBias(work_dir,library,crispr_library):
         df_top=df_top.to_frame()
         df_top=df_top.rename(columns={df_top.columns[0]:"pre"})
         df_top["post"]=df_post_high["GC_content"]
-        df_top["group"]="top_10pc"
-
-        df_all=df
-        df_top["group"]="all"
-
+        #####
+        
+                
         def meltDf(df):
+            df["id_var"]=range(len(df))
             df_melt=pd.melt(df,id_vars=["id_var"],value_vars=["pre","post"])
             df_melt=df_melt.rename(columns={"value":"GC_content"})
             df_melt=df_melt.rename(columns={"variable":"sample"})
             return(df_melt)
 
         df_melt_top=meltDf(df_top)
+        df_melt_top["group"]="top_10pc"
         df_melt_bottom=meltDf(df_bottom)
-        df_melt_all=meltDf(df_all)
+        df_melt_bottom["group"]="bottom_10pc"
 
-        df_melt=df_melt_bottom.append([df_melt_top,df_melt_all],
+        df_melt=df_melt_bottom.append(df_melt_top,
                                     ignore_index=True)
 
         #plot data
+        sns.set_style("white")
+        sns.set_style("ticks")
+        
         sns.displot(df_melt,x="GC_content",
                         hue="sample",
                         kind="kde",
@@ -950,7 +950,7 @@ def gcBias(work_dir,library,crispr_library):
                         col="group",
                         bw_adjust=2)
         plt.xlabel("%GC")
-        plt.legend(loc="upper left")
+        sns.despine()
         plt.savefig(out_file)
 
 def essentialGenes(work_dir,analysis,essential_genes):
