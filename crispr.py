@@ -3,10 +3,7 @@
 import os
 import sys
 import argparse
-import subprocess
-import multiprocessing
 import yaml
-import glob
 import timeit
 import time
 import pickle
@@ -160,14 +157,17 @@ def main():
     if not skip_stats:
         if analysis == "mageck":
             utils.mageck(work_dir,script_dir,cnv,fdr)
-            essential_genes=args["essential_genes"]
-            #utils.essentialGenes(work_dir,analysis,essential_genes)
+
+            
         elif analysis == "bagel2":
             print("Running BAGEL2")
             utils.remove_duplicates(work_dir)
             utils.convert4bagel(work_dir,library,crispr_library)
             utils.bagel2(work_dir,script_dir,exe_dict,fdr)
-
+    
+    #run essential gene list comparison
+    essential_genes=args["essential_genes"]
+    #utils.essentialGenes(work_dir,script_dir,analysis,essential_genes,fdr)
 
     if go == True:
         gene_sets=args["gene_sets"]
