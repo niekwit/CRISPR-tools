@@ -57,7 +57,7 @@ def main():
     ap.add_argument("--essential-genes",
         required=False,
         metavar="<Custom essential gene list>",
-        default=os.path.join(script_dir,""), #"path to Hart list",
+        default=os.path.join(script_dir,"core-essential-genes.csv"), #"path to Hart list",
         help="Essential gene list (default is Hart et al 2015 Cell)")
     ap.add_argument("--csv2fasta",
         required=False,
@@ -167,7 +167,7 @@ def main():
     
     #run essential gene list comparison
     essential_genes=args["essential_genes"]
-    #utils.essentialGenes(work_dir,script_dir,analysis,essential_genes,fdr)
+    utils.essentialGenes(work_dir,analysis,essential_genes,fdr)
 
     if go == True:
         gene_sets=args["gene_sets"]

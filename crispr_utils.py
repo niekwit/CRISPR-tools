@@ -10,11 +10,12 @@ import csv
 import glob
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib_venn import venn2, venn2_circles
 import pandas as pd
 import seaborn as sns
 from tqdm.auto import tqdm
 import gseapy as gp
-from matplotlib_venn import venn2
+
 
 
 def write2log(work_dir,command,name):
@@ -970,14 +971,31 @@ def gcBias(work_dir,library,crispr_library):
         
       
 
-def essentialGenes(work_dir,script_dir,analysis,essential_genes,fdr):
+def essentialGenes(work_dir,analysis,essential_genes,fdr):
     '''
     Determines overlap with core essential genes from MAGeCK/BAGEL2gene lists,
     plots a Venn diagram and returns a list of genes that contains overlapping
     and non-overlapping genes.
     '''
-    essential_genes={line.strip() for line in open(os.path.join(script_dir,"core-essential-genes.csv"))}
+    essential_genes={line.strip() for line in open(essential_genes)}
+        
     
+    def plotVenn(test_genes_only,essential_genes_only,overlapping_genes,title,out_file):
+        venn=venn2(subsets=(len(test_genes_only),
+                                    len(essential_genes_only),
+                                    len(overlapping_genes)),
+                           set_labels=("Dropouts","Core essential genes"),
+                           set_colors=("darkorange","dodgerblue"),
+                           alpha=0.7)
+        venn.get_patch_by_id('11').set_edgecolor('black')
+        venn.get_patch_by_id("11").set_linestyle("--")
+        venn.get_patch_by_id("11").set_linewidth(1.25)
+        venn.get_patch_by_id('10').set_edgecolor('black')
+        venn.get_patch_by_id("10").set_linewidth(1)
+        venn.get_patch_by_id('01').set_edgecolor('black')
+        venn.get_patch_by_id("01").set_linewidth(1)
+        plt.title(title)
+        plt.savefig(out_file)
     
     if analysis == "mageck":
         #get list og MAGeCK gene summary file_exists
@@ -990,10 +1008,25 @@ def essentialGenes(work_dir,script_dir,analysis,essential_genes,fdr):
             return(None)
         
         for file in file_list:
-            df=pd.read_csv(file,sep="\t")
-            df_fdr=df.loc[df["neg|fdr"] < fdr ]
-            test_genes=set(df_fdr["id"])
-            
+            print(file)
+            out_file=os.path.join(os.path.dirname(file),"essential_genes_venn.pdf")
+            if not file_exists(out_file):
+                df=pd.read_csv(file,sep="\t")
+                df_fdr=df.loc[df["neg|fdr"] < fdr ]
+                if len(df_fdr) != 0:
+                    test_genes=set(df_fdr["id"])
+                    
+                    overlapping_genes=test_genes & essential_genes
+                    essential_genes_only=essential_genes - test_genes
+                    test_genes_only=test_genes - essential_genes
+                    
+                    title=os.path.basename(file)
+                    title=title.replace(".gene_summary.txt","")
+                    
+                    plotVenn(test_genes_only,essential_genes_only,overlapping_genes,title,out_file)
+                
+                
+                
 
 def goPython(work_dir,fdr,library,crispr_library,analysis,gene_sets):
     species=library[crispr_library]["species"]
