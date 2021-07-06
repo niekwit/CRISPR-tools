@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-import glob
 import subprocess
 import pkg_resources
 import os
@@ -15,7 +14,7 @@ def install_python_packages(): #check for required python packages; installs if 
     required = {"shyaml","pyyaml","pandas","numpy",
                 "matplotlib","seaborn","multiqc",
                 "cutadapt","scipy","scikit-learn",
-                "tqdm","gseapy","BioVenn"}
+                "tqdm","gseapy","matplotlib-venn"}
     installed = {pkg.key for pkg in pkg_resources.working_set}
     missing = required - installed
     if missing:
@@ -120,7 +119,6 @@ def install_bagel2(script_dir,bagel2_dir):
     exe_dict=pickle.load(open(os.path.join(script_dir,".exe_dict.obj"),"rb"))
     if not "bagel2" in exe_dict:
         print("Installing BAGEL2 to "+script_dir)
-        bagel2_git="https://github.com/hart-lab/bagel.git"
         clone_command="git "+"clone --quiet "+"https://github.com/hart-lab/bagel.git "+os.path.join(script_dir,"bagel2")
         subprocess.run(clone_command, shell=True)
         #add Bowtie directory to exe_dict
