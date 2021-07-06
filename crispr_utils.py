@@ -998,6 +998,7 @@ def essentialGenes(work_dir,analysis,essential_genes,fdr):
         plt.savefig(out_file)
     
     if analysis == "mageck":
+        print("Running essential gene analysis")
         #get list og MAGeCK gene summary file_exists
         file_list=glob.glob(os.path.join(work_dir,
                                 "mageck*",
@@ -1008,7 +1009,6 @@ def essentialGenes(work_dir,analysis,essential_genes,fdr):
             return(None)
         
         for file in file_list:
-            print(file)
             out_file=os.path.join(os.path.dirname(file),"essential_genes_venn.pdf")
             if not file_exists(out_file):
                 df=pd.read_csv(file,sep="\t")
@@ -1024,8 +1024,31 @@ def essentialGenes(work_dir,analysis,essential_genes,fdr):
                     title=title.replace(".gene_summary.txt","")
                     
                     plotVenn(test_genes_only,essential_genes_only,overlapping_genes,title,out_file)
-                
-                
+    elif analysis == "bagel2":
+        file_list=glob.glob(os.path.join(work_dir,
+                                "bagel*",
+                                "*",
+                                "*.pr"))
+
+        if len(file_list) == 0:
+            print("ERROR: no BAGEL2 output files found")
+            return(None)
+        
+        for file in file_list:
+            prefix=os.path.basename(os.path.normpath(file))
+            prefix=prefix.replace(".pr","")
+            df=pd.read_table(file)
+            df_bf=df[(df["BF"] > 0)]
+            test_genes=set(df_bf["Gene"])
+              
+            overlapping_genes=test_genes & essential_genes
+            essential_genes_only=essential_genes - test_genes
+            test_genes_only=test_genes - essential_genes
+            
+            title=os.path.basename(file)
+            title=title.replace(".pr","")
+            
+            plotVenn(test_genes_only,essential_genes_only,overlapping_genes,title,out_file)
                 
 
 def goPython(work_dir,fdr,library,crispr_library,analysis,gene_sets):
@@ -1084,18 +1107,19 @@ def goPython(work_dir,fdr,library,crispr_library,analysis,gene_sets):
         if len(file_list) == 0:
             print("ERROR: no BAGEL2 output files found")
             return(None)
-
-        prefix=os.path.basename(os.path.normpath(file))
-        prefix=prefix.replace(".pr","")
-        print("Performing gene set enrichment analysis with enrichR for: "+prefix+"(depletion)")
-
-        for set in gene_sets:
-            save_path=os.path.dirname(file)
-            df=pd.read_table(file)
-            df_bf=df[(df["BF"] > 0)]
-            geneList=df_bf["Gene"].to_list()
-            enrichr_results=gp.enrichr(gene_list=geneList,
-                gene_sets=set,
-                organism=species,
-                no_plot=False,
-                outdir=os.path.join(save_path,"enrichR",i[1]))
+        
+        for file in file_list:
+            prefix=os.path.basename(os.path.normpath(file))
+            prefix=prefix.replace(".pr","")
+            print("Performing gene set enrichment analysis with enrichR for: "+prefix+"(depletion)")
+    
+            for set in gene_sets:
+                save_path=os.path.dirname(file)
+                df=pd.read_table(file)
+                df_bf=df[(df["BF"] > 0)]
+                geneList=df_bf["Gene"].to_list()
+                enrichr_results=gp.enrichr(gene_list=geneList,
+                    gene_sets=set,
+                    organism=species,
+                    no_plot=False,
+                    outdir=os.path.join(save_path,"enrichR",i[1]))
