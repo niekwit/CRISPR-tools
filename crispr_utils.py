@@ -10,7 +10,7 @@ import csv
 import glob
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib_venn import venn2, venn2_circles
+from matplotlib_venn import venn2
 import pandas as pd
 import seaborn as sns
 from tqdm.auto import tqdm
@@ -253,6 +253,7 @@ def plot(df,y_label,save_file):
     plt.xlabel("")
     plt.tight_layout()
     plt.savefig(save_file)
+    plt.clf()
 
 def plot_alignment_rate(work_dir):
     plot_file=os.path.join(work_dir,"count","alignment-rate.pdf")
@@ -649,7 +650,7 @@ def bagel2(work_dir,script_dir,exe_dict,fdr):
         control_sample=df.loc[i]["c"]
         bagel2_output=test_sample+"_vs_"+control_sample
         bagel2_output_base=os.path.join(work_dir,"bagel",bagel2_output,bagel2_output)
-        test_sample_column=column_dict[test_sample]
+        #test_sample_column=column_dict[test_sample]
         control_sample_column=column_dict[control_sample]
 
         if not file_exists(os.path.join(work_dir,"bagel",bagel2_output)):
@@ -714,6 +715,31 @@ def bagel2(work_dir,script_dir,exe_dict,fdr):
                 subprocess.run(plot_command, shell=True)
             except:
                 sys.exit("ERROR: Calculation of precision-recall failed, check log")
+    
+    def histogramBF(df,out_file):
+        sns.set_style("white")
+        sns.set_style("ticks")
+        sns.despine()
+        sns.histplot(data=df,
+                    x="BF",
+                    bins=50)
+        plt.xlabel('Bayes Factor')
+        plt.ylabel('Number of Genes')
+        plt.savefig(out_file)
+        plt.clf()
+    
+    file_list=glob.glob(os.path.join(work_dir,
+                                "bagel*",
+                                "*",
+                                "*.pr"))
+    
+    for file in file_list:
+        #plot histogram BF    
+        out_file=os.path.join(os.path.dirname(file),"histogram-BF.pdf")
+        if not file_exists(out_file):
+            df=pd.read_table(file)
+            histogramBF(df,out_file)
+    
 
 def lib_analysis(work_dir,library,crispr_library,script_dir):
     #determine whether count file contains library samples pre and post
@@ -996,7 +1022,9 @@ def essentialGenes(work_dir,analysis,essential_genes,fdr):
         venn.get_patch_by_id("01").set_linewidth(1)
         plt.title(title)
         plt.savefig(out_file)
+        plt.clf()
     
+     
     if analysis == "mageck":
         print("Running essential gene analysis")
         #get list og MAGeCK gene summary file_exists
@@ -1035,21 +1063,24 @@ def essentialGenes(work_dir,analysis,essential_genes,fdr):
             return(None)
         
         for file in file_list:
-            prefix=os.path.basename(os.path.normpath(file))
-            prefix=prefix.replace(".pr","")
-            df=pd.read_table(file)
-            df_bf=df[(df["BF"] > 0)]
-            test_genes=set(df_bf["Gene"])
-              
-            overlapping_genes=test_genes & essential_genes
-            essential_genes_only=essential_genes - test_genes
-            test_genes_only=test_genes - essential_genes
-            
-            title=os.path.basename(file)
-            title=title.replace(".pr","")
-            
-            plotVenn(test_genes_only,essential_genes_only,overlapping_genes,title,out_file)
+            #plot venn
+            out_file=os.path.join(os.path.dirname(file),"essential_genes_venn.pdf")
+            if not file_exists(out_file):
+                prefix=os.path.basename(os.path.normpath(file))
+                prefix=prefix.replace(".pr","")
+                df=pd.read_table(file)
+                df_bf=df[(df["BF"] > 0)]
+                test_genes=set(df_bf["Gene"])
+                  
+                overlapping_genes=test_genes & essential_genes
+                essential_genes_only=essential_genes - test_genes
+                test_genes_only=test_genes - essential_genes
                 
+                title=os.path.basename(file)
+                title=title.replace(".pr","")
+                
+                plotVenn(test_genes_only,essential_genes_only,overlapping_genes,title,out_file)
+                     
 
 def goPython(work_dir,fdr,library,crispr_library,analysis,gene_sets):
     species=library[crispr_library]["species"]
