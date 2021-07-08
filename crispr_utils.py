@@ -244,14 +244,15 @@ def count(library,crispr_library,mismatch,threads,script_dir,work_dir,exe_dict):
 def plot(df,y_label,save_file):
     sns.set_style("white")
     sns.set_style("ticks")
-    sns.despine()
     sns.barplot(x=list(df.keys())[0],
                     y=list(df.keys())[1],
-                    data=df)
+                    data=df,
+                    color="navy")
     plt.ylabel(y_label)
     plt.xticks(rotation = 'vertical')
     plt.xlabel("")
     plt.tight_layout()
+    sns.despine()
     plt.savefig(save_file)
     plt.clf()
 
@@ -1007,24 +1008,28 @@ def essentialGenes(work_dir,analysis,essential_genes,fdr):
         
     
     def plotVenn(test_genes_only,essential_genes_only,overlapping_genes,title,out_file):
-        venn=venn2(subsets=(len(test_genes_only),
-                                    len(essential_genes_only),
-                                    len(overlapping_genes)),
-                           set_labels=("Dropouts","Core essential genes"),
-                           set_colors=("darkorange","dodgerblue"),
-                           alpha=0.7)
-        venn.get_patch_by_id('11').set_edgecolor('black')
-        venn.get_patch_by_id("11").set_linestyle("--")
-        venn.get_patch_by_id("11").set_linewidth(1.25)
-        venn.get_patch_by_id('10').set_edgecolor('black')
-        venn.get_patch_by_id("10").set_linewidth(1)
-        venn.get_patch_by_id('01').set_edgecolor('black')
-        venn.get_patch_by_id("01").set_linewidth(1)
-        plt.title(title)
-        plt.savefig(out_file)
-        plt.clf()
-    
-     
+        if len(overlapping_genes) > 0:
+            venn=venn2(subsets=(len(test_genes_only),
+                                        len(essential_genes_only),
+                                        len(overlapping_genes)),
+                               set_labels=("Dropouts","Core essential genes"),
+                               set_colors=("darkorange","dodgerblue"),
+                               alpha=0.7)
+            venn.get_patch_by_id('11').set_edgecolor('black')
+            venn.get_patch_by_id("11").set_linestyle("--")
+            venn.get_patch_by_id("11").set_linewidth(1.25)
+            venn.get_patch_by_id('10').set_edgecolor('black')
+            venn.get_patch_by_id("10").set_linewidth(1)
+            venn.get_patch_by_id('01').set_edgecolor('black')
+            venn.get_patch_by_id("01").set_linewidth(1)
+            plt.title(title)
+            plt.savefig(out_file)
+            plt.clf()
+        else:
+            print("No overlapping genes found for "+title)
+            return(None)
+            
+         
     if analysis == "mageck":
         print("Running essential gene analysis")
         #get list og MAGeCK gene summary file_exists
