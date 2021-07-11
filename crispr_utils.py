@@ -17,7 +17,6 @@ from tqdm.auto import tqdm
 import gseapy as gp
 
 
-
 def write2log(work_dir,command,name):
     with open(os.path.join(work_dir,"commands.log"), "a") as file:
         file.write(name)
@@ -254,7 +253,7 @@ def plot(df,y_label,save_file):
     plt.tight_layout()
     sns.despine()
     plt.savefig(save_file)
-    plt.clf()
+    plt.close()
 
 def plot_alignment_rate(work_dir):
     plot_file=os.path.join(work_dir,"count","alignment-rate.pdf")
@@ -437,10 +436,10 @@ def join_counts(work_dir,library,crispr_library):
     dfjoin2.to_csv(os.path.join(work_dir,"count",'counts-aggregated.tsv'), sep='\t',index=False)
 
 def mageck(work_dir,script_dir,cnv,fdr):
-    
+
     if fdr > 0.25:
         print("WARNING: MAGeCK FDR cut off set higher than default 0.25")
-    
+
     #determine number of samples in count table
     header=subprocess.check_output(["head", "-1",os.path.join(work_dir,"count","counts-aggregated.tsv")])
     header=header.decode("utf-8")
@@ -716,7 +715,7 @@ def bagel2(work_dir,script_dir,exe_dict,fdr):
                 subprocess.run(plot_command, shell=True)
             except:
                 sys.exit("ERROR: Calculation of precision-recall failed, check log")
-    
+
     def histogramBF(df,out_file):
         sns.set_style("white")
         sns.set_style("ticks")
@@ -728,19 +727,19 @@ def bagel2(work_dir,script_dir,exe_dict,fdr):
         plt.ylabel('Number of Genes')
         plt.savefig(out_file)
         plt.clf()
-    
+
     file_list=glob.glob(os.path.join(work_dir,
                                 "bagel*",
                                 "*",
                                 "*.pr"))
-    
+
     for file in file_list:
-        #plot histogram BF    
+        #plot histogram BF
         out_file=os.path.join(os.path.dirname(file),"histogram-BF.pdf")
         if not file_exists(out_file):
             df=pd.read_table(file)
             histogramBF(df,out_file)
-    
+
 
 def lib_analysis(work_dir,library,crispr_library,script_dir):
     #determine whether count file contains library samples pre and post
@@ -851,15 +850,15 @@ def lib_analysis(work_dir,library,crispr_library,script_dir):
 
         #plots Lorenz curve
         fig, ax = plt.subplots(figsize=[6,6])
-        ax.plot(np.arange(X_lorenz.size)/(X_lorenz.size-1), 
+        ax.plot(np.arange(X_lorenz.size)/(X_lorenz.size-1),
                 X_lorenz, label='Library pre-amplification',
                 color='green')
-        ax.plot(np.arange(Y_lorenz.size)/(Y_lorenz.size-1), 
-                Y_lorenz, 
+        ax.plot(np.arange(Y_lorenz.size)/(Y_lorenz.size-1),
+                Y_lorenz,
                 label='Library post-amplification',
                 color='red')
         ax.plot([0,1], [0,1], color='k', label='Ideal library')#line plot of equality
-        ax.set(ylabel='Cumulative fraction of reads represented', 
+        ax.set(ylabel='Cumulative fraction of reads represented',
                xlabel='sgRNAs ranked by abundance')
         plt.text(0.075, 0.9, 'pre-amplification Gini index = '+str(pre_gini_index))
         plt.text(0.075, 0.85, 'post-amplification Gini index = '+str(post_gini_index))
@@ -878,27 +877,27 @@ def gcBias(work_dir,library,crispr_library):
                                                 "count",
                                                 "counts-aggregated.tsv")])
     if "pre" and "post" in str(header):
-    
+
         out_file=os.path.join(work_dir,
                                 "library-analysis",
                                 "gc-bias.pdf")
-    
+
         if not file_exists(out_file):
             fasta=library[crispr_library]["fasta"]
-    
+
             #get sgRNA counts
             df=pd.read_csv(os.path.join(work_dir,
                                     "count",
                                     "counts-aggregated.tsv"),sep='\t')
-    
+
             df=df[["sgRNA","gene","pre","post"]]
-    
+
             #get sgRNA sequences from fasta file
             df_fasta=pd.read_csv(fasta, header=None)
             df_fasta=df_fasta.rename(columns={0:"sgRNA"})
             df_seq=df_fasta[df_fasta["sgRNA"].str.contains(">")].reset_index(drop=True)
             df_seq["sequence"]=df_fasta[~df_fasta["sgRNA"].str.contains(">")].reset_index(drop=True)
-    
+
             #get sgRNA sequence in sgRNA count df
             df["pre"]=df["pre"].astype(str)
             df["post"]=df["post"].astype(str)
@@ -911,10 +910,10 @@ def gcBias(work_dir,library,crispr_library):
             df = pd.merge(df, df_seq, on='sgRNA', how='left')
             #df = df.drop(columns="sequence_x")
             #df=df.rename(columns={"sequence_y":"sequence"})
-    
+
             df["pre"]=df["pre"].astype(int)
             df["post"]=df["post"].astype(int)
-    
+
             #calculate %GC for each sgRNA
             def calculateGC(x):
                 total_N=len(x)
@@ -922,37 +921,37 @@ def gcBias(work_dir,library,crispr_library):
                 total_C=x.count("C")
                 GC_content=(total_G + total_C) / total_N *100
                 return(GC_content)
-    
+
             df["%GC"]=df["sequence"].apply(calculateGC)
-    
+
             #select sgRNAs with 10% highest and 10% lowest abundances
             index_range=list(range(int(len(df)*0.1)))
             df_pre_low=df.sort_values(by=["pre"],
                                     ascending=True,
                                     inplace=False).reset_index(drop=True)
             df_pre_low=df_pre_low.iloc[index_range]
-    
+
             df_post_low=df.sort_values(by=["post"],
                                     ascending=True,
                                     inplace=False).reset_index(drop=True)
             df_post_low=df_post_low.iloc[index_range]
-    
+
             df_bottom=df_pre_low["%GC"]
             df_bottom=df_bottom.to_frame()
             df_bottom=df_bottom.rename(columns={df_bottom.columns[0]:"pre"})
             df_bottom["post"]=df_post_low["%GC"]
-            
-           
+
+
             df_pre_high=df.sort_values(by=["pre"],
                                     ascending=False,
                                     inplace=False).reset_index(drop=True)
             df_pre_high=df_pre_high.iloc[index_range]
-    
+
             df_post_high=df.sort_values(by=["post"],
                                     ascending=False,
                                     inplace=False).reset_index(drop=True)
             df_post_high=df_post_high.iloc[index_range]
-    
+
             df_top=df_pre_high["%GC"]
             df_top=df_top.to_frame()
             df_top=df_top.rename(columns={df_top.columns[0]:"pre"})
@@ -961,28 +960,28 @@ def gcBias(work_dir,library,crispr_library):
             #df_all=df[["%GC","%GC"]]
             #df_all.columns.values[0]="pre"
             #df_all.columns.values[1]="post"
-                    
+
             def meltDf(df):
                 df["id_var"]=range(len(df))
                 df_melt=pd.melt(df,id_vars=["id_var"],value_vars=["pre","post"])
                 df_melt=df_melt.rename(columns={"value":"%GC"})
                 df_melt=df_melt.rename(columns={"variable":"sample"})
                 return(df_melt)
-    
+
             df_melt_top=meltDf(df_top)
             df_melt_top["group"]="top_10pc"
             df_melt_bottom=meltDf(df_bottom)
             df_melt_bottom["group"]="bottom_10pc"
             #df_melt_all=meltDf(df_all)
             #df_melt_all["group"]="all"
-    
+
             df_melt=df_melt_bottom.append(df_melt_top,ignore_index=True)
-    
+
             #plot data
             sns.set_style("white")
             sns.set_style("ticks")
             sns.despine()
-            
+
             g=sns.displot(df_melt,x="%GC",
                             hue="sample",
                             fill=True,
@@ -990,13 +989,14 @@ def gcBias(work_dir,library,crispr_library):
                             multiple="stack",
                             stat="density",
                             bins=15)
-            
+
             for ax in g.axes.flat:
                 ax.axvline(x=df["%GC"].median(),color='r',ls='--')
-            
+
             plt.savefig(out_file)
-        
-      
+            plt.close()
+
+
 
 def essentialGenes(work_dir,analysis,essential_genes,fdr):
     '''
@@ -1005,8 +1005,8 @@ def essentialGenes(work_dir,analysis,essential_genes,fdr):
     and non-overlapping genes.
     '''
     essential_genes={line.strip() for line in open(essential_genes)}
-        
-    
+
+
     def plotVenn(test_genes_only,essential_genes_only,overlapping_genes,title,out_file):
         if len(overlapping_genes) > 0:
             venn=venn2(subsets=(len(test_genes_only),
@@ -1024,12 +1024,12 @@ def essentialGenes(work_dir,analysis,essential_genes,fdr):
             venn.get_patch_by_id("01").set_linewidth(1)
             plt.title(title)
             plt.savefig(out_file)
-            plt.clf()
+            plt.close()
         else:
             print("No overlapping genes found for "+title)
             return(None)
-            
-         
+
+
     if analysis == "mageck":
         print("Running essential gene analysis")
         #get list og MAGeCK gene summary file_exists
@@ -1040,7 +1040,7 @@ def essentialGenes(work_dir,analysis,essential_genes,fdr):
         if len(file_list) == 0:
             print("ERROR: no MAGeCK output files found")
             return(None)
-        
+
         for file in file_list:
             out_file=os.path.join(os.path.dirname(file),"essential_genes_venn.pdf")
             if not file_exists(out_file):
@@ -1048,14 +1048,14 @@ def essentialGenes(work_dir,analysis,essential_genes,fdr):
                 df_fdr=df.loc[df["neg|fdr"] < fdr ]
                 if len(df_fdr) != 0:
                     test_genes=set(df_fdr["id"])
-                    
+
                     overlapping_genes=test_genes & essential_genes
                     essential_genes_only=essential_genes - test_genes
                     test_genes_only=test_genes - essential_genes
-                    
+
                     title=os.path.basename(file)
                     title=title.replace(".gene_summary.txt","")
-                    
+
                     plotVenn(test_genes_only,essential_genes_only,overlapping_genes,title,out_file)
     elif analysis == "bagel2":
         file_list=glob.glob(os.path.join(work_dir,
@@ -1066,7 +1066,7 @@ def essentialGenes(work_dir,analysis,essential_genes,fdr):
         if len(file_list) == 0:
             print("ERROR: no BAGEL2 output files found")
             return(None)
-        
+
         for file in file_list:
             #plot venn
             out_file=os.path.join(os.path.dirname(file),"essential_genes_venn.pdf")
@@ -1076,16 +1076,16 @@ def essentialGenes(work_dir,analysis,essential_genes,fdr):
                 df=pd.read_table(file)
                 df_bf=df[(df["BF"] > 0)]
                 test_genes=set(df_bf["Gene"])
-                  
+
                 overlapping_genes=test_genes & essential_genes
                 essential_genes_only=essential_genes - test_genes
                 test_genes_only=test_genes - essential_genes
-                
+
                 title=os.path.basename(file)
                 title=title.replace(".pr","")
-                
+
                 plotVenn(test_genes_only,essential_genes_only,overlapping_genes,title,out_file)
-                     
+
 
 def goPython(work_dir,fdr,library,crispr_library,analysis,gene_sets):
     species=library[crispr_library]["species"]
@@ -1143,12 +1143,12 @@ def goPython(work_dir,fdr,library,crispr_library,analysis,gene_sets):
         if len(file_list) == 0:
             print("ERROR: no BAGEL2 output files found")
             return(None)
-        
+
         for file in file_list:
             prefix=os.path.basename(os.path.normpath(file))
             prefix=prefix.replace(".pr","")
             print("Performing gene set enrichment analysis with enrichR for: "+prefix+"(depletion)")
-    
+
             for set in gene_sets:
                 save_path=os.path.dirname(file)
                 df=pd.read_table(file)
