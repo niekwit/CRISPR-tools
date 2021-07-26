@@ -15,7 +15,38 @@ import pandas as pd
 import seaborn as sns
 from tqdm.auto import tqdm
 import gseapy as gp
+import hashlib
 
+
+def checkMd5(work_dir):
+    md5sum_file = os.path.join(work_dir,"raw-data", "md5sums.csv")     
+   
+    def md5(file):
+        work_dir = os.getcwd()
+        file = os.path.join(work_dir, "raw-data", file)
+        hash_md5 = hashlib.md5()
+        with open(file, "rb") as f:
+            for chunk in iter(lambda: f.read(4096), b""):
+                hash_md5.update(chunk)
+        return(hash_md5.hexdigest())
+
+    if not os.path.exists(os.path.join(work_dir, ".md5summscorrect")):
+        if os.path.exists(md5sum_file):
+            print("Checking MD5 checksums")
+            df = pd.read_csv(os.path.join(work_dir,"raw-data","md5sums.csv"))
+            df["md5sum_new"] = df["file"].apply(md5)
+            
+            #compare original checksums with calculated ones
+            df["md5sumCorrect"] = df["md5sum"] == df["md5sum_new"]
+            
+            check_list = df[~df["md5sumCorrect"]]
+            if len(check_list) > 0:
+                print("Calculated MD5 checksums do not match originals:")
+                print(check_list["file"])
+                sys.exit(1)
+            else:
+                print("MD5 checksums correct")
+                open(".md5summscorrect", 'a').close()
 
 def write2log(work_dir,command,name):
     with open(os.path.join(work_dir,"commands.log"), "a") as file:

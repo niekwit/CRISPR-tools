@@ -97,7 +97,10 @@ def main():
 
     ###set thread count for processing
     threads=utils.set_threads(args)
-
+    
+    ###Check md5 checksums
+    utils.checkMd5(work_dir)
+    
     ###run modules based on parsed arguments:
     ##rename files
     rename=args["rename"]
